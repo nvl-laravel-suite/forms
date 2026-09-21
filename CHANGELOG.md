@@ -4,6 +4,8 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-21
+
 ### Added
 
 - Added canonical Form tenant ownership across public submissions, origins,
