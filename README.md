@@ -1,12 +1,12 @@
 # NVL Forms — API and usage
 
-[← NVL Laravel Suite](../../../README.md)
+[← NVL Laravel Suite](https://github.com/nvl-laravel-suite)
 
 ## Quick reference
 
 | Item | Value |
 |---|---|
-| Installed through | `composer require nvl/laravel-suite:^2.0` |
+| Installed through | `composer require nvl/forms:^2.0` |
 | Module identifier | `nvl/forms` |
 | PHP namespace | `Nvl\Forms` |
 | Service provider | `Nvl\Forms\Providers\FormsServiceProvider` |
@@ -16,12 +16,12 @@
 
 `nvl/forms` is a headless form-definition and submission engine for Laravel 13 on PHP 8.4+. It owns secure form definitions, localized nested content, public rendering contracts, submissions, stored entries, analytics, and privacy operations. It does not ship an admin UI, frontend scaffold, mail provider, application-specific form types, or a required audit system.
 
-Forms depends on `nvl/data`, `nvl/filterable`, `nvl/support`, and `nvl/translatable`. `nvl/activity` is an optional event-driven integration.
+Forms depends on `nvl/core`, `nvl/filterable`, `nvl/tenancy`, and `nvl/translatable`. `nvl/activity` is an optional event-driven integration.
 
 ## Requirements and installation
 
 ```bash
-composer require nvl/laravel-suite:^2.0
+composer require nvl/forms:^2.0
 php artisan migrate
 ```
 
@@ -223,7 +223,7 @@ The doctor does not mutate state. It checks required tables, columns, numeric sc
 
 ## Generated TypeScript
 
-Form DTO and enum sources register automatically with `nvl/data` under `Nvl.Forms.*`:
+Form DTO and enum sources register automatically with Core's Data provider under `Nvl.Forms.*`:
 
 ```bash
 php artisan nvl:data:types:generate
