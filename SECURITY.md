@@ -1,5 +1,7 @@
 # Security Policy
 
+Submit reports through [this package's private vulnerability reporting form](https://github.com/nvl-laravel-suite/forms/security/advisories/new).
+
 Security fixes are provided for the current `2.x` release line on PHP 8.3–8.5 and Laravel 13.
 
 Report vulnerabilities privately through the repository host's security-advisory feature. Include route configuration, payload shape, origin, token or idempotency behavior, impact, and a minimal reproduction without personal submission data.
