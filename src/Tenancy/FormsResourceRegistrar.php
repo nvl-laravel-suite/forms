@@ -11,16 +11,16 @@ use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Models\FormTranslation;
-use Nvl\Tenancy\Enums\TenantResourceKind;
+use Nvl\Support\Tenancy\Enums\TenantResourceKind;
+use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
+use Nvl\Support\Tenancy\ValueObjects\TenantResourceDefinition;
 use Nvl\Tenancy\Services\TenantAdoptionRegistry;
-use Nvl\Tenancy\Services\TenantResourceRegistry;
-use Nvl\Tenancy\ValueObjects\TenantResourceDefinition;
 
 /** Registers the canonical Form ownership graph and package adopter. */
 final readonly class FormsResourceRegistrar
 {
     /** Register root and inherited form resources. */
-    public function register(TenantResourceRegistry $resources, TenantAdoptionRegistry $adapters): void
+    public function register(TenantResourceRegistry $resources, ?TenantAdoptionRegistry $adapters = null): void
     {
         foreach ([
             new TenantResourceDefinition('forms.forms', 'forms', Form::class),
@@ -34,6 +34,6 @@ final readonly class FormsResourceRegistrar
             $resources->register($resource);
         }
 
-        $adapters->register('forms', FormsAdoptionAdapter::class);
+        $adapters?->register('forms', FormsAdoptionAdapter::class);
     }
 }

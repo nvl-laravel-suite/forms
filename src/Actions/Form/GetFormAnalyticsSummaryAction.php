@@ -7,7 +7,7 @@ namespace Nvl\Forms\Actions\Form;
 use Illuminate\Support\Collection;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Provides aggregated analytics metrics for a form.

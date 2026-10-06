@@ -3,7 +3,13 @@
     "description": "Secure dynamic Laravel forms with localized content and submission workflows",
     "type": "library",
     "license": "MIT",
-    "keywords": ["laravel", "forms", "validation", "spam-protection", "translation"],
+    "keywords": [
+        "laravel",
+        "forms",
+        "validation",
+        "spam-protection",
+        "translation"
+    ],
     "require": {
         "php": "^8.3",
         "ext-ctype": "*",
@@ -13,7 +19,6 @@
         "nesbot/carbon": "^2.72 || ^3.0",
         "nvl/core": "^2.0",
         "nvl/filterable": "^2.0",
-        "nvl/tenancy": "^2.0",
         "nvl/translatable": "^2.0",
         "ramsey/uuid": "^4.7",
         "spatie/laravel-data": "^4.23",
@@ -25,12 +30,14 @@
         "larastan/larastan": "^3.10",
         "laravel/pint": "^1.27",
         "mockery/mockery": "^1.6",
+        "nvl/tenancy": "^2.0",
         "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0"
     },
     "suggest": {
-        "nvl/activity": "Can consume the package's after-commit events in an application-owned audit integration"
+        "nvl/activity": "Can consume the package's after-commit events in an application-owned audit integration",
+        "nvl/tenancy": "Enables enforcing tenant ownership, scoped execution, adoption, and captured tenant queue contexts."
     },
     "autoload": {
         "psr-4": {

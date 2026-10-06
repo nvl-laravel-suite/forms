@@ -10,6 +10,7 @@ use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormTranslation;
+use Nvl\Support\Facades\Locales;
 
 /**
  * @extends Factory<Form>
@@ -51,8 +52,7 @@ final class FormFactory extends Factory
                 $translations = is_array($copy['translations'] ?? null)
                     ? $copy['translations']
                     : [];
-                $configuredLocale = config('app.locale', 'en');
-                $locale = is_string($configuredLocale) ? $configuredLocale : 'en';
+                $locale = Locales::default();
 
                 if (! isset($translations[$locale])) {
                     $translations[$locale] = [

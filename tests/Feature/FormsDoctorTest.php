@@ -3,6 +3,18 @@
 declare(strict_types=1);
 
 use Nvl\Forms\Services\FormsDoctor;
+use Nvl\Support\Doctor\DoctorRegistry;
+use Nvl\Support\Providers\DoctorServiceProvider;
+
+it('contributes the same package-owned checks to the consumer Doctor', function (): void {
+    $this->app->register(DoctorServiceProvider::class);
+    $expected = array_map(static fn ($check): string => $check->key, $this->app->make(FormsDoctor::class)->inspect());
+    sort($expected);
+    $report = $this->app->make(DoctorRegistry::class)->inspect();
+    $actual = array_column(array_values(array_filter($report['checks'], static fn (array $check): bool => $check['package'] === 'nvl/forms')), 'key');
+
+    expect($actual)->toBe($expected);
+});
 
 test('forms doctor reports a healthy standalone installation', function (): void {
     $checks = collect(app(FormsDoctor::class)->inspect());

@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Support\FormsConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Read-only service for rate-limit statistics and maintenance operations.

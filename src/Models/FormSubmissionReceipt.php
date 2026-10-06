@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormSubmissionReceiptFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormSubmissionReceiptState;
+use Nvl\Support\Config\PackageStorage;
 
 /**
  * Durable idempotency and registration claim for custom form handlers.
@@ -76,5 +77,17 @@ final class FormSubmissionReceipt extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(Form::class);
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::SubmissionReceipts);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }

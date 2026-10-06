@@ -21,10 +21,10 @@ use Nvl\Forms\Services\FormEntryLocator;
 use Nvl\Forms\Services\PublicFormTokenService;
 use Nvl\Forms\Support\CustomFormGuardResult;
 use Nvl\Forms\Support\FormSubmissionContext;
-use Nvl\Tenancy\Contracts\TenantContext;
-use Nvl\Tenancy\Enums\TenantContextMode;
-use Nvl\Tenancy\Services\TenantQueueContext;
-use Nvl\Tenancy\ValueObjects\TenantJobEnvelope;
+use Nvl\Support\Tenancy\Contracts\TenantContext;
+use Nvl\Support\Tenancy\Contracts\TenantQueueContext;
+use Nvl\Support\Tenancy\Enums\TenantContextMode;
+use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
 use Throwable;
 
 /**

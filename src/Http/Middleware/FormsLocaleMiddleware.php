@@ -7,8 +7,8 @@ namespace Nvl\Forms\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Nvl\Support\Contracts\LocaleCatalog;
 use Nvl\Translatable\Services\ContentLocale;
-use Nvl\Translatable\Services\LocaleRegistry;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -18,7 +18,7 @@ class FormsLocaleMiddleware
 {
     public function __construct(
         private readonly ContentLocale $contentLocale,
-        private readonly LocaleRegistry $locales,
+        private readonly LocaleCatalog $locales,
     ) {}
 
     /**
@@ -35,12 +35,12 @@ class FormsLocaleMiddleware
         if ($lang !== '') {
             $candidate = mb_strtolower(str_replace('_', '-', trim($lang)));
             $baseCandidate = explode('-', $candidate, 2)[0];
-            $fallback = config('app.fallback_locale', 'en');
+            $fallback = $this->locales->fallbacks()[0] ?? $this->locales->default();
             $normalized = match (true) {
                 $this->locales->supports($candidate) => $this->locales->assertSupported($candidate),
                 $this->locales->supports($baseCandidate) => $this->locales->assertSupported($baseCandidate),
-                is_string($fallback) && $this->locales->supports($fallback) => $this->locales->assertSupported($fallback),
-                default => $this->locales->supported()[0] ?? 'en',
+                $this->locales->supports($fallback) => $this->locales->assertSupported($fallback),
+                default => $this->locales->default(),
             };
 
             $this->contentLocale->set($normalized);

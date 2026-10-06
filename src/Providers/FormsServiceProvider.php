@@ -30,15 +30,17 @@ use Nvl\Forms\Services\AllowFormEntryDeletion;
 use Nvl\Forms\Services\AllowFormEntryPrivacyOperations;
 use Nvl\Forms\Services\EntryCallbackRegistry;
 use Nvl\Forms\Services\FormRateLimitService;
+use Nvl\Forms\Services\FormsDoctor;
 use Nvl\Forms\Services\FormSpamDetectionService;
 use Nvl\Forms\Support\FormErrorMapperRegistry;
 use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Forms\Tenancy\FormsResourceRegistrar;
+use Nvl\Support\Doctor\PackageDoctorContributor;
+use Nvl\Support\Providers\TenantServiceProvider;
+use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Support\Traits\MergesPackageConfiguration;
-use Nvl\Tenancy\Providers\TenancyServiceProvider;
 use Nvl\Tenancy\Services\TenantAdoptionRegistry;
-use Nvl\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Translatable\Services\TranslationResourceRegistry;
 
 /**
@@ -98,12 +100,16 @@ final class FormsServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->register(TenancyServiceProvider::class);
+        PackageDoctorContributor::register($this->app, 'nvl/forms', fn (): array => $this->app->make(FormsDoctor::class)->inspect());
+
+        $this->app->register(TenantServiceProvider::class);
         $this->mergePackageConfiguration(__DIR__.'/../../config/forms.php', 'forms');
-        (new FormsResourceRegistrar)->register(
-            $this->app->make(TenantResourceRegistry::class),
-            $this->app->make(TenantAdoptionRegistry::class),
-        );
+        (new FormsResourceRegistrar)->register($this->app->make(TenantResourceRegistry::class));
+        $this->app->booted(function (): void {
+            if ($this->app->bound(TenantAdoptionRegistry::class)) {
+                (new FormsResourceRegistrar)->register($this->app->make(TenantResourceRegistry::class), $this->app->make(TenantAdoptionRegistry::class));
+            }
+        });
 
         $this->app->singletonIf(FormHandlerRegistry::class, fn (): FormHandlerRegistry => new FormHandlerRegistry);
         $this->app->singletonIf(EntryCallbackRegistry::class, fn (Container $app): EntryCallbackRegistry => new EntryCallbackRegistry($app));

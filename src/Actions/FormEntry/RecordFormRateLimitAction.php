@@ -6,7 +6,7 @@ namespace Nvl\Forms\Actions\FormEntry;
 
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Models\Form;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Records a submission attempt for rate limit tracking.

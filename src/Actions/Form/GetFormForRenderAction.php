@@ -7,7 +7,7 @@ namespace Nvl\Forms\Actions\Form;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
 use Nvl\Forms\Models\Form;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Resolves a public form by model, UUID, or handle with render relations loaded.

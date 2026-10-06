@@ -6,7 +6,7 @@ namespace Nvl\Forms\Services;
 
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Resolves host/origin access checks for restricted public forms.

@@ -13,7 +13,7 @@ use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Results\FormRateLimitAttemptResult;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Handles form rate limiting: per-IP submission tracking, blocking, and unblocking.

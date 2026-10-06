@@ -6,19 +6,26 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Support\Config\PackageStorage;
 
 return new class extends Migration
 {
+    /** Use the effective package connection for Laravel's migration transaction. */
+    public function getConnection(): ?string
+    {
+        return PackageStorage::connection('forms');
+    }
+
     public function up(): void
     {
-        if (Schema::hasTable(FormsTables::I18n)) {
-            return;
+        if (Schema::connection(PackageStorage::connection('forms'))->hasTable(FormsTables::get(FormsTables::I18n))) {
+            throw new LogicException('Existing package table is not owned by this migration. Run nvl:doctor --strict and use nvl:schema:upgrade for a verified legacy installation.');
         }
 
-        Schema::create(FormsTables::I18n, function (Blueprint $table) {
+        Schema::connection(PackageStorage::connection('forms'))->create(FormsTables::get(FormsTables::I18n), function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('form_id')
-                ->constrained(FormsTables::Forms)
+                ->constrained(FormsTables::get(FormsTables::Forms))
                 ->cascadeOnDelete();
             $table->string('locale', 35);
             $table->string('name')->nullable();
@@ -36,6 +43,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(FormsTables::I18n);
+        Schema::connection(PackageStorage::connection('forms'))->dropIfExists(FormsTables::get(FormsTables::I18n));
     }
 };

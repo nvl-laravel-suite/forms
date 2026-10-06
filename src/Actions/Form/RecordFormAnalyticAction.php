@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Records a forms analytics event.

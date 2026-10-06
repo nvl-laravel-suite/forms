@@ -17,7 +17,7 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Services\FormRegistrationFingerprint;
 use Nvl\Forms\Services\FormSpamRejectionRecorder;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Spatie\LaravelData\Optional;
 use Throwable;
 

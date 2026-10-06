@@ -19,6 +19,9 @@ use Nvl\Forms\Services\RequestOriginResolver;
 use Nvl\Forms\Support\FormSubmissionContext;
 use Nvl\Forms\Tests\Stubs\FormsTestContractCallback;
 use Nvl\Forms\Tests\Stubs\FormsTestExecuteCallback;
+use Nvl\Support\Tenancy\Services\TenantSiteAttributes;
+use Nvl\Support\Tenancy\ValueObjects\TenantId;
+use Nvl\Support\Tenancy\ValueObjects\TenantSiteContext;
 
 beforeEach(function (): void {
     CarbonImmutable::setTestNow('2026-08-02 12:00:00');
@@ -164,6 +167,20 @@ test('submission context normalizes every supported transport source', function 
     $fallback = new FormSubmissionContext(ipAddress: '', request: null);
     expect($fallback->resolvedIpAddress())->toBe('0.0.0.0')
         ->and($fallback->httpRequest())->toBeInstanceOf(Request::class);
+});
+
+test('submission context accepts legacy public site attributes while canonical presence remains authoritative', function (): void {
+    $request = Request::create('https://legacy.forms.test/submit', 'POST');
+    $legacy = new TenantSiteContext(new TenantId('10000000-0000-4000-8000-000000000001'), 'legacy', 'https://legacy.forms.test');
+    $request->attributes->set(TenantSiteAttributes::LegacyKey, $legacy);
+    expect(formSubmissionContext($request)->publicSite)->toBe('legacy');
+
+    $canonical = new TenantSiteContext($legacy->tenantId, 'canonical', 'https://canonical.forms.test');
+    $request->attributes->set(TenantSiteContext::class, $canonical);
+    expect(formSubmissionContext($request)->publicSite)->toBe('canonical');
+
+    $request->attributes->set(TenantSiteContext::class, null);
+    expect(formSubmissionContext($request)->publicSite)->toBeNull();
 });
 
 test('custom submission receipts enforce durable replay and registration claims', function (): void {

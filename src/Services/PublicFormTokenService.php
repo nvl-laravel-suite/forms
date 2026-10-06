@@ -9,9 +9,9 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Str;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
-use Nvl\Tenancy\Contracts\TenantContext;
-use Nvl\Tenancy\Enums\TenantContextMode;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantContext;
+use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Throwable;
 
 /**

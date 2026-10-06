@@ -13,8 +13,8 @@ use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Data\FormsDoctorCheckData;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Tenancy\Contracts\TenantContext;
-use Nvl\Tenancy\Enums\TenantContextMode;
+use Nvl\Support\Tenancy\Contracts\TenantContext;
+use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Throwable;
 
 /**
@@ -48,9 +48,9 @@ final readonly class FormsDoctor
     private function schemaChecks(): array
     {
         $requirements = [
-            FormsTables::Forms => ['id', 'handle', 'revision', 'status'],
-            FormsTables::I18n => ['id', 'form_id', 'locale', 'name', 'content'],
-            FormsTables::Entries => [
+            FormsTables::get(FormsTables::Forms) => ['id', 'handle', 'revision', 'status'],
+            FormsTables::get(FormsTables::I18n) => ['id', 'form_id', 'locale', 'name', 'content'],
+            FormsTables::get(FormsTables::Entries) => [
                 'id',
                 'form_id',
                 'submission_data',
@@ -61,7 +61,7 @@ final readonly class FormsDoctor
                 'redacted_at',
                 'anonymized_at',
             ],
-            FormsTables::SubmissionReceipts => [
+            FormsTables::get(FormsTables::SubmissionReceipts) => [
                 'id',
                 'form_id',
                 'idempotency_key',
@@ -70,9 +70,9 @@ final readonly class FormsDoctor
                 'state',
                 'result_id',
             ],
-            FormsTables::AllowedOrigins => ['id', 'form_id', 'origin', 'is_active'],
-            FormsTables::Analytics => ['id', 'form_id', 'event_type'],
-            FormsTables::RateLimits => ['id', 'form_id', 'ip_address'],
+            FormsTables::get(FormsTables::AllowedOrigins) => ['id', 'form_id', 'origin', 'is_active'],
+            FormsTables::get(FormsTables::Analytics) => ['id', 'form_id', 'event_type'],
+            FormsTables::get(FormsTables::RateLimits) => ['id', 'form_id', 'ip_address'],
         ];
         $checks = [];
 
@@ -141,8 +141,8 @@ final readonly class FormsDoctor
                 }
             }
 
-            if (Schema::hasColumn(FormsTables::Entries, 'spam_score')) {
-                $type = Schema::getColumnType(FormsTables::Entries, 'spam_score', true);
+            if (Schema::hasColumn(FormsTables::get(FormsTables::Entries), 'spam_score')) {
+                $type = Schema::getColumnType(FormsTables::get(FormsTables::Entries), 'spam_score', true);
                 $numeric = str_contains(strtolower($type), 'int');
                 $checks[] = $this->check(
                     'schema.type.form_entries.spam_score',
@@ -273,32 +273,32 @@ final readonly class FormsDoctor
     private function requiredIndexes(string $table): array
     {
         return match ($table) {
-            FormsTables::Forms => [
+            FormsTables::get(FormsTables::Forms) => [
                 ['columns' => ['handle'], 'unique' => true],
                 ['columns' => ['status'], 'unique' => false],
             ],
-            FormsTables::I18n => [
+            FormsTables::get(FormsTables::I18n) => [
                 ['columns' => ['form_id', 'locale'], 'unique' => true],
             ],
-            FormsTables::Entries => [
+            FormsTables::get(FormsTables::Entries) => [
                 ['columns' => ['form_id', 'created_at'], 'unique' => false],
                 ['columns' => ['form_id', 'idempotency_key'], 'unique' => true],
                 ['columns' => ['form_id', 'registration_fingerprint'], 'unique' => true],
             ],
-            FormsTables::SubmissionReceipts => [
+            FormsTables::get(FormsTables::SubmissionReceipts) => [
                 ['columns' => ['form_id', 'idempotency_key'], 'unique' => true],
                 ['columns' => ['form_id', 'registration_fingerprint'], 'unique' => true],
                 ['columns' => ['state', 'updated_at'], 'unique' => false],
             ],
-            FormsTables::AllowedOrigins => [
+            FormsTables::get(FormsTables::AllowedOrigins) => [
                 ['columns' => ['form_id', 'origin'], 'unique' => true],
                 ['columns' => ['form_id', 'is_active'], 'unique' => false],
             ],
-            FormsTables::Analytics => [
+            FormsTables::get(FormsTables::Analytics) => [
                 ['columns' => ['form_id', 'event_type'], 'unique' => false],
                 ['columns' => ['form_id', 'created_at'], 'unique' => false],
             ],
-            FormsTables::RateLimits => [
+            FormsTables::get(FormsTables::RateLimits) => [
                 ['columns' => ['form_id', 'ip_address'], 'unique' => true],
             ],
             default => [],
@@ -311,12 +311,12 @@ final readonly class FormsDoctor
     private function requiredForeignKeys(string $table): array
     {
         return match ($table) {
-            FormsTables::I18n,
-            FormsTables::Entries,
-            FormsTables::SubmissionReceipts,
-            FormsTables::AllowedOrigins,
-            FormsTables::Analytics,
-            FormsTables::RateLimits => [['form_id']],
+            FormsTables::get(FormsTables::I18n),
+            FormsTables::get(FormsTables::Entries),
+            FormsTables::get(FormsTables::SubmissionReceipts),
+            FormsTables::get(FormsTables::AllowedOrigins),
+            FormsTables::get(FormsTables::Analytics),
+            FormsTables::get(FormsTables::RateLimits) => [['form_id']],
             default => [],
         };
     }

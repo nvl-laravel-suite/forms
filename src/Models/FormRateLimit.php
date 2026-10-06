@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Traits\FormRateLimitFilters;
+use Nvl\Support\Config\PackageStorage;
 
 /**
  * FormRateLimit model representing rate limiting data for forms.
@@ -107,5 +108,17 @@ class FormRateLimit extends Model
     public function scopeActiveWindow(Builder $query): void
     {
         $query->where('window_start', '>', now()->subHour());
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::RateLimits);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }

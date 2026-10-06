@@ -6,9 +6,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Support\Config\PackageStorage;
 
 return new class extends Migration
 {
+    /** Use the effective package connection for Laravel's migration transaction. */
+    public function getConnection(): ?string
+    {
+        return PackageStorage::connection('forms');
+    }
+
     /**
      * Run the migrations.
      *
@@ -16,16 +23,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable(FormsTables::RateLimits)) {
-            return;
+        if (Schema::connection(PackageStorage::connection('forms'))->hasTable(FormsTables::get(FormsTables::RateLimits))) {
+            throw new LogicException('Existing package table is not owned by this migration. Run nvl:doctor --strict and use nvl:schema:upgrade for a verified legacy installation.');
         }
 
-        Schema::create(FormsTables::RateLimits, function (Blueprint $table) {
+        Schema::connection(PackageStorage::connection('forms'))->create(FormsTables::get(FormsTables::RateLimits), function (Blueprint $table) {
             $table->uuid('id')->primary();
 
             $table->foreignUuid('form_id')
                 ->comment('Reference to the parent form')
-                ->constrained(FormsTables::Forms)
+                ->constrained(FormsTables::get(FormsTables::Forms))
                 ->onDelete('cascade');
 
             $table->ipAddress('ip_address')
@@ -68,8 +75,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists(FormsTables::RateLimits);
-        Schema::enableForeignKeyConstraints();
+        Schema::connection(PackageStorage::connection('forms'))->disableForeignKeyConstraints();
+        Schema::connection(PackageStorage::connection('forms'))->dropIfExists(FormsTables::get(FormsTables::RateLimits));
+        Schema::connection(PackageStorage::connection('forms'))->enableForeignKeyConstraints();
     }
 };

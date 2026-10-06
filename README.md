@@ -250,3 +250,23 @@ See [UPGRADING.md](UPGRADING.md), [SECURITY.md](SECURITY.md), [CONTRIBUTING.md](
 ## License
 
 Released under the [MIT License](LICENSE).
+
+## Shared consumer diagnostics
+
+Run `php artisan nvl:doctor --strict --format=json` to combine the read-only checks from loaded NVL package providers. Errors fail the gate, and strict mode also fails warnings. This package's existing Doctor command remains available and uses the same package-owned inspection service.
+
+## Next major: isolated schema identities
+
+Use `forms.tables.<logical-key>` for every table and `forms.connection` for its database connection. Null connection inherits `nvl-core.connection`, then Laravel's default. Tables are resolved at runtime by the package table definition helper.
+
+| Logical key | New default | Previous name |
+| --- | --- | --- |
+| `forms` | `nvl_forms_forms` | `forms` |
+| `i18n` | `nvl_forms_i18n` | `forms_i18n` |
+| `entries` | `nvl_forms_entries` | `form_entries` |
+| `submission_receipts` | `nvl_forms_submission_receipts` | `form_submission_receipts` |
+| `allowed_origins` | `nvl_forms_allowed_origins` | `form_allowed_origins` |
+| `analytics` | `nvl_forms_analytics` | `form_analytics` |
+| `rate_limits` | `nvl_forms_rate_limits` | `form_rate_limits` |
+
+Migration filenames contain `nvl_forms_`. Existing installations must complete the upgrade in `UPGRADING.md` before running new migrations. A pending creator rejects an existing target before any migration in the batch runs; legacy storage with old history needs an ownership decision.

@@ -13,6 +13,7 @@ use Nvl\Forms\Builders\FormAnalyticBuilder;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Traits\FormAnalyticFilters;
+use Nvl\Support\Config\PackageStorage;
 
 /**
  * FormAnalytic model representing form analytics events.
@@ -90,5 +91,17 @@ class FormAnalytic extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(Form::class);
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::Analytics);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }

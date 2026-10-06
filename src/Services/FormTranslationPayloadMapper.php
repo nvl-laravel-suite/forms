@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
-use Nvl\Translatable\Services\LocaleRegistry;
+use Nvl\Support\Contracts\LocaleCatalog;
 
 /**
  * Maps localized form payloads into dedicated translation rows.
@@ -12,7 +12,7 @@ use Nvl\Translatable\Services\LocaleRegistry;
 final readonly class FormTranslationPayloadMapper
 {
     public function __construct(
-        private LocaleRegistry $locales,
+        private LocaleCatalog $locales,
     ) {}
 
     /**

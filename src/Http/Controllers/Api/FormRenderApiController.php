@@ -26,7 +26,8 @@ use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Forms\Support\FormsConfiguration;
 use Nvl\Forms\Support\FormSubmissionContext;
 use Nvl\Support\Exceptions\BusinessException;
-use Nvl\Tenancy\ValueObjects\TenantSiteContext;
+use Nvl\Support\Tenancy\Services\TenantSiteAttributes;
+use Nvl\Support\Tenancy\ValueObjects\TenantSiteContext;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 /**
@@ -64,6 +65,7 @@ final class FormRenderApiController extends Controller
 
             $additionalData = $renderDataRegistry->getData($form, $request);
             $additionalTranslations = $renderDataRegistry->getTranslations($form);
+            $tenantSite = TenantSiteAttributes::read($request);
 
             return response()->json(array_merge([
                 'success' => true,
@@ -75,8 +77,8 @@ final class FormRenderApiController extends Controller
                         'forms.public.token_ttl_minutes',
                         15,
                     )),
-                    ($request->attributes->get(TenantSiteContext::class) instanceof TenantSiteContext)
-                        ? $request->attributes->get(TenantSiteContext::class)->site
+                    ($tenantSite instanceof TenantSiteContext)
+                        ? $tenantSite->site
                         : 'default',
                 ),
                 'extension_translations' => $additionalTranslations !== [] ? $additionalTranslations : null,

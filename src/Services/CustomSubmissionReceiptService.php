@@ -11,7 +11,7 @@ use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Support\CustomSubmissionClaim;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Throwable;
 
 /**

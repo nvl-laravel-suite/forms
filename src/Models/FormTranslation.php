@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Support\Config\PackageStorage;
 
 /**
  * Stores locale-specific public copy and arbitrary form content.
@@ -64,5 +65,17 @@ final class FormTranslation extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(Form::class);
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::I18n);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }

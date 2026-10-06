@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\AllowedOriginFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Traits\AllowedOriginFilters;
+use Nvl\Support\Config\PackageStorage;
 
 /**
  * AllowedOrigin model representing CORS-allowed origins for forms.
@@ -111,5 +112,17 @@ class AllowedOrigin extends Model
     {
         $query->whereNotNull('last_used_at')
             ->orderBy('last_used_at', 'desc');
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::AllowedOrigins);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }

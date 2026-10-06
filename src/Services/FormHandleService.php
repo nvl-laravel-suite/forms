@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Exception;
 use Illuminate\Support\Str;
 use Nvl\Forms\Models\Form;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Manages form handle generation and uniqueness validation.

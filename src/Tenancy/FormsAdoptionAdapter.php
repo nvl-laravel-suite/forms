@@ -7,8 +7,8 @@ namespace Nvl\Forms\Tenancy;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Database\Query\Builder;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
 use Nvl\Tenancy\Contracts\TenantAdoptionAdapter;
-use Nvl\Tenancy\Exceptions\TenantBoundaryViolation;
 use Nvl\Tenancy\Services\TenantAdoptionBoundary;
 use Nvl\Tenancy\ValueObjects\TenantAdoptionPlan;
 use Nvl\Tenancy\ValueObjects\TenantBackfillResult;
@@ -41,7 +41,7 @@ final readonly class FormsAdoptionAdapter implements TenantAdoptionAdapter
         $connection->transaction(function () use ($assignments, $connection): void {
             foreach ($assignments as $assignment) {
                 $ownership = $this->adoption->ownership($assignment, 'forms.forms');
-                $connection->table(FormsTables::Forms)->where('id', $assignment->recordId)->update($ownership);
+                $connection->table(FormsTables::get(FormsTables::Forms))->where('id', $assignment->recordId)->update($ownership);
                 foreach ($this->childTables() as $table) {
                     $connection->table($table)->where('form_id', $assignment->recordId)->update(['tenant_id' => $ownership['tenant_id']]);
                 }
@@ -60,12 +60,12 @@ final readonly class FormsAdoptionAdapter implements TenantAdoptionAdapter
     {
         $connection = $this->adoption->connection($plan, 'forms.forms');
         $errors = [];
-        if ($connection->table(FormsTables::Forms)->whereNull('tenant_id')->exists()) {
+        if ($connection->table(FormsTables::get(FormsTables::Forms))->whereNull('tenant_id')->exists()) {
             $errors[] = 'forms.forms.unassigned';
         }
         foreach ($this->childTables() as $table) {
             if ($connection->table($table.' as child')
-                ->join(FormsTables::Forms.' as parent', 'parent.id', '=', 'child.form_id')
+                ->join(FormsTables::get(FormsTables::Forms).' as parent', 'parent.id', '=', 'child.form_id')
                 ->where(function (Builder $query): void {
                     $query->whereNull('child.tenant_id')->orWhereColumn('child.tenant_id', '!=', 'parent.tenant_id');
                 })->exists()) {
@@ -87,6 +87,6 @@ final readonly class FormsAdoptionAdapter implements TenantAdoptionAdapter
     /** @return list<string> */
     private function childTables(): array
     {
-        return [FormsTables::Entries, FormsTables::SubmissionReceipts, FormsTables::AllowedOrigins, FormsTables::Analytics, FormsTables::RateLimits, FormsTables::I18n];
+        return [FormsTables::get(FormsTables::Entries), FormsTables::get(FormsTables::SubmissionReceipts), FormsTables::get(FormsTables::AllowedOrigins), FormsTables::get(FormsTables::Analytics), FormsTables::get(FormsTables::RateLimits), FormsTables::get(FormsTables::I18n)];
     }
 }

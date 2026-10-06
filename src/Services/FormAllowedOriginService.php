@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Support\AllowedOriginExpression;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Manages allowed origin normalization, creation, and synchronization for forms.

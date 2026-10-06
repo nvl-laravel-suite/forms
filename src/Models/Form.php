@@ -20,6 +20,7 @@ use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
 use Nvl\Forms\Traits\FormFilters;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Translatable\Contracts\TranslatableModel;
 use Nvl\Translatable\Enums\TranslationMutationPolicy;
 use Nvl\Translatable\RelatedTranslationDefinition;
@@ -393,5 +394,17 @@ class Form extends Model implements TranslatableModel
     public function scopeWithSubmissions(Builder $query): void
     {
         $query->where('submissions_count', '>', 0);
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::Forms);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }

@@ -13,6 +13,7 @@ use Nvl\Forms\Contracts\FormRenderDataProvider;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\Resolvement;
+use Nvl\Forms\Http\Controllers\Api\FormRenderApiController;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
@@ -23,6 +24,9 @@ use Nvl\Forms\Support\FormErrorMapperRegistry;
 use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Support\Exceptions\BusinessException;
+use Nvl\Support\Tenancy\Services\TenantSiteAttributes;
+use Nvl\Support\Tenancy\ValueObjects\TenantId;
+use Nvl\Support\Tenancy\ValueObjects\TenantSiteContext;
 
 test('render endpoint returns form payload with csrf token', function (): void {
     $form = Form::factory()->create([
@@ -44,6 +48,20 @@ test('render endpoint returns form payload with csrf token', function (): void {
     expect($response->json('csrf_token'))->toBeString()->not->toBe('');
     expect($response->json('public_token'))->toBeString()->not->toBe('');
 });
+
+test('public render tokens retain the selected canonical or legacy site attribute', function (string $attributeKey): void {
+    $form = Form::factory()->create(['restrict_public_access' => false, 'status' => FormStatus::ACTIVE]);
+    $request = Request::create('https://forms.test/render');
+    $request->attributes->set($attributeKey, new TenantSiteContext(new TenantId('10000000-0000-4000-8000-000000000001'), 'verified', 'https://forms.test'));
+    $response = app()->call([app(FormRenderApiController::class), 'show'], ['request' => $request, 'formIdentifier' => $form->id]);
+    $token = $response->getData(true)['public_token'] ?? null;
+    expect($token)->toBeString();
+    $payload = json_decode(base64_decode(strtr(explode('.', $token, 2)[0], '-_', '+/')), true, flags: JSON_THROW_ON_ERROR);
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and(app(PublicFormTokenService::class)->validate($token, $form, 'verified'))->toBeTrue()
+        ->and($payload['site'] ?? null)->toBe('verified');
+})->with([TenantSiteContext::class, TenantSiteAttributes::LegacyKey]);
 
 test('public endpoints resolve handles and apply the requested content locale', function (): void {
     config([

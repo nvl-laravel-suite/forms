@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\AllowedOrigin;
 
 use Nvl\Forms\Models\AllowedOrigin;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Records usage metadata for an allowed-origin rule.

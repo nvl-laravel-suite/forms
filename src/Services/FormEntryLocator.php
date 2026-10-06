@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /** Reloads a submitted entry beneath its canonical tenant-owned Form. */
 final readonly class FormEntryLocator

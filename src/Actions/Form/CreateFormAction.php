@@ -14,7 +14,7 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormAllowedOriginService;
 use Nvl\Forms\Services\FormHandleService;
 use Nvl\Forms\Services\FormTranslationPayloadMapper;
-use Nvl\Tenancy\Services\TenantBoundary;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Translatable\Services\TranslationWriter;
 use Spatie\LaravelData\Optional;
 use Throwable;

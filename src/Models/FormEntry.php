@@ -15,6 +15,7 @@ use Nvl\Forms\Builders\FormEntryBuilder;
 use Nvl\Forms\Database\Factories\FormEntryFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Traits\FormEntryFilters;
+use Nvl\Support\Config\PackageStorage;
 
 /**
  * FormEntry model representing a submission to a form.
@@ -214,5 +215,17 @@ class FormEntry extends Model
         $flags = $this->security_flags ?? [];
         $flags[$key] = $value;
         $this->security_flags = $flags;
+    }
+
+    /** Resolve the configured package storage table. */
+    public function getTable(): string
+    {
+        return FormsTables::get(FormsTables::Entries);
+    }
+
+    /** Resolve the package connection through shared infrastructure defaults. */
+    public function getConnectionName(): ?string
+    {
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
     }
 }
