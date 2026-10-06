@@ -9,6 +9,8 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Records usage metadata for an allowed-origin rule.
+ *
+ * @internal
  */
 final class RecordAllowedOriginUsageAction
 {

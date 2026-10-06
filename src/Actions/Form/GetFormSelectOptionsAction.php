@@ -10,7 +10,11 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Data\FormSelectOptionItem;
 use Nvl\Forms\Models\Form;
 
-/** Retrieves form select options for dropdown/select components. */
+/**
+ * Retrieves form select options for dropdown/select components.
+ *
+ * @api
+ */
 final class GetFormSelectOptionsAction
 {
     /**

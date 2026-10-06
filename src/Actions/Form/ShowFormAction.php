@@ -14,6 +14,8 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
  *
  * Delegation to RecordFormViewAction is deliberate domain orchestration that
  * keeps the opt-in view side effect on the canonical display path.
+ *
+ * @api
  */
 final class ShowFormAction
 {

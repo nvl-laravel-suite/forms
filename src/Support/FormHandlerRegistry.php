@@ -9,6 +9,8 @@ use Nvl\Forms\Exceptions\FormException;
 
 /**
  * Registry for mapping form handles to custom submission handlers.
+ *
+ * @api
  */
 final class FormHandlerRegistry
 {

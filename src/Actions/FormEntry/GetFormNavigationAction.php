@@ -11,6 +11,8 @@ use Nvl\Forms\Models\Form;
  * Generates form navigation tabs for the entries interface.
  * This action handles the business logic for creating
  * contextual navigation between form sections.
+ *
+ * @internal
  */
 final class GetFormNavigationAction
 {

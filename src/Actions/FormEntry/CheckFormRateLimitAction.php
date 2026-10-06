@@ -10,6 +10,8 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 /**
  * Checks if a submission is rate limited and throws when exceeded.
+ *
+ * @internal
  */
 final class CheckFormRateLimitAction
 {

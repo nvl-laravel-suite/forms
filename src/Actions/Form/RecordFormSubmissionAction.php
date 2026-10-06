@@ -14,6 +14,8 @@ use Throwable;
  *
  * Delegation to RecordFormAnalyticAction is deliberate domain orchestration so
  * both write paths share one transaction and one canonical analytics contract.
+ *
+ * @internal
  */
 final class RecordFormSubmissionAction
 {

@@ -11,6 +11,8 @@ use Nvl\Forms\Support\FormSubmissionContext;
 
 /**
  * Combines validated public input with trusted request metadata for persistence.
+ *
+ * @internal
  */
 final class PrepareFormSubmissionDataAction
 {

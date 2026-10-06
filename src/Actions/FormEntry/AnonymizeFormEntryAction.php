@@ -12,6 +12,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Irreversibly removes all submitter-identifying data from an entry.
+ *
+ * @api
  */
 final readonly class AnonymizeFormEntryAction
 {

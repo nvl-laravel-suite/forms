@@ -10,6 +10,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Validates that a form entry belongs to the specified form.
+ *
+ * @internal
  */
 final class ValidateFormEntryOwnershipAction
 {

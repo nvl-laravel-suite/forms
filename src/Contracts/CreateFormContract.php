@@ -8,6 +8,11 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Nvl\Forms\Data\Mutations\MutateFormPayload;
 use Nvl\Forms\Models\Form;
 
+/**
+ * Create a form through the validated public mutation workflow.
+ *
+ * @api
+ */
 interface CreateFormContract
 {
     /**

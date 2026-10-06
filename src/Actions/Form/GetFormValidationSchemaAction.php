@@ -14,6 +14,8 @@ use Stringable;
 
 /**
  * Builds JSON-safe client validation metadata for the submission envelope.
+ *
+ * @api
  */
 final class GetFormValidationSchemaAction
 {

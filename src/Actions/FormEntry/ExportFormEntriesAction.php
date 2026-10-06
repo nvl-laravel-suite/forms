@@ -25,6 +25,8 @@ use Nvl\Forms\Services\FormEntryExportService;
  * and activity logging.
  *
  * @see FormEntryExportService
+ *
+ * @api
  */
 final class ExportFormEntriesAction
 {

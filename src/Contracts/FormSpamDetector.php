@@ -12,6 +12,8 @@ use Nvl\Forms\Models\FormRateLimit;
  *
  * Provides honeypot validation, multi-factor spam scoring, and
  * threshold-based blocking/flagging decisions.
+ *
+ * @api
  */
 interface FormSpamDetector
 {

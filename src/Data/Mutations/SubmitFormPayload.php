@@ -18,6 +18,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Write-only mutation DTO for public form submission payloads.
+ *
+ * @api
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]

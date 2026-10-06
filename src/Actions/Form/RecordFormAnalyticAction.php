@@ -12,6 +12,8 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Records a forms analytics event.
+ *
+ * @internal
  */
 final class RecordFormAnalyticAction
 {

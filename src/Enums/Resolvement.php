@@ -6,6 +6,8 @@ namespace Nvl\Forms\Enums;
 
 /**
  * Form submission resolution strategy options.
+ *
+ * @api
  */
 enum Resolvement: string
 {

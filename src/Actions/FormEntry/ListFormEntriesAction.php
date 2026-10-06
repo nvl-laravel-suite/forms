@@ -13,6 +13,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Lists form entries with filtering and pagination.
+ *
+ * @api
  */
 final class ListFormEntriesAction
 {

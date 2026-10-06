@@ -33,6 +33,8 @@ use Throwable;
  * The approved action composition keeps protection, custom-handler guards,
  * entry persistence, analytics, callbacks, and durable receipts behind one
  * transport-neutral use-case boundary.
+ *
+ * @api
  */
 final class HandlePublicFormSubmissionAction
 {

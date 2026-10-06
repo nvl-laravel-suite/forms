@@ -12,6 +12,8 @@ use Nvl\Forms\Models\Form;
  * Retrieves form suggestions for autocomplete functionality.
  * This action handles form search and suggestion logic with proper
  * ranking and ordering for optimal user experience.
+ *
+ * @api
  */
 final class GetFormSuggestionsAction
 {

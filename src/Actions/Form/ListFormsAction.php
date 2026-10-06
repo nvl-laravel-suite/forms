@@ -10,7 +10,11 @@ use Nvl\Filterable\Data\FilterSet;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 
-/** Lists forms with filtering and pagination. */
+/**
+ * Lists forms with filtering and pagination.
+ *
+ * @api
+ */
 final class ListFormsAction
 {
     /**

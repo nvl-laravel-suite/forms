@@ -13,6 +13,8 @@ use Throwable;
 
 /**
  * Adds or updates a single security flag on a form entry.
+ *
+ * @internal
  */
 final class AddFormEntrySecurityFlagAction
 {

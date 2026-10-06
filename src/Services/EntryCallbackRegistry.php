@@ -16,6 +16,8 @@ use Throwable;
 
 /**
  * Registry for dispatching configured form entry callbacks.
+ *
+ * @api
  */
 final class EntryCallbackRegistry
 {
@@ -73,6 +75,8 @@ final class EntryCallbackRegistry
      * @param  Form  $form  Form model instance
      * @param  FormEntry  $entry  Persisted entry model instance
      * @param  Request  $request  HTTP request instance
+     *
+     * @internal
      */
     public function dispatch(Form $form, FormEntry $entry, Request $request): void
     {
@@ -103,7 +107,11 @@ final class EntryCallbackRegistry
         $this->tenantCallbacks[$handle] = $callbacks;
     }
 
-    /** Resolve every callback freshly after tenant context is restored. */
+    /**
+     * Resolve every callback freshly after tenant context is restored.
+     *
+     * @internal
+     */
     public function dispatchTenant(Form $form, FormEntry $entry, FormSubmissionCallbackContext $context): void
     {
         foreach ($this->tenantCallbacks[$form->handle] ?? [] as $callbackClass) {

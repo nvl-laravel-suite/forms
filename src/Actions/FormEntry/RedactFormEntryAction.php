@@ -13,6 +13,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Redacts selected personal-data fields without deleting the entry.
+ *
+ * @api
  */
 final readonly class RedactFormEntryAction
 {

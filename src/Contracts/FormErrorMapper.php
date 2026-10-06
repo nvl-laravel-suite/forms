@@ -13,6 +13,8 @@ use Nvl\Support\Exceptions\BusinessException;
  * Modules can implement this interface to provide custom error mapping
  * for specific form handles without requiring the Forms module to know
  * about external module exceptions.
+ *
+ * @api
  */
 interface FormErrorMapper
 {

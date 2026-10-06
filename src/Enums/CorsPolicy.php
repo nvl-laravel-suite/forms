@@ -6,6 +6,8 @@ namespace Nvl\Forms\Enums;
 
 /**
  * Enum for CORS policy configurations.
+ *
+ * @api
  */
 enum CorsPolicy: string
 {

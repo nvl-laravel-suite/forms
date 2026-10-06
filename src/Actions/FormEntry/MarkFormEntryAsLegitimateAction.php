@@ -13,6 +13,8 @@ use Throwable;
 
 /**
  * Marks a form entry as legitimate and updates aggregate counters.
+ *
+ * @api
  */
 final class MarkFormEntryAsLegitimateAction
 {

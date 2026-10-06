@@ -14,6 +14,8 @@ use Nvl\Forms\Services\FormShowStateResolver;
  *
  * The action composition preserves one display-loading and optional
  * view-recording path before transport-safe state is derived.
+ *
+ * @internal
  */
 final class BuildFormShowPayloadAction
 {

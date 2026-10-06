@@ -8,6 +8,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Retrieves a form entry with full details for display.
+ *
+ * @api
  */
 final class ShowFormEntryAction
 {

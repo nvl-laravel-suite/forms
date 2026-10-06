@@ -14,6 +14,8 @@ use Nvl\Forms\Results\FormRateLimitAttemptResult;
  *
  * Handles per-IP submission tracking, blocking, unblocking, and status queries.
  * Spam detection and statistics are handled by dedicated contracts/services.
+ *
+ * @api
  */
 interface FormRateLimiter
 {

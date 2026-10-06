@@ -12,6 +12,8 @@ use Nvl\Forms\Models\Form;
  *
  * Modules can implement this interface to inject custom data into form pages
  * without requiring Forms to know about external application packages.
+ *
+ * @api
  */
 interface FormRenderDataProvider
 {

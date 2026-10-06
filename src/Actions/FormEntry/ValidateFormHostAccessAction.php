@@ -10,6 +10,8 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Validates host access restrictions for a form submission.
+ *
+ * @internal
  */
 final class ValidateFormHostAccessAction
 {

@@ -11,7 +11,11 @@ use Nvl\Forms\Events\FormChangedEvent;
 use Nvl\Forms\Models\Form;
 use Throwable;
 
-/** Deletes a form and its associated data. */
+/**
+ * Deletes a form and its associated data.
+ *
+ * @api
+ */
 final class DeleteFormAction
 {
     /**

@@ -13,6 +13,8 @@ use Nvl\Support\Tenancy\ValueObjects\TenantSiteContext;
 
 /**
  * FormSubmissionContext carries request-derived submission metadata for action calls.
+ *
+ * @api
  */
 final readonly class FormSubmissionContext
 {
@@ -50,6 +52,8 @@ final readonly class FormSubmissionContext
 
     /**
      * Build submission context from an HTTP request.
+     *
+     * @internal
      */
     public static function fromRequest(Request $request, RequestOriginResolver $originResolver): self
     {

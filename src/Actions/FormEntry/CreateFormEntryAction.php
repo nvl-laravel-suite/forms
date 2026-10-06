@@ -31,6 +31,8 @@ use Throwable;
  * @see CheckFormRateLimitAction
  * @see DetectFormSubmissionSpamAction
  * @see PersistFormEntryAction
+ *
+ * @api
  */
 final class CreateFormEntryAction implements CreateFormEntryContract
 {

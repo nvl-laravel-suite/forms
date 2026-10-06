@@ -16,6 +16,8 @@ use Nvl\Support\Exceptions\BusinessException;
  *
  * Allows modules to register mappers that convert business exceptions
  * to form field errors based on form handle.
+ *
+ * @api
  */
 final class FormErrorMapperRegistry
 {

@@ -15,6 +15,8 @@ use Throwable;
 
 /**
  * Deletes a form entry with comprehensive business logic.
+ *
+ * @api
  */
 final class DeleteFormEntryAction
 {

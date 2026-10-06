@@ -9,6 +9,8 @@ use Nvl\Forms\Models\Form;
 
 /**
  * Value object describing a successful public form submission.
+ *
+ * @api
  */
 final readonly class FormSubmissionResult
 {

@@ -9,6 +9,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Authorizes privacy and retention operations on stored form entries.
+ *
+ * @api
  */
 interface FormEntryPrivacyPolicy
 {

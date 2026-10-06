@@ -60,6 +60,8 @@ use Nvl\Translatable\Translatable;
  * @property-read Collection<int, AllowedOrigin> $allowedOrigins
  * @property-read Collection<int, FormAnalytic> $analytics
  * @property-read Collection<int, FormRateLimit> $rateLimits
+ *
+ * @api
  */
 class Form extends Model implements TranslatableModel
 {

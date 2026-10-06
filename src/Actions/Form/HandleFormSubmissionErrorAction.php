@@ -11,6 +11,8 @@ use Illuminate\Contracts\Foundation\Application;
  * Handles form submission error messages and formatting.
  * This action centralizes the complex error message logic
  * for form submission failures.
+ *
+ * @internal
  */
 final readonly class HandleFormSubmissionErrorAction
 {

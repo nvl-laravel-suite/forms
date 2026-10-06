@@ -16,6 +16,8 @@ use Nvl\Forms\Models\FormRateLimit;
  * @property int $submissionCount Current submission count in the active window
  * @property int $violationCount Current violation count for the IP/form pair
  * @property FormRateLimit|null $rateLimit Locked rate-limit row when rate limiting is enabled
+ *
+ * @api
  */
 final readonly class FormRateLimitAttemptResult
 {
@@ -32,6 +34,8 @@ final readonly class FormRateLimitAttemptResult
      * Build an allowed result from the current rate-limit row.
      *
      * @param  FormRateLimit|null  $rateLimit  Locked rate-limit row, null when disabled
+     *
+     * @internal
      */
     public static function allowed(?FormRateLimit $rateLimit): self
     {
@@ -50,6 +54,8 @@ final readonly class FormRateLimitAttemptResult
      *
      * @param  FormRateLimit  $rateLimit  Locked rate-limit row
      * @param  int  $retryAfterSeconds  Seconds until the block expires
+     *
+     * @internal
      */
     public static function denied(FormRateLimit $rateLimit, int $retryAfterSeconds): self
     {

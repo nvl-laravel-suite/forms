@@ -27,6 +27,8 @@ use Throwable;
  *
  * @see FormHandleService
  * @see FormAllowedOriginService
+ *
+ * @api
  */
 final class CreateFormAction implements CreateFormContract
 {

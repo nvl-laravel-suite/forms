@@ -32,6 +32,8 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
  * @see ValidateFormHostAccessAction
  * @see CheckFormRateLimitAction
  * @see DetectFormSubmissionSpamAction
+ *
+ * @internal
  */
 final class GuardCustomFormSubmissionAction
 {

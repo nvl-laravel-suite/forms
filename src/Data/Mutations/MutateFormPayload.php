@@ -29,6 +29,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Write-only mutation DTO for form create and update operations.
+ *
+ * @api
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]

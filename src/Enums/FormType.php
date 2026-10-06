@@ -6,6 +6,8 @@ namespace Nvl\Forms\Enums;
 
 /**
  * Form rendering mode options.
+ *
+ * @api
  */
 enum FormType: string
 {

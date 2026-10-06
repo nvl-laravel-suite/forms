@@ -13,6 +13,8 @@ use Throwable;
 
 /**
  * Marks a form entry as spam and updates aggregate counters.
+ *
+ * @api
  */
 final class MarkFormEntryAsSpamAction
 {

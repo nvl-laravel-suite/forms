@@ -9,6 +9,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Application-owned entry deletion and legal-hold policy.
+ *
+ * @api
  */
 interface FormEntryDeletionPolicy
 {

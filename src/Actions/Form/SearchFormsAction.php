@@ -8,7 +8,11 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Results\FormSearchResult;
 
-/** Searches forms with filtering and lightweight aggregation. */
+/**
+ * Searches forms with filtering and lightweight aggregation.
+ *
+ * @api
+ */
 final class SearchFormsAction
 {
     /**

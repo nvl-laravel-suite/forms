@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
+/**
+ * Host callback for a committed legacy form entry submission.
+ *
+ * @api
+ */
 interface EntrySubmissionCallback
 {
     /**

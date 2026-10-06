@@ -16,6 +16,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Validated CORS behavior for a form or allowed-origin override.
+ *
+ * @api
  */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]

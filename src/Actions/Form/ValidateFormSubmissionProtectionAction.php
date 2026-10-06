@@ -11,6 +11,8 @@ use Nvl\Forms\Support\FormSubmissionContext;
 
 /**
  * Validates anti-forgery protection for public form submissions.
+ *
+ * @internal
  */
 final class ValidateFormSubmissionProtectionAction
 {

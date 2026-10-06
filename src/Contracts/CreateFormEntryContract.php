@@ -8,6 +8,11 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Nvl\Forms\Data\FormEntryPayload;
 use Nvl\Forms\Models\FormEntry;
 
+/**
+ * Create a form entry through the security-checked submission workflow.
+ *
+ * @api
+ */
 interface CreateFormEntryContract
 {
     /**

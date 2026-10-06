@@ -23,6 +23,8 @@ use Throwable;
  * allowed origins with fresh usage counters.
  *
  * @see FormHandleService
+ *
+ * @api
  */
 final class DuplicateFormAction
 {

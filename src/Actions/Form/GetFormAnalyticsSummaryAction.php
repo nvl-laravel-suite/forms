@@ -11,6 +11,8 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Provides aggregated analytics metrics for a form.
+ *
+ * @api
  */
 final class GetFormAnalyticsSummaryAction
 {

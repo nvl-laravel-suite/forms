@@ -12,6 +12,8 @@ use Nvl\Forms\Services\FormEntryExportService;
  *
  * Delegates segment normalization and timestamp format to the export service so
  * all entry export paths share the same filename contract.
+ *
+ * @internal
  */
 final class GenerateExportFilenameAction
 {

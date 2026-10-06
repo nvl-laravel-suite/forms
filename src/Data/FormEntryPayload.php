@@ -23,6 +23,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  * Read-only transfer object for form entry display and listing.
  *
  * For entry creation mutations, use MutateFormEntryPayload instead.
+ *
+ * @api
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
@@ -203,6 +205,8 @@ class FormEntryPayload extends Data
      *
      * @param  FormEntry  $formEntry  The form entry model instance
      * @return self The form entry data instance
+     *
+     * @internal
      */
     public static function fromModel(FormEntry $formEntry): self
     {

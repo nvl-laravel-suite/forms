@@ -6,6 +6,8 @@ namespace Nvl\Forms\Enums;
 
 /**
  * Enum for form status values.
+ *
+ * @api
  */
 enum FormStatus: string
 {

@@ -18,6 +18,8 @@ use Spatie\LaravelData\Optional;
  * Returns a structured result with spam/flag decisions and detected signals.
  *
  * @see FormSpamDetectionService
+ *
+ * @internal
  */
 final class DetectFormSubmissionSpamAction
 {

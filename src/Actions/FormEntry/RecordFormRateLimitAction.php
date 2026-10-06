@@ -10,6 +10,8 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Records a submission attempt for rate limit tracking.
+ *
+ * @internal
  */
 final class RecordFormRateLimitAction
 {

@@ -10,6 +10,8 @@ use Nvl\Translatable\Services\ContentLocale;
 
 /**
  * Builds the public-safe localized contract used by form render consumers.
+ *
+ * @internal
  */
 final class TransformFormDataForRenderAction
 {

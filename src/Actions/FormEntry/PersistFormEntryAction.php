@@ -19,6 +19,8 @@ use Throwable;
  *
  * Delegation to RecordFormSubmissionAction is deliberate domain orchestration
  * so a legitimate entry and its bookkeeping commit atomically.
+ *
+ * @internal
  */
 final class PersistFormEntryAction
 {

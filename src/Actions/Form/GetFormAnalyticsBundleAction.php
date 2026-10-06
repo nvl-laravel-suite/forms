@@ -12,6 +12,8 @@ use Nvl\Forms\Models\FormEntry;
  *
  * The approved action composition keeps display loading and metric calculation
  * consistent for every analytics surface.
+ *
+ * @api
  */
 final class GetFormAnalyticsBundleAction
 {

@@ -11,6 +11,8 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
 /**
  * Resolves a public form by model, UUID, or handle with render relations loaded.
+ *
+ * @api
  */
 final class GetFormForRenderAction
 {

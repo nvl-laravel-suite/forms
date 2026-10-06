@@ -11,6 +11,8 @@ use Nvl\Forms\Models\Form;
  * Value object bundling paginated form search data with total matches.
  *
  * @property-read Collection<int, Form> $forms
+ *
+ * @api
  */
 final readonly class FormSearchResult
 {

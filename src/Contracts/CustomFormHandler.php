@@ -9,6 +9,8 @@ use Nvl\Forms\Models\Form;
 
 /**
  * Contract for custom form submission handlers.
+ *
+ * @api
  */
 interface CustomFormHandler
 {

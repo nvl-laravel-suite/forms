@@ -8,7 +8,11 @@ use Nvl\Forms\Data\FormSubmissionCallbackContext;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
-/** Handles a committed tenant submission using scalar request context only. */
+/**
+ * Handles a committed tenant submission using scalar request context only.
+ *
+ * @api
+ */
 interface TenantEntrySubmissionCallback
 {
     /** Process one canonically reloaded form entry after commit. */

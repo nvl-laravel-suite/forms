@@ -16,6 +16,8 @@ use Nvl\Forms\Models\Form;
  *
  * Allows modules to register providers that inject additional data into
  * form render pages based on form handle.
+ *
+ * @api
  */
 final class FormRenderDataRegistry
 {

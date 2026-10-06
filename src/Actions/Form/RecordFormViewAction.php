@@ -16,6 +16,8 @@ use Throwable;
  *
  * The approved action composition keeps the three related bookkeeping writes
  * within one transaction.
+ *
+ * @internal
  */
 final class RecordFormViewAction
 {
