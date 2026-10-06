@@ -191,7 +191,7 @@ class FormRateLimitPayload extends Data
      */
     public static function messages(): array
     {
-        return self::translatedMessages('forms::forms');
+        return self::translatedMessages('nvl-forms::forms');
     }
 
     /**
@@ -201,6 +201,6 @@ class FormRateLimitPayload extends Data
      */
     public static function attributes(): array
     {
-        return self::translatedAttributes('forms::forms');
+        return self::translatedAttributes('nvl-forms::forms');
     }
 }

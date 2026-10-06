@@ -36,7 +36,7 @@ test('guard custom form submission allows clean submission', function (): void {
 });
 
 test('guard custom form submission blocks honeypot trigger', function (): void {
-    config(['forms.security.spam_protection.honeypot.field_names' => ['website']]);
+    config(['nvl-forms.security.spam_protection.honeypot.field_names' => ['website']]);
 
     $form = Form::factory()->create([
         'enable_honeypot' => true,

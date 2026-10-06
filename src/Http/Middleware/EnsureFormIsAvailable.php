@@ -32,7 +32,7 @@ final class EnsureFormIsAvailable
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $form = $request->attributes->get('forms.resolved_form');
+        $form = $request->attributes->get('nvl-forms.resolved_form');
 
         if (! $form instanceof Form) {
             $route = $request->route();
@@ -46,11 +46,11 @@ final class EnsureFormIsAvailable
 
             try {
                 $form = $this->getForm->execute($identifier);
-                $request->attributes->set('forms.resolved_form', $form);
+                $request->attributes->set('nvl-forms.resolved_form', $form);
             } catch (ModelNotFoundException) {
                 return response()->json([
                     'success' => false,
-                    'error' => trans('forms::forms/messages.api.form_not_found'),
+                    'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
                 ], 404);
             }
         }
@@ -63,12 +63,12 @@ final class EnsureFormIsAvailable
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
-                    'error' => trans('forms::forms/messages.api.form_unavailable'),
+                    'error' => trans('nvl-forms::forms/messages.api.form_unavailable'),
                 ], 403);
             }
 
             return redirect()->back()->withErrors([
-                'error' => (string) trans('forms::forms/messages.api.form_unavailable'),
+                'error' => (string) trans('nvl-forms::forms/messages.api.form_unavailable'),
             ]);
         }
 

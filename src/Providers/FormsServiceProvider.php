@@ -37,9 +37,11 @@ use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Forms\Tenancy\FormsResourceRegistrar;
 use Nvl\Support\Doctor\PackageDoctorContributor;
+use Nvl\Support\Globals\GlobalNames;
 use Nvl\Support\Providers\TenantServiceProvider;
 use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Support\Traits\MergesPackageConfiguration;
+use Nvl\Support\Traits\RegistersNamespacedResources;
 use Nvl\Tenancy\Services\TenantAdoptionRegistry;
 use Nvl\Translatable\Services\TranslationResourceRegistry;
 
@@ -49,6 +51,7 @@ use Nvl\Translatable\Services\TranslationResourceRegistry;
 final class FormsServiceProvider extends ServiceProvider
 {
     use MergesPackageConfiguration;
+    use RegistersNamespacedResources;
 
     protected string $name = 'Forms';
 
@@ -81,7 +84,7 @@ final class FormsServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerMiddleware();
         $this->registerRegistries();
-        if ((bool) config('forms.migrations.enabled', true)) {
+        if ((bool) config('nvl-forms.migrations.enabled', true)) {
             $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         }
 
@@ -103,7 +106,7 @@ final class FormsServiceProvider extends ServiceProvider
         PackageDoctorContributor::register($this->app, 'nvl/forms', fn (): array => $this->app->make(FormsDoctor::class)->inspect());
 
         $this->app->register(TenantServiceProvider::class);
-        $this->mergePackageConfiguration(__DIR__.'/../../config/forms.php', 'forms');
+        $this->mergePackageConfiguration(__DIR__.'/../../config/nvl-forms.php', 'forms');
         (new FormsResourceRegistrar)->register($this->app->make(TenantResourceRegistry::class));
         $this->app->booted(function (): void {
             if ($this->app->bound(TenantAdoptionRegistry::class)) {
@@ -150,10 +153,21 @@ final class FormsServiceProvider extends ServiceProvider
      */
     protected function registerMiddleware(): void
     {
+        if (config('nvl-forms.routes.public.enabled', false) !== true) {
+            return;
+        }
         $router = $this->app->make(Router::class);
-        $router->aliasMiddleware('validate-form-host', ValidateFormHost::class);
-        $router->aliasMiddleware('forms-locale', FormsLocaleMiddleware::class);
-        $router->aliasMiddleware('form-available', EnsureFormIsAvailable::class);
+        $names = $this->app->make(GlobalNames::class);
+        foreach (['validate-form-host' => ['nvl.forms.validate-host', ValidateFormHost::class],
+            'forms-locale' => ['nvl.forms.locale', FormsLocaleMiddleware::class],
+            'form-available' => ['nvl.forms.available', EnsureFormIsAvailable::class]] as $legacy => [$canonical, $middleware]) {
+            $exists = static fn (string $name): bool => array_key_exists($name, $router->getMiddleware());
+            $install = static function (string $name) use ($router, $middleware): void {
+                $router->aliasMiddleware($name, $middleware);
+            };
+            $names->reserve('forms', 'middleware', $canonical, $exists, $install);
+            $names->register('forms', 'middleware', $legacy, $canonical, $exists, $install);
+        }
     }
 
     /**
@@ -174,11 +188,10 @@ final class FormsServiceProvider extends ServiceProvider
     {
         $langPath = __DIR__.'/../../lang';
 
-        $this->loadTranslationsFrom($langPath, $this->nameLower);
-        $this->loadJsonTranslationsFrom($langPath);
+        $this->app->make(GlobalNames::class)->translations('forms', $langPath, $this->app->make('translation.loader'));
 
         $this->publishes([
-            $langPath => lang_path('vendor/'.$this->nameLower),
+            $langPath => lang_path('vendor/nvl-'.$this->nameLower),
         ], 'forms-translations');
     }
 
@@ -188,7 +201,7 @@ final class FormsServiceProvider extends ServiceProvider
     protected function registerConfig(): void
     {
         $this->publishes([
-            __DIR__.'/../../config/forms.php' => config_path('forms.php'),
+            __DIR__.'/../../config/nvl-forms.php' => config_path('nvl-forms.php'),
         ], 'forms-config');
     }
 

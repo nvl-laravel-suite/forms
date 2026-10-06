@@ -40,7 +40,7 @@ final class CheckFormRateLimitAction
         if (! $attempt->allowed) {
             throw new TooManyRequestsHttpException(
                 max(1, $attempt->retryAfterSeconds),
-                (string) trans('forms::forms/shared.messages.error.rate_limit_exceeded'),
+                (string) trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
             );
         }
     }

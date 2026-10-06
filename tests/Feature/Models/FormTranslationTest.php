@@ -17,8 +17,8 @@ use Nvl\Translatable\Services\ContentLocale;
 
 beforeEach(function (): void {
     config([
-        'translatable.locales' => ['en', 'bg', 'fr'],
-        'translatable.fallback_locales' => ['en'],
+        'nvl-translatable.locales' => ['en', 'bg', 'fr'],
+        'nvl-translatable.fallback_locales' => ['en'],
         'app.fallback_locale' => 'en',
     ]);
 });

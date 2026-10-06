@@ -29,7 +29,7 @@ final class FormRegistrationFingerprint
         }
 
         throw new FormSubmissionRejectionException(
-            message: (string) trans('forms::forms/messages.error.registration_identity_required'),
+            message: (string) trans('nvl-forms::forms/messages.error.registration_identity_required'),
             statusCode: 422,
         );
     }

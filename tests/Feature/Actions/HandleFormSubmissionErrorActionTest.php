@@ -9,7 +9,7 @@ test('handle form submission error action maps host errors', function (): void {
 
     $message = $action->execute(new Exception('Submission not allowed from this host'));
 
-    expect($message)->toBe(trans('forms::forms/messages.error.host_not_allowed'));
+    expect($message)->toBe(trans('nvl-forms::forms/messages.error.host_not_allowed'));
 });
 
 test('handle form submission error action falls back to generic message', function (): void {
@@ -17,5 +17,5 @@ test('handle form submission error action falls back to generic message', functi
 
     $message = $action->execute(new Exception('Unexpected failure'));
 
-    expect($message)->toBe(trans('forms::forms/messages.error.submission_failed'));
+    expect($message)->toBe(trans('nvl-forms::forms/messages.error.submission_failed'));
 });

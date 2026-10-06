@@ -87,8 +87,8 @@ final class CreateFormEntryAction implements CreateFormEntryContract
             $result = DB::transaction(function () use ($data, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $trustedFormLoadTime, $payloadDigest) {
                 $formId = $data->formId;
                 if ($formId === '') {
-                    throw new Exception((string) trans('forms::forms/shared.messages.error.not_found', [
-                        'item' => (string) trans('forms::forms/general.entities.singular'),
+                    throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.not_found', [
+                        'item' => (string) trans('nvl-forms::forms/general.entities.singular'),
                     ]));
                 }
 
@@ -178,8 +178,8 @@ final class CreateFormEntryAction implements CreateFormEntryContract
 
                 $fresh = $entry->fresh(['form:id,handle']);
                 if ($fresh === null) {
-                    throw new Exception((string) trans('forms::forms/shared.messages.error.refresh_failed', [
-                        'item' => (string) trans('forms::entries/general.entities.singular'),
+                    throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.refresh_failed', [
+                        'item' => (string) trans('nvl-forms::entries/general.entities.singular'),
                     ]));
                 }
 
@@ -225,13 +225,13 @@ final class CreateFormEntryAction implements CreateFormEntryContract
         }
 
         if (($result['rejection'] ?? null) === 'bot_detected') {
-            throw new Exception((string) trans('forms::forms/shared.messages.error.bot_detected'));
+            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.bot_detected'));
         }
 
         $entry = $result['entry'] ?? null;
         if (! $entry instanceof FormEntry) {
-            throw new Exception((string) trans('forms::forms/shared.messages.error.refresh_failed', [
-                'item' => (string) trans('forms::entries/general.entities.singular'),
+            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.refresh_failed', [
+                'item' => (string) trans('nvl-forms::entries/general.entities.singular'),
             ]));
         }
 
@@ -268,7 +268,7 @@ final class CreateFormEntryAction implements CreateFormEntryContract
         }
 
         throw new FormSubmissionRejectionException(
-            message: (string) trans('forms::forms/messages.error.idempotency_conflict'),
+            message: (string) trans('nvl-forms::forms/messages.error.idempotency_conflict'),
             statusCode: 409,
         );
     }
@@ -279,7 +279,7 @@ final class CreateFormEntryAction implements CreateFormEntryContract
     private function throwDuplicateRegistration(): never
     {
         throw new FormSubmissionRejectionException(
-            message: (string) trans('forms::forms/messages.error.registration_already_exists'),
+            message: (string) trans('nvl-forms::forms/messages.error.registration_already_exists'),
             statusCode: 409,
         );
     }

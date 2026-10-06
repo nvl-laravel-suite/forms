@@ -20,10 +20,10 @@ enum CorsPolicy: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::Strict => (string) trans('forms::forms/forms.options.cors_policy.strict'),
-            self::Moderate => (string) trans('forms::forms/forms.options.cors_policy.moderate'),
-            self::Permissive => (string) trans('forms::forms/forms.options.cors_policy.permissive'),
-            self::Custom => (string) trans('forms::forms/forms.options.cors_policy.custom'),
+            self::Strict => (string) trans('nvl-forms::forms/forms.options.cors_policy.strict'),
+            self::Moderate => (string) trans('nvl-forms::forms/forms.options.cors_policy.moderate'),
+            self::Permissive => (string) trans('nvl-forms::forms/forms.options.cors_policy.permissive'),
+            self::Custom => (string) trans('nvl-forms::forms/forms.options.cors_policy.custom'),
         };
     }
 
@@ -33,10 +33,10 @@ enum CorsPolicy: string
     public function description(): string
     {
         return match ($this) {
-            self::Strict => (string) trans('forms::forms/forms.descriptions.cors_policy.strict'),
-            self::Moderate => (string) trans('forms::forms/forms.descriptions.cors_policy.moderate'),
-            self::Permissive => (string) trans('forms::forms/forms.descriptions.cors_policy.permissive'),
-            self::Custom => (string) trans('forms::forms/forms.descriptions.cors_policy.custom'),
+            self::Strict => (string) trans('nvl-forms::forms/forms.descriptions.cors_policy.strict'),
+            self::Moderate => (string) trans('nvl-forms::forms/forms.descriptions.cors_policy.moderate'),
+            self::Permissive => (string) trans('nvl-forms::forms/forms.descriptions.cors_policy.permissive'),
+            self::Custom => (string) trans('nvl-forms::forms/forms.descriptions.cors_policy.custom'),
         };
     }
 

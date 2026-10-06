@@ -16,7 +16,7 @@ test('get form navigation action returns overview tab with expected href', funct
 
     $tab = $navigation[0];
 
-    expect($tab['label'] ?? null)->toBe(trans('forms::forms/general.tabs.overview'))
+    expect($tab['label'] ?? null)->toBe(trans('nvl-forms::forms/general.tabs.overview'))
         ->and($tab['href'] ?? null)->toBe("/forms/{$form->id}")
         ->and($tab['active'] ?? null)->toBeTrue();
 

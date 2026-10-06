@@ -98,7 +98,7 @@ final class FormRateLimitStatisticsService
     private function cleanupAfterDays(): int
     {
         return FormsConfiguration::positiveInteger(
-            'forms.security.ip_blocking.cleanup_after_days',
+            'nvl-forms.security.ip_blocking.cleanup_after_days',
             7,
         );
     }

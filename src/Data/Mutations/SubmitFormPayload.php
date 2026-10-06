@@ -107,7 +107,7 @@ class SubmitFormPayload extends Data
      */
     public static function messages(): array
     {
-        return self::translatedMessages('forms::entries');
+        return self::translatedMessages('nvl-forms::entries');
     }
 
     /**
@@ -117,6 +117,6 @@ class SubmitFormPayload extends Data
      */
     public static function attributes(): array
     {
-        return self::translatedAttributes('forms::entries');
+        return self::translatedAttributes('nvl-forms::entries');
     }
 }

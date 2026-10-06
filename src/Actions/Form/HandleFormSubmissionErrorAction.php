@@ -25,12 +25,12 @@ final readonly class HandleFormSubmissionErrorAction
     public function execute(Exception $exception): string
     {
         return match (true) {
-            str_contains($exception->getMessage(), 'not allowed from this host') => (string) trans('forms::forms/messages.error.host_not_allowed'),
+            str_contains($exception->getMessage(), 'not allowed from this host') => (string) trans('nvl-forms::forms/messages.error.host_not_allowed'),
             str_contains($exception->getMessage(), 'Required fields missing') => $exception->getMessage(),
-            str_contains($exception->getMessage(), 'origin required') => (string) trans('forms::forms/messages.error.origin_required'),
+            str_contains($exception->getMessage(), 'origin required') => (string) trans('nvl-forms::forms/messages.error.origin_required'),
             default => $this->application->environment('local')
                 ? $exception->getMessage()
-                : (string) trans('forms::forms/messages.error.submission_failed'),
+                : (string) trans('nvl-forms::forms/messages.error.submission_failed'),
         };
     }
 }

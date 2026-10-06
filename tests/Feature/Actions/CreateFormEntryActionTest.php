@@ -43,7 +43,7 @@ test('create form entry action orchestrates dependencies for legitimate submissi
 });
 
 test('create form entry action records honeypot rejections as spam', function (): void {
-    config(['forms.security.spam_protection.honeypot.field_names' => ['website']]);
+    config(['nvl-forms.security.spam_protection.honeypot.field_names' => ['website']]);
 
     $form = Form::factory()->create([
         'restrict_public_access' => false,
@@ -64,7 +64,7 @@ test('create form entry action records honeypot rejections as spam', function ()
         'curl/8.0',
         'session-1234',
         null
-    ))->toThrow(Exception::class, trans('forms::forms/shared.messages.error.bot_detected'));
+    ))->toThrow(Exception::class, trans('nvl-forms::forms/shared.messages.error.bot_detected'));
 
     expect($form->fresh()->spam_count)->toBe(1);
 

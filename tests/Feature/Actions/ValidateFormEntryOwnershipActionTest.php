@@ -18,9 +18,9 @@ test('validate form entry ownership action throws for mismatched form', function
     $entry = FormEntry::factory()->create();
 
     $this->expectException(Exception::class);
-    $this->expectExceptionMessage(trans('forms::forms/shared.messages.error.ownership_mismatch', [
-        'item' => trans('forms::entries/general.entities.singular'),
-        'parent' => trans('forms::forms/general.entities.singular'),
+    $this->expectExceptionMessage(trans('nvl-forms::forms/shared.messages.error.ownership_mismatch', [
+        'item' => trans('nvl-forms::entries/general.entities.singular'),
+        'parent' => trans('nvl-forms::forms/general.entities.singular'),
     ]));
 
     app(ValidateFormEntryOwnershipAction::class)->execute($form, $entry);

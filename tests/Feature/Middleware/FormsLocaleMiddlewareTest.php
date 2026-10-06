@@ -10,7 +10,7 @@ beforeEach(function (): void {
     config(['app.fallback_locale' => 'bg']);
 
     if (! Route::has('testing.forms.locale')) {
-        Route::middleware('forms-locale')
+        Route::middleware('nvl.forms.locale')
             ->get('/testing/forms/locale', fn () => response()->json([
                 'locale' => app()->getLocale(),
             ]))

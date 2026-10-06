@@ -368,7 +368,7 @@ final class FormRateLimitService implements FormRateLimiter
     private function calculateBlockDuration(int $violationCount): int
     {
         /** @var array<int, int> $durations */
-        $durations = config('forms.security.rate_limiting.block_duration_minutes', []);
+        $durations = config('nvl-forms.security.rate_limiting.block_duration_minutes', []);
 
         return $durations[$violationCount] ?? $durations[array_key_last($durations) ?? 5] ?? 1440;
     }

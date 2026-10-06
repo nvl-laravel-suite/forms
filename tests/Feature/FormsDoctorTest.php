@@ -31,7 +31,7 @@ test('forms doctor reports a healthy standalone installation', function (): void
 });
 
 test('forms doctor rejects enabled management routes without a registered gate', function (): void {
-    config(['forms.authorization.gate' => 'missing-forms-gate']);
+    config(['nvl-forms.authorization.gate' => 'missing-forms-gate']);
 
     $check = collect(app(FormsDoctor::class)->inspect())
         ->firstWhere('key', 'authorization.management');
@@ -41,7 +41,7 @@ test('forms doctor rejects enabled management routes without a registered gate',
 });
 
 test('forms doctor rejects enabled public routes without throttling', function (): void {
-    config(['forms.routes.public.middleware' => ['api']]);
+    config(['nvl-forms.routes.public.middleware' => ['api']]);
 
     $check = collect(app(FormsDoctor::class)->inspect())
         ->firstWhere('key', 'routes.public.throttle');

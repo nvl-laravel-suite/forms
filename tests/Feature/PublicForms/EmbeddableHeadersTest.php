@@ -24,7 +24,7 @@ test('public iframe form responses do not include x-frame-options', function ():
     Route::middleware([ValidateFormHost::class])
         ->get('/public/forms/{form}', function (Request $request) {
             return response()->json([
-                'frame_ancestors' => $request->attributes->get('forms.frame_ancestors'),
+                'frame_ancestors' => $request->attributes->get('nvl-forms.frame_ancestors'),
             ]);
         });
 

@@ -33,7 +33,7 @@ final class PublicFormSubmissionResponseMapper
             return null;
         }
 
-        return (string) trans('forms::forms/messages.warning.submission_recording_delayed');
+        return (string) trans('nvl-forms::forms/messages.warning.submission_recording_delayed');
     }
 
     /**
@@ -48,7 +48,7 @@ final class PublicFormSubmissionResponseMapper
         $message = trim($exception->getMessage());
 
         if ($message === '') {
-            return ['error' => (string) trans('forms::forms/messages.api.error')];
+            return ['error' => (string) trans('nvl-forms::forms/messages.api.error')];
         }
 
         $mappedErrors = $this->errorMapperRegistry->map($form, $exception);

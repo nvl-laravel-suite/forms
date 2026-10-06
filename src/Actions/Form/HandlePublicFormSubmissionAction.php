@@ -89,7 +89,7 @@ final class HandlePublicFormSubmissionAction
 
         if (! $form->isPubliclyAvailableNow()) {
             throw new FormSubmissionRejectionException(
-                message: (string) trans('forms::forms/messages.api.form_unavailable'),
+                message: (string) trans('nvl-forms::forms/messages.api.form_unavailable'),
                 statusCode: 403,
             );
         }
@@ -120,7 +120,7 @@ final class HandlePublicFormSubmissionAction
         $handler = $this->customRegistry->resolve($form);
         if ($handler === null) {
             throw new FormSubmissionRejectionException(
-                message: (string) trans('forms::forms/messages.api.error'),
+                message: (string) trans('nvl-forms::forms/messages.api.error'),
                 statusCode: 400,
             );
         }

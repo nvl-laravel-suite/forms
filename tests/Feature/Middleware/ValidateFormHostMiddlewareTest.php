@@ -10,7 +10,7 @@ use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 
 test('validate form host allows unrestricted forms without origin enforcement', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/allow/{form}', fn () => response()->json(['ok' => true]));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/allow/{form}', fn () => response()->json(['ok' => true]));
 
     $form = Form::factory()->create([
         'restrict_public_access' => false,
@@ -23,7 +23,7 @@ test('validate form host allows unrestricted forms without origin enforcement', 
 });
 
 test('validate form host permits allowed origins and appends cors headers', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/origin/{form}', fn () => response()->json(['ok' => true]));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/origin/{form}', fn () => response()->json(['ok' => true]));
 
     $form = Form::factory()->create([
         'restrict_public_access' => true,
@@ -46,7 +46,7 @@ test('validate form host permits allowed origins and appends cors headers', func
 });
 
 test('validate form host rejects unapproved origins when access is restricted', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/reject/{form}', fn () => response()->json(['ok' => true]));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/reject/{form}', fn () => response()->json(['ok' => true]));
 
     $form = Form::factory()->create([
         'restrict_public_access' => true,
@@ -63,13 +63,13 @@ test('validate form host rejects unapproved origins when access is restricted', 
 
     $response->assertForbidden()
         ->assertJson([
-            'error' => trans('forms::forms/shared.messages.error.origin_not_allowed', ['origin' => 'blocked.test']),
+            'error' => trans('nvl-forms::forms/shared.messages.error.origin_not_allowed', ['origin' => 'blocked.test']),
             'origin' => 'blocked.test',
         ]);
 });
 
 test('validate form host blocks rate limited ips with dynamic retry timing', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/rate-limited/{form}', fn () => response()->json(['ok' => true]));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/rate-limited/{form}', fn () => response()->json(['ok' => true]));
 
     $form = Form::factory()->create([
         'restrict_public_access' => true,
@@ -97,13 +97,13 @@ test('validate form host blocks rate limited ips with dynamic retry timing', fun
 
     $response->assertStatus(429)
         ->assertJson([
-            'error' => trans('forms::forms/shared.messages.error.rate_limit_exceeded'),
+            'error' => trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
             'retry_after' => 720,
         ]);
 });
 
 test('validate form host does not trust spoofable iframe request headers', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/iframe/{form}', fn () => response()->json(['ok' => true]));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/iframe/{form}', fn () => response()->json(['ok' => true]));
 
     $form = Form::factory()->create([
         'type' => FormType::IFRAME,
@@ -118,7 +118,7 @@ test('validate form host does not trust spoofable iframe request headers', funct
 });
 
 test('validate form host allows inertia subrequests for iframe forms', function (): void {
-    Route::middleware('validate-form-host')->post('/testing/forms/iframe-inertia/{form}', fn () => redirect('/testing/forms/ok'));
+    Route::middleware('nvl.forms.validate-host')->post('/testing/forms/iframe-inertia/{form}', fn () => redirect('/testing/forms/ok'));
 
     $form = Form::factory()->create([
         'type' => FormType::IFRAME,
@@ -137,7 +137,7 @@ test('validate form host allows inertia subrequests for iframe forms', function 
 });
 
 test('validate form host allows json iframe submissions after origin policy checks', function (): void {
-    Route::middleware('validate-form-host')->post('/testing/forms/iframe-json/{form}', fn () => response()->json(['ok' => true]));
+    Route::middleware('nvl.forms.validate-host')->post('/testing/forms/iframe-json/{form}', fn () => response()->json(['ok' => true]));
 
     $form = Form::factory()->create([
         'type' => FormType::IFRAME,
@@ -154,7 +154,7 @@ test('validate form host allows json iframe submissions after origin policy chec
 });
 
 test('validate form host allows iframe form html navigations when fetch metadata is unavailable', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/iframe-html/{form}', fn () => response('ok'));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/iframe-html/{form}', fn () => response('ok'));
 
     $form = Form::factory()->create([
         'type' => FormType::IFRAME,
@@ -167,7 +167,7 @@ test('validate form host allows iframe form html navigations when fetch metadata
 });
 
 test('validate form host leaves embedding enforcement to csp when fetch metadata says document', function (): void {
-    Route::middleware('validate-form-host')->get('/testing/forms/iframe-html-detect/{form}', fn () => response('ok'));
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/iframe-html-detect/{form}', fn () => response('ok'));
 
     $form = Form::factory()->create([
         'type' => FormType::IFRAME,
@@ -182,7 +182,7 @@ test('validate form host leaves embedding enforcement to csp when fetch metadata
 });
 
 test('validate form host applies configured cors policy to real preflight requests', function (): void {
-    Route::middleware('validate-form-host')->options('/testing/forms/preflight/{form}', fn () => response()->noContent());
+    Route::middleware('nvl.forms.validate-host')->options('/testing/forms/preflight/{form}', fn () => response()->noContent());
 
     $form = Form::factory()->create([
         'restrict_public_access' => true,

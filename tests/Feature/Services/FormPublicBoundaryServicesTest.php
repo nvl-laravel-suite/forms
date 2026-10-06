@@ -34,7 +34,7 @@ afterEach(function (): void {
 });
 
 test('public tokens validate form scope handle expiry and malformed inputs', function (): void {
-    $key = 'forms-public-boundary-key';
+    $key = 'nvl.forms.public-boundary-key';
     config()->set('app.key', 'base64:'.base64_encode($key));
     $form = Form::factory()->create(['handle' => 'public-token-form']);
     $other = Form::factory()->create(['handle' => 'other-form']);

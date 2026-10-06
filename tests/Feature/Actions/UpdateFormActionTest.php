@@ -83,7 +83,7 @@ test('update form action rejects duplicate handles', function (): void {
     ]);
 
     $this->expectException(Exception::class);
-    $this->expectExceptionMessage(trans('forms::forms/messages.error.handle_exists', ['handle' => 'existing-handle']));
+    $this->expectExceptionMessage(trans('nvl-forms::forms/messages.error.handle_exists', ['handle' => 'existing-handle']));
 
     app(UpdateFormAction::class)->execute($form, $data);
 });

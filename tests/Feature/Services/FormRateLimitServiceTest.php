@@ -95,7 +95,7 @@ test('rate limit status distinguishes absent active expired and blocked records'
 });
 
 test('submission attempts create reset block and deny atomically', function (): void {
-    config()->set('forms.security.rate_limiting.block_duration_minutes', [1 => 5, 2 => 15]);
+    config()->set('nvl-forms.security.rate_limiting.block_duration_minutes', [1 => 5, 2 => 15]);
     $form = Form::factory()->create([
         'enable_rate_limiting' => true,
         'rate_limit_per_hour' => 2,
@@ -141,7 +141,7 @@ test('submission attempts create reset block and deny atomically', function (): 
 });
 
 test('operators can explicitly block unblock whitelist and inspect statistics', function (): void {
-    config()->set('forms.security.ip_blocking.cleanup_after_days', 7);
+    config()->set('nvl-forms.security.ip_blocking.cleanup_after_days', 7);
     $form = Form::factory()->create(['enable_rate_limiting' => true]);
     $service = app(FormRateLimitService::class);
     $statistics = app(FormRateLimitStatisticsService::class);

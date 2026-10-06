@@ -119,7 +119,7 @@ test('suggestions endpoint returns matching forms', function (): void {
     Form::factory()->create(['name' => 'Product Demo', 'handle' => 'product-demo']);
     Form::factory()->create(['name' => 'Support Request', 'handle' => 'support-request']);
 
-    $response = $this->getJson('/api/v1/forms/suggestions?q=demo&limit=5');
+    $response = $this->getJson('/nvl/api/v1/forms/suggestions?q=demo&limit=5');
 
     $response->assertOk()
         ->assertJson(
@@ -134,7 +134,7 @@ test('search endpoint returns forms with metadata', function (): void {
     Form::factory()->count(2)->create(['submissions_count' => 3]);
     Form::factory()->create(['submissions_count' => 0]);
 
-    $response = $this->getJson('/api/v1/forms/search?hasSubmissions=1');
+    $response = $this->getJson('/nvl/api/v1/forms/search?hasSubmissions=1');
 
     $response->assertOk()
         ->assertJson(
@@ -160,7 +160,7 @@ test('select endpoint honours filters', function (): void {
         'submissions_count' => 10,
     ]);
 
-    $response = $this->getJson('/api/v1/forms/select?publicOnly=1&withSubmissions=1');
+    $response = $this->getJson('/nvl/api/v1/forms/select?publicOnly=1&withSubmissions=1');
 
     $publicForm = Form::where('handle', 'public-form')->first();
     expect($publicForm)->not->toBeNull();
@@ -178,6 +178,6 @@ test('all management discovery endpoints enforce the form policy', function (): 
     Gate::define('manage-forms', static fn (): bool => false);
 
     foreach (['suggestions', 'search', 'select'] as $endpoint) {
-        $this->getJson("/api/v1/forms/{$endpoint}")->assertForbidden();
+        $this->getJson("/nvl/api/v1/forms/{$endpoint}")->assertForbidden();
     }
 });

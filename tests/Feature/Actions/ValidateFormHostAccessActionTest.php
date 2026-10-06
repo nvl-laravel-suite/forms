@@ -28,7 +28,7 @@ test('validate form host access throws when origin missing under restriction', f
     $form = Form::factory()->create(['restrict_public_access' => true]);
 
     $this->expectException(AccessDeniedHttpException::class);
-    $this->expectExceptionMessage(trans('forms::forms/messages.error.origin_required'));
+    $this->expectExceptionMessage(trans('nvl-forms::forms/messages.error.origin_required'));
 
     app(ValidateFormHostAccessAction::class)->execute($form, null);
 });

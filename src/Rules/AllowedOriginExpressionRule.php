@@ -24,7 +24,7 @@ final class AllowedOriginExpressionRule implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! AllowedOriginExpression::isValid($value)) {
-            $fail('forms::forms/validation.custom.allowed_origin_expression.invalid')->translate();
+            $fail('nvl-forms::forms/validation.custom.allowed_origin_expression.invalid')->translate();
         }
     }
 }

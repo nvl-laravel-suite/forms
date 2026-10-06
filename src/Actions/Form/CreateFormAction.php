@@ -98,8 +98,8 @@ final class CreateFormAction implements CreateFormContract
             $freshForm = $form->fresh();
             if ($freshForm === null) {
                 throw new Exception(
-                    (string) trans('forms::forms/shared.messages.error.refresh_failed', [
-                        'item' => (string) trans('forms::forms/general.entities.singular'),
+                    (string) trans('nvl-forms::forms/shared.messages.error.refresh_failed', [
+                        'item' => (string) trans('nvl-forms::forms/general.entities.singular'),
                     ])
                 );
             }

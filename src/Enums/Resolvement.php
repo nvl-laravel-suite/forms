@@ -17,7 +17,7 @@ enum Resolvement: string
      */
     public function getLabel(): string
     {
-        return (string) trans('forms::forms/forms.options.resolvement.'.$this->value);
+        return (string) trans('nvl-forms::forms/forms.options.resolvement.'.$this->value);
     }
 
     /**

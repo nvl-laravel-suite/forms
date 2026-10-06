@@ -158,7 +158,7 @@ final class FormPolicy
             return false;
         }
 
-        $gate = config('forms.authorization.gate');
+        $gate = config('nvl-forms.authorization.gate');
 
         if (! is_string($gate) || $gate === '') {
             return false;

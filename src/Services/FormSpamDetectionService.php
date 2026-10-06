@@ -57,7 +57,7 @@ final class FormSpamDetectionService implements FormSpamDetector
         }
 
         /** @var array<int, string> $honeypotFields */
-        $honeypotFields = config('forms.security.spam_protection.honeypot.field_names', []);
+        $honeypotFields = config('nvl-forms.security.spam_protection.honeypot.field_names', []);
 
         return array_any($honeypotFields, fn ($field) => isset($data[$field]) && $data[$field] !== '');
     }
@@ -87,11 +87,11 @@ final class FormSpamDetectionService implements FormSpamDetector
         ?float $formLoadTime = null,
     ): float {
         /** @var array<string, int> $weights */
-        $weights = config('forms.security.spam_protection.score_weights', []);
+        $weights = config('nvl-forms.security.spam_protection.score_weights', []);
         /** @var int $minSubmissionTime */
-        $minSubmissionTime = config('forms.security.spam_protection.min_submission_time', 3);
+        $minSubmissionTime = config('nvl-forms.security.spam_protection.min_submission_time', 3);
         /** @var array<int, string> $spamPhrases */
-        $spamPhrases = config('forms.security.spam_protection.spam_phrases', []);
+        $spamPhrases = config('nvl-forms.security.spam_protection.spam_phrases', []);
 
         $score = 0;
 
@@ -221,7 +221,7 @@ final class FormSpamDetectionService implements FormSpamDetector
     public function shouldBlockSubmission(float $spamScore): bool
     {
         /** @var int $threshold */
-        $threshold = config('forms.security.spam_protection.score_thresholds.block', 70);
+        $threshold = config('nvl-forms.security.spam_protection.score_thresholds.block', 70);
 
         return $spamScore >= $threshold;
     }
@@ -238,9 +238,9 @@ final class FormSpamDetectionService implements FormSpamDetector
     public function shouldFlagSubmission(float $spamScore): bool
     {
         /** @var int $flagThreshold */
-        $flagThreshold = config('forms.security.spam_protection.score_thresholds.flag', 40);
+        $flagThreshold = config('nvl-forms.security.spam_protection.score_thresholds.flag', 40);
         /** @var int $blockThreshold */
-        $blockThreshold = config('forms.security.spam_protection.score_thresholds.block', 70);
+        $blockThreshold = config('nvl-forms.security.spam_protection.score_thresholds.block', 70);
 
         return $spamScore >= $flagThreshold && $spamScore < $blockThreshold;
     }

@@ -24,8 +24,8 @@ final class FormShowStateResolver
      */
     public function resolve(Form $form): FormShowStates
     {
-        $yesLabel = (string) trans('forms::forms/shared.tables.boolean.yes');
-        $noLabel = (string) trans('forms::forms/shared.tables.boolean.no');
+        $yesLabel = (string) trans('nvl-forms::forms/shared.tables.boolean.yes');
+        $noLabel = (string) trans('nvl-forms::forms/shared.tables.boolean.no');
 
         $status = $this->resolveStatusState($form);
         $security = $this->resolveSecurityState($form, $yesLabel, $noLabel);
@@ -110,47 +110,47 @@ final class FormShowStateResolver
 
         $isRestricted = (bool) $form->restrict_public_access;
         $accessLabel = $isRestricted
-            ? (string) trans('forms::forms/forms.options.access.private')
-            : (string) trans('forms::forms/forms.options.access.public');
-        $lastUsedAt = $form->last_used_at?->toDateTimeString() ?? (string) trans('forms::forms/shared.tables.ui.empty');
+            ? (string) trans('nvl-forms::forms/forms.options.access.private')
+            : (string) trans('nvl-forms::forms/forms.options.access.public');
+        $lastUsedAt = $form->last_used_at?->toDateTimeString() ?? (string) trans('nvl-forms::forms/shared.tables.ui.empty');
 
         /** @var array<int, FormShowStat> $items */
         $items = [
             new FormShowStat(
                 icon: 'Signal',
-                label: (string) trans('forms::forms/forms.fields.status.label'),
+                label: (string) trans('nvl-forms::forms/forms.fields.status.label'),
                 value: $statusLabel,
-                description: (string) trans('forms::forms/forms.fields.status.help'),
+                description: (string) trans('nvl-forms::forms/forms.fields.status.help'),
             ),
             new FormShowStat(
                 icon: 'FileText',
-                label: (string) trans('forms::forms/forms.additional_fields.submissions_count.label'),
+                label: (string) trans('nvl-forms::forms/forms.additional_fields.submissions_count.label'),
                 value: number_format((int) $form->submissions_count),
-                description: (string) trans('forms::forms/forms.additional_fields.submissions_count.help'),
+                description: (string) trans('nvl-forms::forms/forms.additional_fields.submissions_count.help'),
             ),
             new FormShowStat(
                 icon: 'Eye',
-                label: (string) trans('forms::forms/forms.additional_fields.views_count.label'),
+                label: (string) trans('nvl-forms::forms/forms.additional_fields.views_count.label'),
                 value: number_format((int) $form->views_count),
-                description: (string) trans('forms::forms/forms.additional_fields.views_count.help'),
+                description: (string) trans('nvl-forms::forms/forms.additional_fields.views_count.help'),
             ),
             new FormShowStat(
                 icon: 'ShieldAlert',
-                label: (string) trans('forms::forms/forms.additional_fields.spam_count.label'),
+                label: (string) trans('nvl-forms::forms/forms.additional_fields.spam_count.label'),
                 value: number_format((int) $form->spam_count),
-                description: (string) trans('forms::forms/forms.additional_fields.spam_count.help'),
+                description: (string) trans('nvl-forms::forms/forms.additional_fields.spam_count.help'),
             ),
             new FormShowStat(
                 icon: $isRestricted ? 'Lock' : 'Globe',
-                label: (string) trans('forms::forms/forms.fields.restrict_public_access.label'),
+                label: (string) trans('nvl-forms::forms/forms.fields.restrict_public_access.label'),
                 value: $accessLabel,
-                description: (string) trans('forms::forms/forms.fields.restrict_public_access.help'),
+                description: (string) trans('nvl-forms::forms/forms.fields.restrict_public_access.help'),
             ),
             new FormShowStat(
                 icon: 'Calendar',
-                label: (string) trans('forms::forms/forms.additional_fields.last_used_at.label'),
+                label: (string) trans('nvl-forms::forms/forms.additional_fields.last_used_at.label'),
                 value: $lastUsedAt,
-                description: (string) trans('forms::forms/forms.additional_fields.last_used_at.help'),
+                description: (string) trans('nvl-forms::forms/forms.additional_fields.last_used_at.help'),
             ),
         ];
 

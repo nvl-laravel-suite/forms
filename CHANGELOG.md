@@ -4,6 +4,15 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Isolate owned cache and lock keys under `nvl:forms:`; preserve generic host entries and explicit store choices.
+
+- Prepare lockstep major 5 with required and development NVL peer floors of `^5.0`. This candidate has not been tagged or published.
+- Use a plain gated route provider so host withRouting composition and cached routes are preserved.
+- Namespace middleware, limiter, route, translation and publish registrations.
+- Review [UPGRADING.md](UPGRADING.md) before adopting the new names and infrastructure boundaries.
+
 ## [2.2.1] - 2026-09-26
 
 ### Documentation

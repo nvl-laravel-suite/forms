@@ -48,14 +48,14 @@ final class ValidateFormHost
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $form = $request->attributes->get('forms.resolved_form');
+        $form = $request->attributes->get('nvl-forms.resolved_form');
 
         if (! $form instanceof Form) {
             $formIdentifier = $request->route('form');
 
             if (! is_string($formIdentifier)) {
                 return response()->json([
-                    'error' => trans('forms::forms/messages.api.form_not_found'),
+                    'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
                 ], 404);
             }
 
@@ -63,22 +63,22 @@ final class ValidateFormHost
                 $form = $this->getFormForRender->execute($formIdentifier);
             } catch (ModelNotFoundException) {
                 return response()->json([
-                    'error' => trans('forms::forms/messages.api.form_not_found'),
+                    'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
                 ], 404);
             }
 
-            $request->attributes->set('forms.resolved_form', $form);
+            $request->attributes->set('nvl-forms.resolved_form', $form);
         }
 
         $originHost = $this->originResolver->originHost($request);
         $originHeader = $this->originResolver->originHeader($request);
 
         if (($form->type ?? null) === FormType::IFRAME) {
-            $request->attributes->set('forms.embeddable', true);
+            $request->attributes->set('nvl-forms.embeddable', true);
 
             $frameAncestors = $this->buildFrameAncestors($form);
             if ($frameAncestors !== null) {
-                $request->attributes->set('forms.frame_ancestors', $frameAncestors);
+                $request->attributes->set('nvl-forms.frame_ancestors', $frameAncestors);
             }
         }
 
@@ -91,13 +91,13 @@ final class ValidateFormHost
 
         if ($originHost === null || $originHost === '') {
             return response()->json([
-                'error' => trans('forms::forms/messages.error.origin_required'),
+                'error' => trans('nvl-forms::forms/messages.error.origin_required'),
             ], 403);
         }
 
         if (! $this->originAccess->isOriginAllowed($form, $originHost)) {
             return response()->json([
-                'error' => trans('forms::forms/shared.messages.error.origin_not_allowed', ['origin' => $originHost]),
+                'error' => trans('nvl-forms::forms/shared.messages.error.origin_not_allowed', ['origin' => $originHost]),
                 'origin' => $originHost,
             ], 403);
         }
@@ -106,7 +106,7 @@ final class ValidateFormHost
         $rateLimitStatus = $this->rateLimitService->getRateLimitStatus($form, $ipAddress);
         if ($rateLimitStatus['is_blocked']) {
             $response = response()->json([
-                'error' => trans('forms::forms/shared.messages.error.rate_limit_exceeded'),
+                'error' => trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
                 'retry_after' => $rateLimitStatus['retry_after'],
             ], 429);
 

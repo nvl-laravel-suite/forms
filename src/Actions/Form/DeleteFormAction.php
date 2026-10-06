@@ -33,14 +33,14 @@ final class DeleteFormAction
         $deleted = DB::transaction(function () use ($form) {
             // Check for dependencies (form entries)
             if ($form->entries()->exists()) {
-                throw new Exception((string) trans('forms::forms/messages.error.cannot_delete_with_entries'));
+                throw new Exception((string) trans('nvl-forms::forms/messages.error.cannot_delete_with_entries'));
             }
 
             // Perform deletion
             $deleted = $form->delete();
 
             if ($deleted === null) {
-                throw new Exception((string) trans('forms::forms/shared.messages.error.delete_failed', ['item' => (string) trans('forms::forms/general.entities.singular')]));
+                throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.delete_failed', ['item' => (string) trans('nvl-forms::forms/general.entities.singular')]));
             }
 
             return $deleted;

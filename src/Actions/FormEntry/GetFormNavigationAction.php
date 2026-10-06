@@ -25,7 +25,7 @@ final class GetFormNavigationAction
     {
         return [
             [
-                'label' => (string) trans('forms::forms/general.tabs.overview'),
+                'label' => (string) trans('nvl-forms::forms/general.tabs.overview'),
                 'href' => Route::has('forms.show') ? route('forms.show', $form) : "/forms/{$form->id}",
                 'active' => $overviewActive,
             ],

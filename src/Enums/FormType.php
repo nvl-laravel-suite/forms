@@ -17,7 +17,7 @@ enum FormType: string
      */
     public function getLabel(): string
     {
-        return (string) trans('forms::forms/forms.options.type.'.$this->value);
+        return (string) trans('nvl-forms::forms/forms.options.type.'.$this->value);
     }
 
     /**

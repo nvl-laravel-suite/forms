@@ -74,7 +74,7 @@ final class FormRenderApiController extends Controller
                 'public_token' => $tokenService->issue(
                     $form,
                     now()->addMinutes(FormsConfiguration::positiveInteger(
-                        'forms.public.token_ttl_minutes',
+                        'nvl-forms.public.token_ttl_minutes',
                         15,
                     )),
                     ($tenantSite instanceof TenantSiteContext)
@@ -86,16 +86,16 @@ final class FormRenderApiController extends Controller
 
         } catch (ModelNotFoundException) {
             return response()->json([
-                'error' => trans('forms::forms/messages.api.form_not_found'),
+                'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
             ], 404);
         } catch (Exception $e) {
             report($e);
 
             return response()->json([
-                'error' => trans('forms::forms/messages.api.form_load_error'),
+                'error' => trans('nvl-forms::forms/messages.api.form_load_error'),
                 'message' => $this->application->environment('local')
                     ? $e->getMessage()
-                    : trans('forms::forms/messages.api.form_load_error_detail'),
+                    : trans('nvl-forms::forms/messages.api.form_load_error_detail'),
             ], 500);
         }
     }
@@ -138,7 +138,7 @@ final class FormRenderApiController extends Controller
 
             $response = [
                 'success' => true,
-                'message' => trans('forms::forms/messages.api.form_submitted'),
+                'message' => trans('nvl-forms::forms/messages.api.form_submitted'),
                 'data' => [
                     'entry_id' => $submission->entryId,
                     'form_name' => $submission->form->displayName(),
@@ -155,8 +155,8 @@ final class FormRenderApiController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'error' => trans('forms::forms/messages.api.validation_failed'),
-                'message' => trans('forms::forms/messages.api.validation_failed_detail'),
+                'error' => trans('nvl-forms::forms/messages.api.validation_failed'),
+                'message' => trans('nvl-forms::forms/messages.api.validation_failed_detail'),
                 'errors' => $e->errors(),
             ], 422);
 
@@ -182,13 +182,13 @@ final class FormRenderApiController extends Controller
         } catch (TooManyRequestsHttpException $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage() !== '' ? $e->getMessage() : trans('forms::forms/shared.messages.error.rate_limit_exceeded'),
+                'error' => $e->getMessage() !== '' ? $e->getMessage() : trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
             ], 429);
 
         } catch (FormSubmissionRejectionException $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage() !== '' ? $e->getMessage() : trans('forms::forms/messages.api.submission_failed'),
+                'error' => $e->getMessage() !== '' ? $e->getMessage() : trans('nvl-forms::forms/messages.api.submission_failed'),
             ], $e->statusCode());
 
         } catch (Exception $e) {
@@ -196,7 +196,7 @@ final class FormRenderApiController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => trans('forms::forms/messages.api.submission_failed'),
+                'error' => trans('nvl-forms::forms/messages.api.submission_failed'),
                 'message' => $handleError->execute($e),
             ], 400);
         }
@@ -220,13 +220,13 @@ final class FormRenderApiController extends Controller
             ]);
         } catch (ModelNotFoundException) {
             return response()->json([
-                'error' => trans('forms::forms/messages.api.form_not_found'),
+                'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
             ], 404);
         } catch (Exception $e) {
             report($e);
 
             return response()->json([
-                'error' => trans('forms::forms/messages.api.form_load_error'),
+                'error' => trans('nvl-forms::forms/messages.api.form_load_error'),
             ], 500);
         }
     }
@@ -249,16 +249,16 @@ final class FormRenderApiController extends Controller
             ]);
         } catch (ModelNotFoundException) {
             return response()->json([
-                'error' => trans('forms::forms/messages.api.form_not_found'),
+                'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
             ], 404);
         } catch (Exception $e) {
             report($e);
 
             return response()->json([
-                'error' => trans('forms::forms/messages.api.schema_load_error'),
+                'error' => trans('nvl-forms::forms/messages.api.schema_load_error'),
                 'message' => $this->application->environment('local')
                     ? $e->getMessage()
-                    : trans('forms::forms/messages.api.error'),
+                    : trans('nvl-forms::forms/messages.api.error'),
             ], 500);
         }
     }

@@ -34,7 +34,7 @@ test('render endpoint returns form payload with csrf token', function (): void {
         'status' => FormStatus::ACTIVE,
     ]);
 
-    $response = $this->withSession([])->getJson("/api/v1/forms/{$form->id}/render");
+    $response = $this->withSession([])->getJson("/nvl/api/v1/forms/{$form->id}/render");
 
     $response->assertOk()
         ->assertJson([
@@ -65,8 +65,8 @@ test('public render tokens retain the selected canonical or legacy site attribut
 
 test('public endpoints resolve handles and apply the requested content locale', function (): void {
     config([
-        'translatable.locales' => ['en', 'bg'],
-        'translatable.fallback_locales' => ['en'],
+        'nvl-translatable.locales' => ['en', 'bg'],
+        'nvl-translatable.fallback_locales' => ['en'],
     ]);
 
     $form = Form::factory()->create([
@@ -79,7 +79,7 @@ test('public endpoints resolve handles and apply the requested content locale', 
         ],
     ]);
 
-    $response = $this->getJson('/api/v1/forms/localized-registration/render?lang=bg-BG');
+    $response = $this->getJson('/nvl/api/v1/forms/localized-registration/render?lang=bg-BG');
 
     $response->assertOk()
         ->assertJsonPath('data.id', $form->id)
@@ -96,14 +96,14 @@ test('public routes reject unavailable forms before submission', function (): vo
         'require_csrf' => false,
     ]);
 
-    $response = $this->postJson('/api/v1/forms/paused-registration/submit', [
+    $response = $this->postJson('/nvl/api/v1/forms/paused-registration/submit', [
         'email' => 'paused@example.com',
     ]);
 
     $response->assertForbidden()
         ->assertJson([
             'success' => false,
-            'error' => trans('forms::forms/messages.api.form_unavailable'),
+            'error' => trans('nvl-forms::forms/messages.api.form_unavailable'),
         ]);
 
     $this->assertDatabaseCount(FormsTables::Entries, 0);
@@ -112,7 +112,7 @@ test('public routes reject unavailable forms before submission', function (): vo
 test('render endpoint responds with not found when form is missing', function (): void {
     $uuid = (string) Str::uuid();
 
-    $response = $this->getJson("/api/v1/forms/{$uuid}/render");
+    $response = $this->getJson("/nvl/api/v1/forms/{$uuid}/render");
 
     $response->assertStatus(404)
         ->assertJsonStructure(['error']);
@@ -132,7 +132,7 @@ test('submit endpoint persists entries and returns payload', function (): void {
     ];
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         $payload,
         ['Origin' => 'https://landing.example.com']
     );
@@ -140,7 +140,7 @@ test('submit endpoint persists entries and returns payload', function (): void {
     $response->assertCreated()
         ->assertJson([
             'success' => true,
-            'message' => trans('forms::forms/messages.api.form_submitted'),
+            'message' => trans('nvl-forms::forms/messages.api.form_submitted'),
         ])
         ->assertJsonStructure(['data' => ['entry_id', 'form_name', 'submitted_at']]);
 
@@ -158,7 +158,7 @@ test('submit endpoint validates payloads and returns errors', function (): void 
         'require_csrf' => false,
     ]);
 
-    $response = $this->postJson("/api/v1/forms/{$form->id}/submit", [
+    $response = $this->postJson("/nvl/api/v1/forms/{$form->id}/submit", [
         'email' => 'not-an-email',
     ]);
 
@@ -198,7 +198,7 @@ test('submit endpoint handles rate limit violations gracefully', function (): vo
     $response = $this
         ->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
         ->postJson(
-            "/api/v1/forms/{$form->id}/submit",
+            "/nvl/api/v1/forms/{$form->id}/submit",
             [
                 'subject' => 'Rate limited',
             ],
@@ -208,7 +208,7 @@ test('submit endpoint handles rate limit violations gracefully', function (): vo
     $response->assertTooManyRequests()
         ->assertJson([
             'success' => false,
-            'error' => trans('forms::forms/shared.messages.error.rate_limit_exceeded'),
+            'error' => trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
         ]);
 
     $this->assertDatabaseCount(FormsTables::Entries, 0);
@@ -260,7 +260,7 @@ test('submit endpoint blocks custom handlers when rate limit is exceeded', funct
     $response = $this
         ->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
         ->postJson(
-            "/api/v1/forms/{$form->id}/submit",
+            "/nvl/api/v1/forms/{$form->id}/submit",
             ['subject' => 'Custom limited'],
             ['Origin' => 'https://landing.example.com']
         );
@@ -268,7 +268,7 @@ test('submit endpoint blocks custom handlers when rate limit is exceeded', funct
     $response->assertStatus(429)
         ->assertJson([
             'success' => false,
-            'error' => trans('forms::forms/shared.messages.error.rate_limit_exceeded'),
+            'error' => trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
         ]);
 
     $handlerRegistry->clear();
@@ -317,7 +317,7 @@ test('submit endpoint passes normalized payload to custom handlers', function ()
     app()->instance($handlerClass, $handler);
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         [
             'subject' => 'Normalized payload',
             'firstName' => 'Taylor',
@@ -376,7 +376,7 @@ test('submit endpoint exposes a warning when custom submission bookkeeping degra
         ->andThrow(new RuntimeException('Forms bookkeeping failed'));
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         ['subject' => 'Warning payload'],
         ['Origin' => 'https://landing.example.com']
     );
@@ -384,7 +384,7 @@ test('submit endpoint exposes a warning when custom submission bookkeeping degra
     $response->assertCreated()
         ->assertJson([
             'success' => true,
-            'warning' => trans('forms::forms/messages.warning.submission_recording_delayed'),
+            'warning' => trans('nvl-forms::forms/messages.warning.submission_recording_delayed'),
             'data' => ['entry_id' => 'custom-warning-api'],
         ]);
 
@@ -401,7 +401,7 @@ test('submit endpoint rejects requests missing required submission protection', 
     ]);
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         ['subject' => 'Missing token'],
         ['Origin' => 'https://landing.example.com']
     );
@@ -409,7 +409,7 @@ test('submit endpoint rejects requests missing required submission protection', 
     $response->assertStatus(419)
         ->assertJson([
             'success' => false,
-            'error' => trans('forms::forms/messages.error.csrf_failed'),
+            'error' => trans('nvl-forms::forms/messages.error.csrf_failed'),
         ]);
 });
 
@@ -426,7 +426,7 @@ test('submit endpoint accepts valid public token when submission protection is r
     $token = $tokenService->issue($form, now()->addMinutes(15));
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         [
             'subject' => 'Protected submission',
             'email' => 'protected@example.com',
@@ -440,7 +440,7 @@ test('submit endpoint accepts valid public token when submission protection is r
     $response->assertCreated()
         ->assertJson([
             'success' => true,
-            'message' => trans('forms::forms/messages.api.form_submitted'),
+            'message' => trans('nvl-forms::forms/messages.api.form_submitted'),
         ]);
 });
 
@@ -450,7 +450,7 @@ test('options endpoint exposes cors metadata', function (): void {
         'status' => FormStatus::ACTIVE,
     ]);
 
-    $response = $this->optionsJson("/api/v1/forms/{$form->id}/submit");
+    $response = $this->optionsJson("/nvl/api/v1/forms/{$form->id}/submit");
 
     $response->assertOk()
         ->assertJson([
@@ -462,7 +462,7 @@ test('options endpoint exposes cors metadata', function (): void {
 test('options endpoint returns not found for missing form', function (): void {
     $uuid = (string) Str::uuid();
 
-    $response = $this->optionsJson("/api/v1/forms/{$uuid}/submit");
+    $response = $this->optionsJson("/nvl/api/v1/forms/{$uuid}/submit");
 
     $response->assertStatus(404)
         ->assertJsonStructure(['error']);
@@ -474,7 +474,7 @@ test('schema endpoint returns validation metadata', function (): void {
         'status' => FormStatus::ACTIVE,
     ]);
 
-    $response = $this->getJson("/api/v1/forms/{$form->id}/schema");
+    $response = $this->getJson("/nvl/api/v1/forms/{$form->id}/schema");
 
     $response->assertOk()
         ->assertJson([
@@ -498,11 +498,11 @@ test('schema endpoint enforces restricted origin access like render and submit',
 
     $response = $this
         ->withHeader('Origin', 'https://blocked.example')
-        ->getJson("/api/v1/forms/{$form->id}/schema");
+        ->getJson("/nvl/api/v1/forms/{$form->id}/schema");
 
     $response->assertForbidden()
         ->assertJson([
-            'error' => trans('forms::forms/shared.messages.error.origin_not_allowed', ['origin' => 'blocked.example']),
+            'error' => trans('nvl-forms::forms/shared.messages.error.origin_not_allowed', ['origin' => 'blocked.example']),
             'origin' => 'blocked.example',
         ]);
 });
@@ -510,11 +510,11 @@ test('schema endpoint enforces restricted origin access like render and submit',
 test('schema endpoint responds with error when form is missing', function (): void {
     $uuid = (string) Str::uuid();
 
-    $response = $this->getJson("/api/v1/forms/{$uuid}/schema");
+    $response = $this->getJson("/nvl/api/v1/forms/{$uuid}/schema");
 
     $response->assertStatus(404)
         ->assertJson([
-            'error' => trans('forms::forms/messages.api.form_not_found'),
+            'error' => trans('nvl-forms::forms/messages.api.form_not_found'),
         ]);
 });
 
@@ -541,7 +541,7 @@ test('render endpoint merges additional data from render data registry', functio
     $registry = app(FormRenderDataRegistry::class);
     $registry->register('render-data-test', $provider);
 
-    $response = $this->withSession([])->getJson("/api/v1/forms/{$form->id}/render");
+    $response = $this->withSession([])->getJson("/nvl/api/v1/forms/{$form->id}/render");
 
     $response->assertOk()
         ->assertJson([
@@ -590,7 +590,7 @@ test('submit endpoint maps business exceptions to field errors via registry', fu
     $errorMapperRegistry->register($form->handle, $mapper);
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         ['email' => 'test@example.com'],
         ['Origin' => 'https://example.com']
     );
@@ -630,7 +630,7 @@ test('submit endpoint returns generic error when no mapper handles business exce
     app()->instance($handlerClass, $handler);
 
     $response = $this->postJson(
-        "/api/v1/forms/{$form->id}/submit",
+        "/nvl/api/v1/forms/{$form->id}/submit",
         ['email' => 'test@example.com'],
         ['Origin' => 'https://example.com']
     );

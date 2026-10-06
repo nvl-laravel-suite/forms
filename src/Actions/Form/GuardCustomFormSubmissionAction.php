@@ -102,7 +102,7 @@ final class GuardCustomFormSubmissionAction
             );
 
             throw new FormSubmissionRejectionException(
-                message: (string) trans('forms::forms/shared.messages.error.bot_detected'),
+                message: (string) trans('nvl-forms::forms/shared.messages.error.bot_detected'),
                 statusCode: 422,
             );
         }
@@ -127,7 +127,7 @@ final class GuardCustomFormSubmissionAction
             );
 
             throw new FormSubmissionRejectionException(
-                message: (string) trans('forms::forms/shared.messages.error.bot_detected'),
+                message: (string) trans('nvl-forms::forms/shared.messages.error.bot_detected'),
                 statusCode: 422,
             );
         }

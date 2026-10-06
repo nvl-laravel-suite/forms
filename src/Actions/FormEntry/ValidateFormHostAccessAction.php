@@ -37,11 +37,11 @@ final class ValidateFormHostAccessAction
         }
 
         if ($submittedFrom === null || $submittedFrom === '') {
-            throw new AccessDeniedHttpException((string) trans('forms::forms/messages.error.origin_required'));
+            throw new AccessDeniedHttpException((string) trans('nvl-forms::forms/messages.error.origin_required'));
         }
 
         if (! $this->originAccess->isOriginAllowed($formModel, $submittedFrom)) {
-            throw new AccessDeniedHttpException((string) trans('forms::forms/shared.messages.error.origin_not_allowed', ['origin' => $submittedFrom]));
+            throw new AccessDeniedHttpException((string) trans('nvl-forms::forms/shared.messages.error.origin_not_allowed', ['origin' => $submittedFrom]));
         }
     }
 }

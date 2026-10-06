@@ -17,7 +17,7 @@ return [
     |
     */
     'routes' => [
-        'prefix' => 'api/v1',
+        'prefix' => 'nvl/api/v1',
         'middleware' => ['api'],
         'management' => [
             'enabled' => false,
@@ -25,7 +25,7 @@ return [
         ],
         'public' => [
             'enabled' => false,
-            'middleware' => ['throttle:forms-public'],
+            'middleware' => ['throttle:nvl.forms.public'],
         ],
     ],
 

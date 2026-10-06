@@ -10,15 +10,15 @@ use Nvl\Forms\Models\Form;
 use Nvl\Tenancy\Http\Middleware\ResolvePublicTenant;
 
 $managementMiddleware = array_values(array_filter(
-    (array) config('forms.routes.management.middleware', ['auth']),
+    (array) config('nvl-forms.routes.management.middleware', ['auth']),
     static fn (mixed $value): bool => is_string($value) && $value !== '',
 ));
 $publicMiddleware = array_values(array_filter(
-    (array) config('forms.routes.public.middleware', ['throttle:forms-public']),
+    (array) config('nvl-forms.routes.public.middleware', ['throttle:nvl.forms.public']),
     static fn (mixed $value): bool => is_string($value) && $value !== '',
 ));
 
-if ((bool) config('forms.routes.management.enabled', false)) {
+if ((bool) config('nvl-forms.routes.management.enabled', false)) {
     Route::middleware($managementMiddleware)->group(function () {
         // Forms search/autocomplete endpoints
         Route::prefix('forms')->name('nvl.forms.management.')->group(function () {
@@ -58,19 +58,19 @@ if ((bool) config('forms.routes.management.enabled', false)) {
 }
 
 // Public API routes for iframe rendering and form submission
-if ((bool) config('forms.routes.public.enabled', false)) {
-    $tenantAdmissionMiddleware = (bool) config('tenancy.enabled', false)
+if ((bool) config('nvl-forms.routes.public.enabled', false)) {
+    $tenantAdmissionMiddleware = (bool) config('nvl-tenancy.enabled', false)
         ? [ResolvePublicTenant::class]
         : [];
     Route::prefix('forms')
         ->name('nvl.forms.public.')
-        ->middleware(array_values(array_unique([...$tenantAdmissionMiddleware, ...$publicMiddleware, 'forms-locale'])))
+        ->middleware(array_values(array_unique([...$tenantAdmissionMiddleware, ...$publicMiddleware, 'nvl.forms.locale'])))
         ->group(function () {
             // Form rendering endpoints (with host validation middleware)
-            Route::middleware(['validate-form-host'])
+            Route::middleware(['nvl.forms.validate-host'])
                 ->withoutMiddleware([FrameGuard::class])
                 ->group(function () {
-                    Route::middleware(['form-available'])->group(function () {
+                    Route::middleware(['nvl.forms.available'])->group(function () {
                         Route::get('/{form}/render', [FormRenderApiController::class, 'show'])
                             ->name('render');
                         Route::post('/{form}/submit', [FormRenderApiController::class, 'submit'])

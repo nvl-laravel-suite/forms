@@ -41,7 +41,7 @@ test('check form rate limit action throws when ip is blocked', function (): void
         ->andReturn(FormRateLimitAttemptResult::denied($rateLimit, 900));
 
     $this->expectException(TooManyRequestsHttpException::class);
-    $this->expectExceptionMessage(trans('forms::forms/shared.messages.error.rate_limit_exceeded'));
+    $this->expectExceptionMessage(trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'));
 
     (new CheckFormRateLimitAction($rateLimitService))->execute($form, '127.0.0.1');
 });

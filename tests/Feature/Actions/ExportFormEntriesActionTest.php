@@ -25,6 +25,8 @@ test('export form entries action writes csv and updates progress tracking', func
     Event::fake([FormChangedEvent::class]);
     $user = TestFormsUser::factory()->create(['name' => 'Nicolas Vlachos']);
     $form = Form::factory()->create(['handle' => 'contact-form']);
+    $foreignProgressKey = 'export_progress_'.$user->getAuthIdentifier().'_'.$form->id.'_host';
+    Cache::put($foreignProgressKey, ['status' => 'host-export'], 60);
 
     FormEntry::factory()->for($form)->create([
         'subject' => '=SUM(1,2)',
@@ -67,9 +69,10 @@ test('export form entries action writes csv and updates progress tracking', func
             && $event->context['entry_count'] === 2,
     );
 
-    // Progress tracking uses a ULID-suffixed key for concurrency safety.
-    // Verifying CSV output and file creation covers the export functionality;
-    // progress state is an internal implementation detail.
+    $exportId = explode('_', basename($relativePath), 2)[0];
+    $progressKey = 'nvl:forms:export-progress:'.$user->getAuthIdentifier().':'.$form->id.':'.$exportId;
+    expect(Cache::get($progressKey))->toBe(['status' => 'completed', 'progress' => 100])
+        ->and(Cache::get($foreignProgressKey))->toBe(['status' => 'host-export']);
 });
 
 test('export form entries action throws when authentication missing', function (): void {
@@ -78,7 +81,7 @@ test('export form entries action throws when authentication missing', function (
     FormEntry::factory()->for($form)->create();
 
     $this->expectException(Exception::class);
-    $this->expectExceptionMessage(trans('forms::forms/shared.messages.error.authentication_required'));
+    $this->expectExceptionMessage(trans('nvl-forms::forms/shared.messages.error.authentication_required'));
 
     app(ExportFormEntriesAction::class)->execute($form);
 });
@@ -87,8 +90,8 @@ test('export form entries action rejects empty datasets', function (): void {
     $user = TestFormsUser::factory()->create();
     $form = Form::factory()->create();
 
-    $message = trans('forms::forms/shared.messages.error.no_export_data', [
-        'items' => trans('forms::entries/general.entities.plural'),
+    $message = trans('nvl-forms::forms/shared.messages.error.no_export_data', [
+        'items' => trans('nvl-forms::entries/general.entities.plural'),
     ]);
 
     $this->expectException(Exception::class);

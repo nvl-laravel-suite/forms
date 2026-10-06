@@ -29,7 +29,7 @@ test('every literal package translation key has a standalone English value', fun
         preg_match_all('/\btrans\(\s*[\'"]([^\'"]+)[\'"]/', $contents, $matches);
 
         foreach ($matches[1] as $key) {
-            if (str_starts_with($key, 'forms::') && ! str_contains($key, '{$') && ! str_ends_with($key, '.')) {
+            if (str_starts_with($key, 'nvl-forms::') && ! str_contains($key, '{$') && ! str_ends_with($key, '.')) {
                 $keys[$key] = true;
             }
         }
@@ -46,7 +46,7 @@ test('every literal package translation key has a standalone English value', fun
         ...CorsPolicy::cases(),
         ...FormAnalyticEventType::cases(),
     ] as $case) {
-        expect($case->getLabel())->not->toContain('forms::');
+        expect($case->getLabel())->not->toContain('nvl-forms::');
     }
 });
 

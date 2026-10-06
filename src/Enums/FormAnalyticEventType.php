@@ -22,12 +22,12 @@ enum FormAnalyticEventType: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::VIEW => (string) trans('forms::forms/forms.options.event_types.view'),
-            self::SUBMISSION => (string) trans('forms::forms/forms.options.event_types.submission'),
-            self::SPAM_BLOCKED => (string) trans('forms::forms/forms.options.event_types.spam_blocked'),
-            self::RATE_LIMITED => (string) trans('forms::forms/forms.options.event_types.rate_limited'),
-            self::ERROR => (string) trans('forms::forms/forms.options.event_types.error'),
-            self::VALIDATION_FAILED => (string) trans('forms::forms/forms.options.event_types.validation_failed'),
+            self::VIEW => (string) trans('nvl-forms::forms/forms.options.event_types.view'),
+            self::SUBMISSION => (string) trans('nvl-forms::forms/forms.options.event_types.submission'),
+            self::SPAM_BLOCKED => (string) trans('nvl-forms::forms/forms.options.event_types.spam_blocked'),
+            self::RATE_LIMITED => (string) trans('nvl-forms::forms/forms.options.event_types.rate_limited'),
+            self::ERROR => (string) trans('nvl-forms::forms/forms.options.event_types.error'),
+            self::VALIDATION_FAILED => (string) trans('nvl-forms::forms/forms.options.event_types.validation_failed'),
         };
     }
 
@@ -37,12 +37,12 @@ enum FormAnalyticEventType: string
     public function description(): string
     {
         return match ($this) {
-            self::VIEW => (string) trans('forms::forms/forms.descriptions.event_types.view'),
-            self::SUBMISSION => (string) trans('forms::forms/forms.descriptions.event_types.submission'),
-            self::SPAM_BLOCKED => (string) trans('forms::forms/forms.descriptions.event_types.spam_blocked'),
-            self::RATE_LIMITED => (string) trans('forms::forms/forms.descriptions.event_types.rate_limited'),
-            self::ERROR => (string) trans('forms::forms/forms.descriptions.event_types.error'),
-            self::VALIDATION_FAILED => (string) trans('forms::forms/forms.descriptions.event_types.validation_failed'),
+            self::VIEW => (string) trans('nvl-forms::forms/forms.descriptions.event_types.view'),
+            self::SUBMISSION => (string) trans('nvl-forms::forms/forms.descriptions.event_types.submission'),
+            self::SPAM_BLOCKED => (string) trans('nvl-forms::forms/forms.descriptions.event_types.spam_blocked'),
+            self::RATE_LIMITED => (string) trans('nvl-forms::forms/forms.descriptions.event_types.rate_limited'),
+            self::ERROR => (string) trans('nvl-forms::forms/forms.descriptions.event_types.error'),
+            self::VALIDATION_FAILED => (string) trans('nvl-forms::forms/forms.descriptions.event_types.validation_failed'),
         };
     }
 

@@ -60,9 +60,9 @@ abstract class FormsTestCase extends Orchestra
      */
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('translatable.locales', ['en', 'bg']);
-        $app['config']->set('forms.routes.management.enabled', true);
-        $app['config']->set('forms.routes.public.enabled', true);
-        $app['config']->set('forms.authorization.gate', 'manage-forms');
+        $app['config']->set('nvl-translatable.locales', ['en', 'bg']);
+        $app['config']->set('nvl-forms.routes.management.enabled', true);
+        $app['config']->set('nvl-forms.routes.public.enabled', true);
+        $app['config']->set('nvl-forms.authorization.gate', 'manage-forms');
     }
 }

@@ -8,15 +8,15 @@ use Nvl\Forms\Providers\FormsServiceProvider;
 
 test('distributed route defaults are disabled independently', function (): void {
     /** @var array<string, mixed> $defaults */
-    $defaults = require __DIR__.'/../../config/forms.php';
+    $defaults = require __DIR__.'/../../config/nvl-forms.php';
 
     expect(data_get($defaults, 'routes.management.enabled'))->toBeFalse()
         ->and(data_get($defaults, 'routes.public.enabled'))->toBeFalse()
-        ->and(data_get($defaults, 'routes.prefix'))->toBe('api/v1');
+        ->and(data_get($defaults, 'routes.prefix'))->toBe('nvl/api/v1');
 });
 
 test('consumer configuration wins while omitted nested package defaults remain available', function (): void {
-    config()->set('forms', [
+    config()->set('nvl-forms', [
         'routes' => [
             'prefix' => 'consumer/forms',
         ],
@@ -29,18 +29,18 @@ test('consumer configuration wins while omitted nested package defaults remain a
 
     (new FormsServiceProvider(app()))->register();
 
-    expect(config('forms.routes.prefix'))->toBe('consumer/forms')
-        ->and(config('forms.routes.management.enabled'))->toBeFalse()
-        ->and(config('forms.routes.public.enabled'))->toBeFalse()
-        ->and(config('forms.security.rate_limit.max_attempts'))->toBe(7)
-        ->and(config('forms.security.rate_limit.decay_minutes'))->toBe(1);
+    expect(config('nvl-forms.routes.prefix'))->toBe('consumer/forms')
+        ->and(config('nvl-forms.routes.management.enabled'))->toBeFalse()
+        ->and(config('nvl-forms.routes.public.enabled'))->toBeFalse()
+        ->and(config('nvl-forms.security.rate_limit.max_attempts'))->toBe(7)
+        ->and(config('nvl-forms.security.rate_limit.decay_minutes'))->toBe(1);
 });
 
 test('the public route limiter uses the documented consumer configuration', function (): void {
-    config()->set('forms.security.rate_limit.max_attempts', 7);
-    config()->set('forms.security.rate_limit.decay_minutes', 2);
+    config()->set('nvl-forms.security.rate_limit.max_attempts', 7);
+    config()->set('nvl-forms.security.rate_limit.decay_minutes', 2);
 
-    $limiter = RateLimiter::limiter('forms-public');
+    $limiter = RateLimiter::limiter('nvl.forms.public');
 
     expect($limiter)->toBeCallable();
 

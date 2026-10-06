@@ -35,7 +35,7 @@ final class BoundedSubmissionPayload implements ValidationRule
         }
 
         if ($bytes > FormsConfiguration::positiveInteger(
-            'forms.submission.max_payload_bytes',
+            'nvl-forms.submission.max_payload_bytes',
             262144,
         )) {
             $fail('The :attribute field is too large.');
@@ -45,11 +45,11 @@ final class BoundedSubmissionPayload implements ValidationRule
 
         [$depth, $items] = $this->measure($value);
 
-        if ($depth > FormsConfiguration::positiveInteger('forms.submission.max_depth', 8)) {
+        if ($depth > FormsConfiguration::positiveInteger('nvl-forms.submission.max_depth', 8)) {
             $fail('The :attribute field is nested too deeply.');
         }
 
-        if ($items > FormsConfiguration::positiveInteger('forms.submission.max_items', 250)) {
+        if ($items > FormsConfiguration::positiveInteger('nvl-forms.submission.max_items', 250)) {
             $fail('The :attribute field contains too many items.');
         }
     }

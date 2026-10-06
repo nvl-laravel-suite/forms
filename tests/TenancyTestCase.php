@@ -30,10 +30,10 @@ abstract class TenancyTestCase extends Orchestra
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('tenancy.enabled', true);
-        $app['config']->set('tenancy.profile', 'application');
-        $app['config']->set('tenancy.resources', ['forms' => 'tenant']);
-        $app['config']->set('forms.routes.public.enabled', true);
+        $app['config']->set('nvl-tenancy.enabled', true);
+        $app['config']->set('nvl-tenancy.profile', 'application');
+        $app['config']->set('nvl-tenancy.resources', ['forms' => 'tenant']);
+        $app['config']->set('nvl-forms.routes.public.enabled', true);
         TenantScenario::bind($app);
     }
 

@@ -157,7 +157,7 @@ final class CustomSubmissionReceiptService
         }
 
         throw new FormSubmissionRejectionException(
-            message: (string) trans('forms::forms/messages.error.submission_conflict'),
+            message: (string) trans('nvl-forms::forms/messages.error.submission_conflict'),
             statusCode: 409,
         );
     }
@@ -171,14 +171,14 @@ final class CustomSubmissionReceiptService
     ): CustomSubmissionClaim {
         if (! hash_equals($receipt->payload_digest, $payloadDigest)) {
             throw new FormSubmissionRejectionException(
-                message: (string) trans('forms::forms/messages.error.idempotency_conflict'),
+                message: (string) trans('nvl-forms::forms/messages.error.idempotency_conflict'),
                 statusCode: 409,
             );
         }
 
         if ($receipt->state !== FormSubmissionReceiptState::Completed) {
             throw new FormSubmissionRejectionException(
-                message: (string) trans('forms::forms/messages.error.submission_conflict'),
+                message: (string) trans('nvl-forms::forms/messages.error.submission_conflict'),
                 statusCode: 409,
             );
         }
@@ -208,7 +208,7 @@ final class CustomSubmissionReceiptService
     private function throwDuplicateRegistration(): never
     {
         throw new FormSubmissionRejectionException(
-            message: (string) trans('forms::forms/messages.error.registration_already_exists'),
+            message: (string) trans('nvl-forms::forms/messages.error.registration_already_exists'),
             statusCode: 409,
         );
     }

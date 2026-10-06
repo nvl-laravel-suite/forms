@@ -72,7 +72,7 @@ final class FormSuggestion extends Data
         $sublabel = null;
 
         if (! empty($form->handle)) {
-            $sublabel = (string) trans('forms::forms/general.card.handle', [
+            $sublabel = (string) trans('nvl-forms::forms/general.card.handle', [
                 'handle' => $form->handle,
             ]);
         }

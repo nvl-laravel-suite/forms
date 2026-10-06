@@ -11,11 +11,11 @@ See the [installation and publishing guide](https://github.com/nvl-laravel-suite
 
 | Item | Value |
 |---|---|
-| Installed through | `composer require nvl/forms:^2.0` |
+| Installed through | `composer require nvl/forms:^5.0` |
 | Module identifier | `nvl/forms` |
 | PHP namespace | `Nvl\Forms` |
 | Service provider | `Nvl\Forms\Providers\FormsServiceProvider` |
-| Configuration | `config/forms.php` |
+| Configuration | `config/nvl-forms.php` |
 
 ## Purpose
 
@@ -26,25 +26,25 @@ Forms depends on `nvl/core`, `nvl/filterable`, `nvl/tenancy`, and `nvl/translata
 ## Requirements and installation
 
 ```bash
-composer require nvl/forms:^2.0
+composer require nvl/forms:^5.0
 php artisan migrate
 ```
 
-Laravel discovers `Nvl\Forms\Providers\FormsServiceProvider`. Clean-install migrations run by default. For an application with existing form tables, set `forms.migrations.enabled` to `false`, run the doctor, and follow [UPGRADING.md](UPGRADING.md) before enabling migrations.
+Laravel discovers `Nvl\Forms\Providers\FormsServiceProvider`. Clean-install migrations run by default. For an application with existing form tables, set `nvl-forms.migrations.enabled` to `false`, run the doctor, and follow [UPGRADING.md](UPGRADING.md) before enabling migrations.
 
 Optional publish tags:
 
 ```bash
-php artisan vendor:publish --tag=forms-config
-php artisan vendor:publish --tag=forms-migrations
-php artisan vendor:publish --tag=forms-translations
-php artisan vendor:publish --tag=forms-skills
+php artisan vendor:publish --tag=nvl-forms-config
+php artisan vendor:publish --tag=nvl-forms-migrations
+php artisan vendor:publish --tag=nvl-forms-translations
+php artisan vendor:publish --tag=nvl-forms-skills
 ```
 
 Choose exactly one migration owner. For automatic vendor loading, leave
-`forms.migrations.enabled=true` and do not publish `forms-migrations`. For
-host-owned migrations, publish `forms-migrations`, set
-`forms.migrations.enabled=false` before the first migration, and maintain the
+`nvl-forms.migrations.enabled=true` and do not publish `nvl-forms-migrations`. For
+host-owned migrations, publish `nvl-forms-migrations`, set
+`nvl-forms.migrations.enabled=false` before the first migration, and maintain the
 copied files as application migrations. Never run both sources; Laravel
 retimestamps published migrations.
 
@@ -170,7 +170,7 @@ Both route surfaces are disabled by default:
 
 ```php
 'routes' => [
-    'prefix' => 'api/v1',
+    'prefix' => 'nvl/api/v1',
     'middleware' => ['api'],
     'management' => [
         'enabled' => false,
@@ -178,7 +178,7 @@ Both route surfaces are disabled by default:
     ],
     'public' => [
         'enabled' => false,
-        'middleware' => ['throttle:forms-public'],
+        'middleware' => ['throttle:nvl.forms.public'],
     ],
 ],
 'authorization' => [
@@ -188,7 +188,7 @@ Both route surfaces are disabled by default:
 
 Management routes use names beginning with `nvl.forms.management.`. Public render, schema, preflight, and submit routes use `nvl.forms.public.` and accept either a UUID or form handle. The `lang` query parameter selects a supported content locale. Availability, locale, origin, CORS, and throttling middleware apply consistently across the public surface.
 
-Management authorization runs in route middleware before request DTO validation and is repeated at the controller boundary. The policy fails closed until `forms.authorization.gate` names a registered gate. The package does not assume an application middleware alias, frontend path, view directory, or user model.
+Management authorization runs in route middleware before request DTO validation and is repeated at the controller boundary. The policy fails closed until `nvl-forms.authorization.gate` names a registered gate. The package does not assume an application middleware alias, frontend path, view directory, or user model.
 
 ## Public render and schema contracts
 
@@ -208,7 +208,7 @@ Queue large exports and retention jobs in the consuming application. Do not plac
 
 Package-owned rows use UUID primary keys. The schema separates forms, form translations, entries, custom-handler submission receipts, analytics, allowed origins, and rate-limit state. Lookup, status, availability, form/locale, idempotency, registration-fingerprint, and security query paths are indexed. Spam score is stored as a numeric zero-to-one-hundred value.
 
-Set `forms.migrations.enabled=false` only for controlled adoption. A pre-existing table is not evidence that its columns, key types, indexes, or constraints match v1.
+Set `nvl-forms.migrations.enabled=false` only for controlled adoption. A pre-existing table is not evidence that its columns, key types, indexes, or constraints match v1.
 
 ## Commands
 
@@ -257,7 +257,7 @@ Run `php artisan nvl:doctor --strict --format=json` to combine the read-only che
 
 ## Next major: isolated schema identities
 
-Use `forms.tables.<logical-key>` for every table and `forms.connection` for its database connection. Null connection inherits `nvl-core.connection`, then Laravel's default. Tables are resolved at runtime by the package table definition helper.
+Use `nvl-forms.tables.<logical-key>` for every table and `nvl-forms.connection` for its database connection. Null connection inherits `nvl-core.connection`, then Laravel's default. Tables are resolved at runtime by the package table definition helper.
 
 | Logical key | New default | Previous name |
 | --- | --- | --- |
@@ -269,4 +269,10 @@ Use `forms.tables.<logical-key>` for every table and `forms.connection` for its 
 | `analytics` | `nvl_forms_analytics` | `form_analytics` |
 | `rate_limits` | `nvl_forms_rate_limits` | `form_rate_limits` |
 
-Migration filenames contain `nvl_forms_`. Existing installations must complete the upgrade in `UPGRADING.md` before running new migrations. A pending creator rejects an existing target before any migration in the batch runs; legacy storage with old history needs an ownership decision.
+Migration filenames contain `nvl_forms_`. Existing installations must complete the upgrade in `UPGRADING.md` before running new migrations. A pending creator rejects an existing target before that owned migration runs; use `nvl:schema:preflight` for an explicit whole-batch check; legacy storage with old history needs an ownership decision.
+
+Owned cache and lock identities follow `nvl:<package>:<purpose>:…`. Export progress entries use `nvl:forms:export-progress:<actor>:<form>:<export>` instead of `export_progress_...`. Update any host progress reader to this prefix; completed CSV paths and export identities are unchanged. Generic host entries are never copied or removed. See [UPGRADING](UPGRADING.md) for coordinated worker and lock lease cutover.
+
+## Canonical configuration ownership
+
+Use `nvl-forms` settings in `config/nvl-forms.php` and canonical package environment names. Old generic roots are foreign unless an upgrading NVL host explicitly selects them in Core's default-off compatibility. Canonical false/null/empty values win; no old roots are populated or written back. Keep logical package/resource IDs unchanged. Review [Core's rename inventory and cache/worker cutover](https://github.com/nvl-laravel-suite/core/blob/main/UPGRADING.md#major-5-canonical-configuration-and-environment).

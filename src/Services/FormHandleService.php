@@ -69,7 +69,7 @@ final class FormHandleService
     {
         if ($this->handleExists($handle, $excludeFormId)) {
             throw new Exception(
-                (string) trans('forms::forms/messages.error.handle_exists', ['handle' => $handle])
+                (string) trans('nvl-forms::forms/messages.error.handle_exists', ['handle' => $handle])
             );
         }
     }

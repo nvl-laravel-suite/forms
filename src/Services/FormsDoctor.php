@@ -193,9 +193,9 @@ final readonly class FormsDoctor
      */
     private function routeChecks(): array
     {
-        $managementEnabled = (bool) config('forms.routes.management.enabled', false);
+        $managementEnabled = (bool) config('nvl-forms.routes.management.enabled', false);
         $managementMiddleware = $this->middleware('management');
-        $gate = config('forms.authorization.gate');
+        $gate = config('nvl-forms.authorization.gate');
         $gateReady = is_string($gate) && $gate !== '' && Gate::has($gate);
         $hasAuthentication = collect($managementMiddleware)->contains(
             static fn (string $middleware): bool => preg_match('/(?:^|\\\\|:)auth(?:$|:)/i', $middleware) === 1
@@ -203,7 +203,7 @@ final readonly class FormsDoctor
                 || str_contains(strtolower($middleware), 'passport'),
         );
 
-        $publicEnabled = (bool) config('forms.routes.public.enabled', false);
+        $publicEnabled = (bool) config('nvl-forms.routes.public.enabled', false);
         $publicMiddleware = $this->middleware('public');
         $hasThrottle = collect($publicMiddleware)->contains(
             static fn (string $middleware): bool => str_starts_with($middleware, 'throttle:'),
@@ -354,7 +354,7 @@ final readonly class FormsDoctor
     private function middleware(string $surface): array
     {
         return array_values(array_filter(
-            (array) config("forms.routes.{$surface}.middleware", []),
+            (array) config("nvl-forms.routes.{$surface}.middleware", []),
             static fn (mixed $item): bool => is_string($item) && $item !== '',
         ));
     }

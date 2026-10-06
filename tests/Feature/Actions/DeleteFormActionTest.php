@@ -21,7 +21,7 @@ test('delete form action throws when form has entries', function (): void {
     FormEntry::factory()->for($form)->create();
 
     $this->expectException(Exception::class);
-    $this->expectExceptionMessage(trans('forms::forms/messages.error.cannot_delete_with_entries'));
+    $this->expectExceptionMessage(trans('nvl-forms::forms/messages.error.cannot_delete_with_entries'));
 
     app(DeleteFormAction::class)->execute($form);
 });

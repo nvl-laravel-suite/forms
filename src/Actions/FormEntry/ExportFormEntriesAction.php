@@ -59,8 +59,8 @@ final class ExportFormEntriesAction
 
         if ($entries->isEmpty()) {
             throw new Exception(
-                (string) trans('forms::forms/shared.messages.error.no_export_data', [
-                    'items' => (string) trans('forms::entries/general.entities.plural'),
+                (string) trans('nvl-forms::forms/shared.messages.error.no_export_data', [
+                    'items' => (string) trans('nvl-forms::entries/general.entities.plural'),
                 ])
             );
         }
@@ -68,7 +68,7 @@ final class ExportFormEntriesAction
         $rawActorId = $actor?->getAuthIdentifier();
         $actorId = is_string($rawActorId) || is_int($rawActorId) ? $rawActorId : null;
         $exportId = Str::ulid()->toString();
-        $progressKey = 'export_progress_'.($actorId !== null ? (string) $actorId : 'guest').'_'.$form->id.'_'.$exportId;
+        $progressKey = 'nvl:forms:export-progress:'.($actorId !== null ? (string) $actorId : 'guest').':'.$form->id.':'.$exportId;
 
         Cache::put($progressKey, [
             'status' => 'started',
@@ -158,11 +158,11 @@ final class ExportFormEntriesAction
     private function validateExportPermissions(Form $form, ?Authenticatable $actor = null): void
     {
         if ($actor === null) {
-            throw new Exception((string) trans('forms::forms/shared.messages.error.authentication_required'));
+            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.authentication_required'));
         }
 
         if (Gate::forUser($actor)->denies('export', $form)) {
-            throw new Exception((string) trans('forms::forms/shared.messages.error.permission_denied'));
+            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.permission_denied'));
         }
     }
 

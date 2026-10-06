@@ -42,7 +42,7 @@ test('get form select options action ignores ambient request filters', function 
         'submissions_count' => 10,
     ]);
 
-    app()->instance('request', Request::create('/api/v1/forms/select', 'GET', [
+    app()->instance('request', Request::create('/nvl/api/v1/forms/select', 'GET', [
         'q' => 'Private',
         'publicOnly' => false,
     ]));

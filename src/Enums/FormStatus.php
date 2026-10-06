@@ -20,10 +20,10 @@ enum FormStatus: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::DRAFT => (string) trans('forms::forms/forms.options.status.draft'),
-            self::ACTIVE => (string) trans('forms::forms/forms.options.status.active'),
-            self::PAUSED => (string) trans('forms::forms/forms.options.status.paused'),
-            self::ARCHIVED => (string) trans('forms::forms/forms.options.status.archived'),
+            self::DRAFT => (string) trans('nvl-forms::forms/forms.options.status.draft'),
+            self::ACTIVE => (string) trans('nvl-forms::forms/forms.options.status.active'),
+            self::PAUSED => (string) trans('nvl-forms::forms/forms.options.status.paused'),
+            self::ARCHIVED => (string) trans('nvl-forms::forms/forms.options.status.archived'),
         };
     }
 
@@ -33,10 +33,10 @@ enum FormStatus: string
     public function description(): string
     {
         return match ($this) {
-            self::DRAFT => (string) trans('forms::forms/forms.descriptions.status.draft'),
-            self::ACTIVE => (string) trans('forms::forms/forms.descriptions.status.active'),
-            self::PAUSED => (string) trans('forms::forms/forms.descriptions.status.paused'),
-            self::ARCHIVED => (string) trans('forms::forms/forms.descriptions.status.archived'),
+            self::DRAFT => (string) trans('nvl-forms::forms/forms.descriptions.status.draft'),
+            self::ACTIVE => (string) trans('nvl-forms::forms/forms.descriptions.status.active'),
+            self::PAUSED => (string) trans('nvl-forms::forms/forms.descriptions.status.paused'),
+            self::ARCHIVED => (string) trans('nvl-forms::forms/forms.descriptions.status.archived'),
         };
     }
 

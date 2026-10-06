@@ -43,7 +43,7 @@ final class DeleteFormEntryAction
 
             $deleted = $formEntry->delete();
             if ($deleted !== true) {
-                throw new Exception((string) trans('forms::forms/shared.messages.error.delete_failed', ['item' => (string) trans('forms::entries/general.entities.singular')]));
+                throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.delete_failed', ['item' => (string) trans('nvl-forms::entries/general.entities.singular')]));
             }
 
             if ($wasSpam && $form->spam_count > 0) {
@@ -87,7 +87,7 @@ final class DeleteFormEntryAction
     {
         // Check if user has permission to delete this entry
         if ($actor !== null && method_exists($actor, 'can') && ! $actor->can('delete', $formEntry)) {
-            throw new Exception((string) trans('forms::forms/shared.messages.error.permission_denied'));
+            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.permission_denied'));
         }
 
         $this->deletionPolicy->authorize($formEntry, $actor);

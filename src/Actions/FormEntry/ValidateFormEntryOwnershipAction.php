@@ -24,9 +24,9 @@ final class ValidateFormEntryOwnershipAction
     public function execute(Form $form, FormEntry $entry): void
     {
         if ($entry->form_id !== $form->id) {
-            throw new FormOwnershipException((string) trans('forms::forms/shared.messages.error.ownership_mismatch', [
-                'item' => (string) trans('forms::entries/general.entities.singular'),
-                'parent' => (string) trans('forms::forms/general.entities.singular'),
+            throw new FormOwnershipException((string) trans('nvl-forms::forms/shared.messages.error.ownership_mismatch', [
+                'item' => (string) trans('nvl-forms::entries/general.entities.singular'),
+                'parent' => (string) trans('nvl-forms::forms/general.entities.singular'),
             ]));
         }
     }

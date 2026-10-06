@@ -47,7 +47,7 @@ final class ValidateFormSubmissionProtectionAction
         }
 
         throw new FormSubmissionRejectionException(
-            message: (string) trans('forms::forms/messages.error.csrf_failed'),
+            message: (string) trans('nvl-forms::forms/messages.error.csrf_failed'),
             statusCode: 419,
         );
     }
