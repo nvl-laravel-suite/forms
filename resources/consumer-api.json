@@ -1,0 +1,909 @@
+{
+    "schema_version": 1,
+    "package": "nvl/forms",
+    "psr4": {
+        "Nvl\\Forms\\": "src",
+        "Nvl\\Forms\\Database\\Factories\\": "database/factories",
+        "Nvl\\Forms\\Database\\Seeders\\": "database/seeders"
+    },
+    "symbols": {
+        "Nvl\\Forms\\Actions\\FormEntry\\AnonymizeFormEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/AnonymizeFormEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\CreateFormEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/CreateFormEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\DeleteFormEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/DeleteFormEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\ExportFormEntriesAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/ExportFormEntriesAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\ListFormEntriesAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/ListFormEntriesAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\MarkFormEntryAsLegitimateAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/MarkFormEntryAsLegitimateAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\MarkFormEntryAsSpamAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/MarkFormEntryAsSpamAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\RedactFormEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/RedactFormEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\FormEntry\\ShowFormEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/FormEntry/ShowFormEntryAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\CreateFormAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/CreateFormAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\DeleteFormAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/DeleteFormAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\DuplicateFormAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/DuplicateFormAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\GetFormAnalyticsBundleAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/GetFormAnalyticsBundleAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\GetFormAnalyticsSummaryAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/GetFormAnalyticsSummaryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\GetFormForRenderAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/GetFormForRenderAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\GetFormSelectOptionsAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/GetFormSelectOptionsAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\GetFormSuggestionsAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/GetFormSuggestionsAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\GetFormValidationSchemaAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/GetFormValidationSchemaAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\HandlePublicFormSubmissionAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/HandlePublicFormSubmissionAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\ListFormsAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/ListFormsAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\SearchFormsAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/SearchFormsAction.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\ShowFormAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/ShowFormAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Actions\\Form\\UpdateFormAction": {
+            "kind": "class",
+            "file": "src/Actions/Form/UpdateFormAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\CreateFormContract": {
+            "kind": "interface",
+            "file": "src/Contracts/CreateFormContract.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\CreateFormEntryContract": {
+            "kind": "interface",
+            "file": "src/Contracts/CreateFormEntryContract.php",
+            "methods": [
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\CustomFormHandler": {
+            "kind": "interface",
+            "file": "src/Contracts/CustomFormHandler.php",
+            "methods": [
+                "handle"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\EntrySubmissionCallback": {
+            "kind": "interface",
+            "file": "src/Contracts/EntrySubmissionCallback.php",
+            "methods": [
+                "after"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\FormEntryDeletionPolicy": {
+            "kind": "interface",
+            "file": "src/Contracts/FormEntryDeletionPolicy.php",
+            "methods": [
+                "authorize"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\FormEntryPrivacyPolicy": {
+            "kind": "interface",
+            "file": "src/Contracts/FormEntryPrivacyPolicy.php",
+            "methods": [
+                "authorize"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\FormErrorMapper": {
+            "kind": "interface",
+            "file": "src/Contracts/FormErrorMapper.php",
+            "methods": [
+                "map"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\FormRateLimiter": {
+            "kind": "interface",
+            "file": "src/Contracts/FormRateLimiter.php",
+            "methods": [
+                "blockIpAddress",
+                "cleanupExpiredRecords",
+                "consumeSubmissionAttempt",
+                "getRateLimitStatus",
+                "isRateLimited",
+                "recordSubmissionAttempt",
+                "unblockIpAddress",
+                "whitelistIpAddress"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\FormRenderDataProvider": {
+            "kind": "interface",
+            "file": "src/Contracts/FormRenderDataProvider.php",
+            "methods": [
+                "getData",
+                "getTranslations"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\FormSpamDetector": {
+            "kind": "interface",
+            "file": "src/Contracts/FormSpamDetector.php",
+            "methods": [
+                "calculateSpamScore",
+                "checkHoneypot",
+                "shouldBlockSubmission",
+                "shouldFlagSubmission"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Contracts\\TenantEntrySubmissionCallback": {
+            "kind": "interface",
+            "file": "src/Contracts/TenantEntrySubmissionCallback.php",
+            "methods": [
+                "after"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\Display\\PublicFormSchemaPayload": {
+            "kind": "class",
+            "file": "src/Data/Display/PublicFormSchemaPayload.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "attributes",
+                "fields",
+                "formId",
+                "messages",
+                "name",
+                "validationRules"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\Display\\PublicSubmissionFieldPayload": {
+            "kind": "class",
+            "file": "src/Data/Display/PublicSubmissionFieldPayload.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "key",
+                "required",
+                "rules"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\FormCorsSettings": {
+            "kind": "class",
+            "file": "src/Data/FormCorsSettings.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "allowCredentials",
+                "allowWildcards",
+                "allowedHeaders",
+                "allowedMethods",
+                "maxAge",
+                "policy"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\FormEntryPayload": {
+            "kind": "class",
+            "file": "src/Data/FormEntryPayload.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "address",
+                "body",
+                "createdAt",
+                "email",
+                "firstName",
+                "form",
+                "formId",
+                "id",
+                "ipAddress",
+                "isSpam",
+                "lastName",
+                "phone",
+                "securityFlags",
+                "sessionId",
+                "spamScore",
+                "subject",
+                "submissionData",
+                "submittedFrom",
+                "updatedAt",
+                "userAgent"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\FormPayload": {
+            "kind": "class",
+            "file": "src/Data/FormPayload.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "allowMultipleRegistrations",
+                "allowedOrigins",
+                "availableFrom",
+                "availableUntil",
+                "corsSettings",
+                "createdAt",
+                "dateRestricted",
+                "description",
+                "enableHoneypot",
+                "enableRateLimiting",
+                "firstUsedAt",
+                "handle",
+                "id",
+                "lastUsedAt",
+                "name",
+                "options",
+                "rateLimitPerHour",
+                "requireCsrf",
+                "resolvement",
+                "restrictPublicAccess",
+                "revision",
+                "spamCount",
+                "status",
+                "submissionsCount",
+                "translations",
+                "type",
+                "updatedAt",
+                "viewsCount"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\FormSelectOptionItem": {
+            "kind": "class",
+            "file": "src/Data/FormSelectOptionItem.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "id",
+                "label",
+                "sublabel"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\FormSubmissionCallbackContext": {
+            "kind": "class",
+            "file": "src/Data/FormSubmissionCallbackContext.php",
+            "methods": [
+                "__construct"
+            ],
+            "properties": [
+                "correlationId",
+                "locale",
+                "origin",
+                "tenantId"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\Mutations\\MutateFormPayload": {
+            "kind": "class",
+            "file": "src/Data/Mutations/MutateFormPayload.php",
+            "methods": [
+                "__construct",
+                "attributes",
+                "messages",
+                "rules",
+                "rulesForCreate",
+                "rulesForUpdate",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages",
+                "validateForCreate",
+                "validateForUpdate"
+            ],
+            "properties": [
+                "allowMultipleRegistrations",
+                "allowedOrigins",
+                "availableFrom",
+                "availableUntil",
+                "corsSettings",
+                "dateRestricted",
+                "enableHoneypot",
+                "enableRateLimiting",
+                "expectedRevision",
+                "handle",
+                "options",
+                "rateLimitPerHour",
+                "requireCsrf",
+                "resolvement",
+                "restrictPublicAccess",
+                "status",
+                "translationMode",
+                "translations",
+                "type"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Data\\Mutations\\SubmitFormPayload": {
+            "kind": "class",
+            "file": "src/Data/Mutations/SubmitFormPayload.php",
+            "methods": [
+                "__construct",
+                "attributes",
+                "messages",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "address",
+                "body",
+                "email",
+                "firstName",
+                "lastName",
+                "phone",
+                "subject",
+                "submissionData"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Enums\\CorsPolicy": {
+            "kind": "enum",
+            "file": "src/Enums/CorsPolicy.php",
+            "methods": [
+                "cases",
+                "description",
+                "from",
+                "getDefaultSettings",
+                "getLabel",
+                "options",
+                "supportsWildcards",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Custom",
+                "Moderate",
+                "Permissive",
+                "Strict"
+            ]
+        },
+        "Nvl\\Forms\\Enums\\FormStatus": {
+            "kind": "enum",
+            "file": "src/Enums/FormStatus.php",
+            "methods": [
+                "canAcceptSubmissions",
+                "canBeEdited",
+                "cases",
+                "colorClass",
+                "description",
+                "from",
+                "getLabel",
+                "options",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "ACTIVE",
+                "ARCHIVED",
+                "DRAFT",
+                "PAUSED"
+            ]
+        },
+        "Nvl\\Forms\\Enums\\FormType": {
+            "kind": "enum",
+            "file": "src/Enums/FormType.php",
+            "methods": [
+                "cases",
+                "from",
+                "getLabel",
+                "options",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "IFRAME",
+                "LANDING_PAGE"
+            ]
+        },
+        "Nvl\\Forms\\Enums\\Resolvement": {
+            "kind": "enum",
+            "file": "src/Enums/Resolvement.php",
+            "methods": [
+                "cases",
+                "from",
+                "getLabel",
+                "options",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "CUSTOM",
+                "ENTRIES"
+            ]
+        },
+        "Nvl\\Forms\\Exceptions\\FormException": {
+            "kind": "class",
+            "file": "src/Exceptions/FormException.php",
+            "methods": [],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Models\\Form": {
+            "kind": "class",
+            "file": "src/Models/Form.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Models\\FormEntry": {
+            "kind": "class",
+            "file": "src/Models/FormEntry.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Models\\FormRateLimit": {
+            "kind": "class",
+            "file": "src/Models/FormRateLimit.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Results\\FormRateLimitAttemptResult": {
+            "kind": "class",
+            "file": "src/Results/FormRateLimitAttemptResult.php",
+            "methods": [
+                "__construct"
+            ],
+            "properties": [
+                "allowed",
+                "blockedUntil",
+                "rateLimit",
+                "retryAfterSeconds",
+                "submissionCount",
+                "violationCount"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Results\\FormSearchResult": {
+            "kind": "class",
+            "file": "src/Results/FormSearchResult.php",
+            "methods": [
+                "__construct"
+            ],
+            "properties": [
+                "forms",
+                "total"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Results\\FormSubmissionResult": {
+            "kind": "class",
+            "file": "src/Results/FormSubmissionResult.php",
+            "methods": [
+                "__construct"
+            ],
+            "properties": [
+                "entryId",
+                "form",
+                "hasBookkeepingWarning",
+                "submittedAt"
+            ],
+            "constants": []
+        },
+        "Nvl\\Forms\\Services\\EntryCallbackRegistry": {
+            "kind": "class",
+            "file": "src/Services/EntryCallbackRegistry.php",
+            "methods": [
+                "__construct",
+                "clear",
+                "forget",
+                "hasLegacyCallbacks",
+                "register",
+                "registerTenant"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Support\\FormErrorMapperRegistry": {
+            "kind": "class",
+            "file": "src/Support/FormErrorMapperRegistry.php",
+            "methods": [
+                "__construct",
+                "has",
+                "map",
+                "register"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Support\\FormHandlerRegistry": {
+            "kind": "class",
+            "file": "src/Support/FormHandlerRegistry.php",
+            "methods": [
+                "all",
+                "clear",
+                "forget",
+                "get",
+                "register"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Support\\FormRenderDataRegistry": {
+            "kind": "class",
+            "file": "src/Support/FormRenderDataRegistry.php",
+            "methods": [
+                "__construct",
+                "getData",
+                "getTranslations",
+                "has",
+                "register"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Support\\FormSubmissionContext": {
+            "kind": "class",
+            "file": "src/Support/FormSubmissionContext.php",
+            "methods": [
+                "__construct",
+                "httpRequest",
+                "resolvedIpAddress"
+            ],
+            "properties": [
+                "actor",
+                "csrfToken",
+                "idempotencyKey",
+                "ipAddress",
+                "originHeader",
+                "originHost",
+                "publicSite",
+                "publicToken",
+                "request",
+                "requestHost",
+                "sessionId",
+                "sessionToken",
+                "userAgent"
+            ],
+            "constants": []
+        }
+    },
+    "models": {
+        "Nvl\\Forms\\Models\\Form": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Forms\\Models\\FormEntry": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Forms\\Models\\FormRateLimit": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        }
+    },
+    "capability_relations": {},
+    "tables": {
+        "allowed_origins": "nvl_forms_allowed_origins",
+        "analytics": "nvl_forms_analytics",
+        "entries": "nvl_forms_entries",
+        "forms": "nvl_forms_forms",
+        "i18n": "nvl_forms_i18n",
+        "rate_limits": "nvl_forms_rate_limits",
+        "submission_receipts": "nvl_forms_submission_receipts"
+    }
+}
