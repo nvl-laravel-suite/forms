@@ -6,6 +6,7 @@ namespace Nvl\Forms\Actions\Form;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Str;
+use Nvl\Forms\Contracts\GetFormValidationSchemaContract;
 use Nvl\Forms\Data\Display\PublicFormSchemaPayload;
 use Nvl\Forms\Data\Display\PublicSubmissionFieldPayload;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
@@ -17,7 +18,7 @@ use Stringable;
  *
  * @api
  */
-final class GetFormValidationSchemaAction
+final class GetFormValidationSchemaAction implements GetFormValidationSchemaContract
 {
     /**
      * Execute the validation schema generation.

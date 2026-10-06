@@ -11,6 +11,7 @@ use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
 use Nvl\Forms\Providers\FormsServiceProvider;
 use Nvl\Forms\Tests\Fixtures\TenantScenario;
+use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tenancy\Providers\TenancyServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
@@ -24,7 +25,8 @@ abstract class TenancyTestCase extends Orchestra
     /** @return list<class-string> */
     protected function getPackageProviders($app): array
     {
-        return [DataServiceProvider::class, FilterableServiceProvider::class, SupportServiceProvider::class,
+        return [
+            LocaleServiceProvider::class, DataServiceProvider::class, FilterableServiceProvider::class, SupportServiceProvider::class,
             TenancyServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class];
     }
 

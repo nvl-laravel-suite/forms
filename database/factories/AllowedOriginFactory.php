@@ -9,11 +9,41 @@ use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 
 /**
+ * Builds native package fixture rows and declared parents.
+ *
+ * @api
+ *
  * @extends Factory<AllowedOrigin>
  */
 final class AllowedOriginFactory extends Factory
 {
     protected $model = AllowedOrigin::class;
+
+    /**
+     * Prepare native parent and owner facts after Laravel expands relationships.
+     *
+     * @internal
+     */
+    public function configure(): static
+    {
+        $expandRelationships = true;
+
+        return $this->state(function () use (&$expandRelationships): array {
+            $expandRelationships = $this->expandRelationships;
+
+            return [];
+        })->afterMaking(function (AllowedOrigin $model) use (&$expandRelationships): void {
+            if (! $expandRelationships) {
+                return;
+            }
+
+            if ($model->getAttribute('form_id') !== null) {
+                $parent = Form::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('form_id')));
+                FactoryGuard::parent($parent, $model);
+                FactoryGuard::inherit($model, $parent);
+            }
+        });
+    }
 
     /**
      * Define the model's default state.
@@ -31,5 +61,16 @@ final class AllowedOriginFactory extends Factory
             'usage_count' => 0,
             'last_used_at' => null,
         ];
+    }
+
+    /** Associate a persisted form parent.
+     *
+     * @api
+     */
+    public function forForm(Form $form): static
+    {
+        FactoryGuard::parent($form, new AllowedOrigin);
+
+        return $this->state(['form_id' => $form->getKey()]);
     }
 }

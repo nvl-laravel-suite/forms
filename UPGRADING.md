@@ -1,5 +1,16 @@
 # Upgrading NVL Forms
 
+## Consumer contracts, committed events and runtime policy (5.x)
+
+Prefer focused public interfaces in constructor injection; native implementations remain container defaults and host prebindings win. Returned models are documented identity/data handles: use package contracts for reads/writes and capability-specific batch readers instead of direct package queries. Enable the shipped Core PHPStan include in your host; do not invoke the suite workbench static audit command in a consumer.
+
+Events now carry immutable schemaVersion=1 and scalar/DTO snapshots. Replace model-bearing event fields with the IDs listed in [events](docs/events.md); load only through an authorized public reader when needed. Only six declared legacy `*Event` names are retained as PHP aliases for major 5, removal no earlier than major 6. Migrate exact imports/listeners/fakes to canonical names, replace suffix wildcard patterns explicitly, drain old queued payloads, rebuild event caches and restart workers. Framework Verified/PasswordReset remain native classes. Source-connection callbacks are process-local after-commit publication, not a durable outbox or exactly-once delivery.
+
+Package failures have a marker and optional response metadata. Opt into Core's JSON renderer deliberately; preserve existing host handlers and request-locale selection. Missing required host adapters produce `binding_required`/500; genuine configured authorization denial retains native handling. See the README error table and required-bindings section where applicable.
+
+Factories ship in runtime package mappings for host tests. Ordinary make may persist parents; withoutParents()->make creates detached fixtures. Supply persisted native owners/parents and active tenants explicitly, retain source revisions, and never treat a factory row as a real storage/provider/workflow effect. Core's optional installer publishes common config without enabling features; strict Doctor and explicit deployment cache/worker steps belong in the host release process. C3/C4/E executable acceptance is pending until recorded by integration.
+
+
 ## Tenant adoption
 
 Use the Forms adapter to assign each Form root through a reviewed map; child
@@ -66,3 +77,11 @@ The implementation Actions `RecordAllowedOriginUsageAction`, `AddFormEntrySecuri
 `EntryCallbackRegistry::dispatch()` and `dispatchTenant()` are internal delivery steps. Register callbacks through the public registry methods and let the submission workflow deliver them after the outermost transaction commits. Direct dispatch would bypass the package delivery lifecycle.
 
 `FormPayload::fromModel`, `FormEntryPayload::fromModel`, and `FormRateLimitAttemptResult::allowed`/`denied` are internal storage/protection helpers. Use the protected rendering or management endpoints for display payloads and the complete public submission workflow for rate-limit handling. The PHP `GetFormForRenderAction` and `ShowFormEntryAction` return model identity handles, not display DTOs; do not project them through these factories.
+
+## Major 5 workflow injection
+
+Replace host constructor dependencies on selected concrete Actions with their focused `Nvl\Forms\Contracts\*Contract` equivalents listed in the README. Existing equivalent workflow contracts are reused. Native concrete constructors, qualifiers, argument defaults, result types, and execution behavior remain compatible. Internal package Action/service chains retain their existing concrete dependencies.
+
+Default workflow registrations use `bindIf`, retaining host interfaces/instances registered before discovery. Register substitutes at the interface key; newly resolved host services receive late replacements. Substituting a workflow does not exercise the native authorization, storage, or lifecycle invariants, which require the owning integration coverage.
+
+`CreateFormContract` and `CreateFormEntryContract` defaults are now conditional. Existing handler, spam, rate-limit, privacy, and submission-protection behavior remains in the native workflows.

@@ -6,6 +6,7 @@ namespace Nvl\Forms\Actions\Form;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Nvl\Forms\Contracts\GetFormSuggestionsContract;
 use Nvl\Forms\Models\Form;
 
 /**
@@ -15,7 +16,7 @@ use Nvl\Forms\Models\Form;
  *
  * @api
  */
-final class GetFormSuggestionsAction
+final class GetFormSuggestionsAction implements GetFormSuggestionsContract
 {
     /**
      * Execute the form suggestions retrieval.

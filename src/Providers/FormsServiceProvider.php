@@ -11,14 +11,60 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Nvl\Data\Services\TypeScriptSourceRegistry;
 use Nvl\Forms\Actions\Form\CreateFormAction;
+use Nvl\Forms\Actions\Form\DeleteFormAction;
+use Nvl\Forms\Actions\Form\DuplicateFormAction;
+use Nvl\Forms\Actions\Form\GetFormAnalyticsBundleAction;
+use Nvl\Forms\Actions\Form\GetFormAnalyticsSummaryAction;
+use Nvl\Forms\Actions\Form\GetFormForRenderAction;
+use Nvl\Forms\Actions\Form\GetFormSelectOptionsAction;
+use Nvl\Forms\Actions\Form\GetFormSuggestionsAction;
+use Nvl\Forms\Actions\Form\GetFormValidationSchemaAction;
+use Nvl\Forms\Actions\Form\HandlePublicFormSubmissionAction;
+use Nvl\Forms\Actions\Form\ListFormsAction;
+use Nvl\Forms\Actions\Form\SearchFormsAction;
+use Nvl\Forms\Actions\Form\ShowFormAction;
+use Nvl\Forms\Actions\Form\UpdateFormAction;
+use Nvl\Forms\Actions\FormEntry\AnonymizeFormEntryAction;
 use Nvl\Forms\Actions\FormEntry\CreateFormEntryAction;
+use Nvl\Forms\Actions\FormEntry\DeleteFormEntryAction;
+use Nvl\Forms\Actions\FormEntry\ExportFormEntriesAction;
+use Nvl\Forms\Actions\FormEntry\ListFormEntriesAction;
+use Nvl\Forms\Actions\FormEntry\MarkFormEntryAsLegitimateAction;
+use Nvl\Forms\Actions\FormEntry\MarkFormEntryAsSpamAction;
+use Nvl\Forms\Actions\FormEntry\RedactFormEntryAction;
+use Nvl\Forms\Actions\FormEntry\ShowFormEntryAction;
 use Nvl\Forms\Console\Commands\FormsDoctorCommand;
+use Nvl\Forms\Contracts\AnonymizeFormEntryContract;
 use Nvl\Forms\Contracts\CreateFormContract;
 use Nvl\Forms\Contracts\CreateFormEntryContract;
+use Nvl\Forms\Contracts\DeleteFormContract;
+use Nvl\Forms\Contracts\DeleteFormEntryContract;
+use Nvl\Forms\Contracts\DuplicateFormContract;
+use Nvl\Forms\Contracts\ExportFormEntriesContract;
 use Nvl\Forms\Contracts\FormEntryDeletionPolicy;
 use Nvl\Forms\Contracts\FormEntryPrivacyPolicy;
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Contracts\FormSpamDetector;
+use Nvl\Forms\Contracts\GetFormAnalyticsBundleContract;
+use Nvl\Forms\Contracts\GetFormAnalyticsSummaryContract;
+use Nvl\Forms\Contracts\GetFormForRenderContract;
+use Nvl\Forms\Contracts\GetFormSelectOptionsContract;
+use Nvl\Forms\Contracts\GetFormSuggestionsContract;
+use Nvl\Forms\Contracts\GetFormValidationSchemaContract;
+use Nvl\Forms\Contracts\HandlePublicFormSubmissionContract;
+use Nvl\Forms\Contracts\ListFormEntriesContract;
+use Nvl\Forms\Contracts\ListFormsContract;
+use Nvl\Forms\Contracts\MarkFormEntryAsLegitimateContract;
+use Nvl\Forms\Contracts\MarkFormEntryAsSpamContract;
+use Nvl\Forms\Contracts\RedactFormEntryContract;
+use Nvl\Forms\Contracts\SearchFormsContract;
+use Nvl\Forms\Contracts\ShowFormContract;
+use Nvl\Forms\Contracts\ShowFormEntryContract;
+use Nvl\Forms\Contracts\UpdateFormContract;
+use Nvl\Forms\Events\FormChanged;
+use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
+use Nvl\Forms\Events\FormEntryChangedEvent;
 use Nvl\Forms\Http\Middleware\EnsureFormIsAvailable;
 use Nvl\Forms\Http\Middleware\FormsLocaleMiddleware;
 use Nvl\Forms\Http\Middleware\ValidateFormHost;
@@ -37,6 +83,7 @@ use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Forms\Tenancy\FormsResourceRegistrar;
 use Nvl\Support\Doctor\PackageDoctorContributor;
+use Nvl\Support\Events\EventAliases;
 use Nvl\Support\Globals\GlobalNames;
 use Nvl\Support\Providers\TenantServiceProvider;
 use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
@@ -66,6 +113,8 @@ final class FormsServiceProvider extends ServiceProvider
         TranslationResourceRegistry $translationResources,
         TypeScriptSourceRegistry $typeScriptSources,
     ): void {
+        $this->app->make(EventAliases::class)->register(FormChanged::class, FormChangedEvent::class);
+        $this->app->make(EventAliases::class)->register(FormEntryChanged::class, FormEntryChangedEvent::class);
         $typeScriptSources->register(__DIR__.'/..', 'nvl/forms');
 
         $this->publishes([
@@ -103,6 +152,28 @@ final class FormsServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bindIf(AnonymizeFormEntryContract::class, AnonymizeFormEntryAction::class);
+        $this->app->bindIf(DeleteFormEntryContract::class, DeleteFormEntryAction::class);
+        $this->app->bindIf(ExportFormEntriesContract::class, ExportFormEntriesAction::class);
+        $this->app->bindIf(ListFormEntriesContract::class, ListFormEntriesAction::class);
+        $this->app->bindIf(MarkFormEntryAsLegitimateContract::class, MarkFormEntryAsLegitimateAction::class);
+        $this->app->bindIf(MarkFormEntryAsSpamContract::class, MarkFormEntryAsSpamAction::class);
+        $this->app->bindIf(RedactFormEntryContract::class, RedactFormEntryAction::class);
+        $this->app->bindIf(ShowFormEntryContract::class, ShowFormEntryAction::class);
+        $this->app->bindIf(DeleteFormContract::class, DeleteFormAction::class);
+        $this->app->bindIf(DuplicateFormContract::class, DuplicateFormAction::class);
+        $this->app->bindIf(GetFormAnalyticsBundleContract::class, GetFormAnalyticsBundleAction::class);
+        $this->app->bindIf(GetFormAnalyticsSummaryContract::class, GetFormAnalyticsSummaryAction::class);
+        $this->app->bindIf(GetFormForRenderContract::class, GetFormForRenderAction::class);
+        $this->app->bindIf(GetFormSelectOptionsContract::class, GetFormSelectOptionsAction::class);
+        $this->app->bindIf(GetFormSuggestionsContract::class, GetFormSuggestionsAction::class);
+        $this->app->bindIf(GetFormValidationSchemaContract::class, GetFormValidationSchemaAction::class);
+        $this->app->bindIf(HandlePublicFormSubmissionContract::class, HandlePublicFormSubmissionAction::class);
+        $this->app->bindIf(ListFormsContract::class, ListFormsAction::class);
+        $this->app->bindIf(SearchFormsContract::class, SearchFormsAction::class);
+        $this->app->bindIf(ShowFormContract::class, ShowFormAction::class);
+        $this->app->bindIf(UpdateFormContract::class, UpdateFormAction::class);
+
         PackageDoctorContributor::register($this->app, 'nvl/forms', fn (): array => $this->app->make(FormsDoctor::class)->inspect());
 
         $this->app->register(TenantServiceProvider::class);
@@ -122,8 +193,8 @@ final class FormsServiceProvider extends ServiceProvider
         $this->app->singletonIf(FormEntryDeletionPolicy::class, AllowFormEntryDeletion::class);
         $this->app->singletonIf(FormEntryPrivacyPolicy::class, AllowFormEntryPrivacyOperations::class);
         $this->app->scoped(FormSpamDetector::class, FormSpamDetectionService::class);
-        $this->app->bind(CreateFormContract::class, CreateFormAction::class);
-        $this->app->bind(CreateFormEntryContract::class, CreateFormEntryAction::class);
+        $this->app->bindIf(CreateFormContract::class, CreateFormAction::class);
+        $this->app->bindIf(CreateFormEntryContract::class, CreateFormEntryAction::class);
         $this->app->register(RouteServiceProvider::class);
     }
 

@@ -7,8 +7,10 @@ namespace Nvl\Forms\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Nvl\Forms\Database\Factories\FormRateLimitFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Traits\FormRateLimitFilters;
 use Nvl\Support\Config\PackageStorage;
@@ -37,6 +39,9 @@ use Nvl\Support\Config\PackageStorage;
 class FormRateLimit extends Model
 {
     use FormRateLimitFilters;
+
+    /** @use HasFactory<FormRateLimitFactory> */
+    use HasFactory;
     use HasUuids;
 
     protected $table = FormsTables::RateLimits;
@@ -122,5 +127,15 @@ class FormRateLimit extends Model
     public function getConnectionName(): ?string
     {
         return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): FormRateLimitFactory
+    {
+        return FormRateLimitFactory::new();
     }
 }

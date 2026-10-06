@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\FormEntry;
 
+use Nvl\Forms\Contracts\ShowFormEntryContract;
 use Nvl\Forms\Models\FormEntry;
 
 /**
@@ -11,7 +12,7 @@ use Nvl\Forms\Models\FormEntry;
  *
  * @api
  */
-final class ShowFormEntryAction
+final class ShowFormEntryAction implements ShowFormEntryContract
 {
     /**
      * Execute the form entry retrieval.

@@ -11,18 +11,17 @@
         "translation"
     ],
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "ext-ctype": "*",
         "ext-filter": "*",
         "ext-mbstring": "*",
-        "laravel/framework": "^13.0",
+        "laravel/framework": "^12.0 || ^13.0",
         "nesbot/carbon": "^2.72 || ^3.0",
         "nvl/core": "^5.0",
         "nvl/filterable": "^5.0",
         "nvl/translatable": "^5.0",
         "ramsey/uuid": "^4.7",
         "spatie/laravel-data": "^4.23",
-        "spatie/typescript-transformer": "^3.3",
         "symfony/http-foundation": "^7.0 || ^8.0",
         "symfony/http-kernel": "^7.0 || ^8.0"
     },
@@ -31,13 +30,15 @@
         "laravel/pint": "^1.27",
         "mockery/mockery": "^1.6",
         "nvl/tenancy": "^5.0",
-        "orchestra/testbench": "^11.0",
+        "orchestra/testbench": "^10.0 || ^11.0",
         "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0"
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "spatie/typescript-transformer": "^3.3"
     },
     "suggest": {
         "nvl/activity": "Can consume the package's after-commit events in an application-owned audit integration",
-        "nvl/tenancy": "Enables enforcing tenant ownership, scoped execution, adoption, and captured tenant queue contexts."
+        "nvl/tenancy": "Enables enforcing tenant ownership, scoped execution, adoption, and captured tenant queue contexts.",
+        "spatie/typescript-transformer": "Consume the declared TypeScript attributes and metadata (^3.3); Core retains the runtime transformation engine."
     },
     "autoload": {
         "psr-4": {
@@ -94,7 +95,12 @@
             "/phpunit.xml.dist",
             "/tests",
             "/.DS_Store",
-            "/**/.DS_Store"
+            "/**/.DS_Store",
+            "/.gitattributes",
+            "/**/.gitattributes",
+            "/.gitignore",
+            "/**/.gitignore",
+            "/**/.gitkeep"
         ]
     },
     "minimum-stability": "stable",
@@ -102,5 +108,19 @@
     "conflict": {
         "nvl/activity": "<5.0 || >=6.0",
         "nvl/tenancy": "<5.0 || >=6.0"
+    },
+    "homepage": "https://github.com/nvl-laravel-suite/forms",
+    "authors": [
+        {
+            "name": "Nicolas Vlachos",
+            "homepage": "https://github.com/nicolasvlachos",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "source": "https://github.com/nvl-laravel-suite/forms",
+        "docs": "https://github.com/nvl-laravel-suite/forms#readme",
+        "issues": "https://github.com/nvl-laravel-suite/forms/issues",
+        "security": "https://github.com/nvl-laravel-suite/forms/security/policy"
     }
 }

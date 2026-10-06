@@ -6,12 +6,13 @@ namespace Nvl\Forms\Actions\Form;
 
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
+use Nvl\Forms\Contracts\DuplicateFormContract;
 use Nvl\Forms\Enums\FormStatus;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormTranslation;
 use Nvl\Forms\Services\FormHandleService;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Translatable\Services\TranslationWriter;
 use Throwable;
 
@@ -26,7 +27,7 @@ use Throwable;
  *
  * @api
  */
-final class DuplicateFormAction
+final class DuplicateFormAction implements DuplicateFormContract
 {
     /**
      * @param  FormHandleService  $handleService  Generates unique handles for the duplicate
@@ -34,6 +35,7 @@ final class DuplicateFormAction
     public function __construct(
         private readonly FormHandleService $handleService,
         private readonly TranslationWriter $translationWriter,
+        private DomainEventDispatcher $domainEvents,
     ) {}
 
     /**
@@ -57,7 +59,7 @@ final class DuplicateFormAction
             : Form::with(['allowedOrigins', 'translations'])->findOrFail($form);
 
         /** @var Form $newForm */
-        $newForm = DB::transaction(function () use ($originalForm, $newName) {
+        $newForm = (new Form)->getConnection()->transaction(function () use ($originalForm, $newName, $actor) {
             $newForm = $originalForm->replicate();
 
             $sourceName = $originalForm->displayName();
@@ -80,15 +82,15 @@ final class DuplicateFormAction
 
             $newForm->load(['allowedOrigins', 'translations']);
 
+            $this->domainEvents->dispatch(FormChanged::for(
+                form: $newForm,
+                operation: 'duplicated',
+                actor: $actor,
+                context: ['source_form_id' => $originalForm->id],
+            ), $newForm->getConnection());
+
             return $newForm;
         });
-
-        event(FormChangedEvent::for(
-            form: $newForm,
-            operation: 'duplicated',
-            actor: $actor,
-            context: ['source_form_id' => $originalForm->id],
-        ));
 
         return $newForm;
     }

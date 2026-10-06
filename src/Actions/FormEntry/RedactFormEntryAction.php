@@ -5,18 +5,19 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\FormEntry;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Nvl\Forms\Contracts\FormEntryPrivacyPolicy;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Contracts\RedactFormEntryContract;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Events\DomainEventDispatcher;
 
 /**
  * Redacts selected personal-data fields without deleting the entry.
  *
  * @api
  */
-final readonly class RedactFormEntryAction
+final readonly class RedactFormEntryAction implements RedactFormEntryContract
 {
     private const array REDACTABLE = [
         'subject',
@@ -32,7 +33,7 @@ final readonly class RedactFormEntryAction
         'session_id',
     ];
 
-    public function __construct(private FormEntryPrivacyPolicy $privacyPolicy) {}
+    public function __construct(private FormEntryPrivacyPolicy $privacyPolicy, private DomainEventDispatcher $domainEvents) {}
 
     /**
      * @param  list<string>  $fields
@@ -47,7 +48,7 @@ final readonly class RedactFormEntryAction
             throw new InvalidArgumentException('Redaction fields must use the documented allowlist.');
         }
 
-        $updated = DB::transaction(function () use ($entry, $fields, $actor): FormEntry {
+        $updated = (new FormEntry)->getConnection()->transaction(function () use ($entry, $fields, $actor): FormEntry {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $model = FormEntry::query()
                 ->with('form')
@@ -59,16 +60,16 @@ final readonly class RedactFormEntryAction
             $attributes['redacted_at'] = now();
             $model->forceFill($attributes)->save();
 
+            $this->domainEvents->dispatch(FormEntryChanged::for(
+                $model->form,
+                $model,
+                'redacted',
+                $actor,
+                ['field_count' => count($fields)],
+            ), $model->getConnection());
+
             return $model->refresh()->load('form');
         });
-
-        event(FormEntryChangedEvent::for(
-            $updated->form,
-            $updated,
-            'redacted',
-            $actor,
-            ['field_count' => count($fields)],
-        ));
 
         return $updated;
     }

@@ -7,6 +7,7 @@ namespace Nvl\Forms\Actions\Form;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Nvl\Forms\Contracts\GetFormSelectOptionsContract;
 use Nvl\Forms\Data\FormSelectOptionItem;
 use Nvl\Forms\Models\Form;
 
@@ -15,7 +16,7 @@ use Nvl\Forms\Models\Form;
  *
  * @api
  */
-final class GetFormSelectOptionsAction
+final class GetFormSelectOptionsAction implements GetFormSelectOptionsContract
 {
     /**
      * Execute the form select options retrieval.

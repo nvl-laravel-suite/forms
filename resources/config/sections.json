@@ -1,0 +1,39 @@
+{
+    "schema_version": 1,
+    "configs": {
+        "nvl-forms": {
+            "required": [],
+            "common": [
+                "authorization.gate",
+                "migrations.enabled",
+                "routes.management.enabled",
+                "routes.management.middleware",
+                "routes.middleware",
+                "routes.prefix",
+                "routes.public.enabled",
+                "routes.public.middleware"
+            ],
+            "advanced": [
+                "public.token_ttl_minutes",
+                "security.ip_blocking.cleanup_after_days",
+                "security.rate_limit.decay_minutes",
+                "security.rate_limit.max_attempts",
+                "security.rate_limiting.block_duration_minutes",
+                "security.spam_protection.honeypot.field_names",
+                "security.spam_protection.min_submission_time",
+                "security.spam_protection.score_thresholds.block",
+                "security.spam_protection.score_thresholds.flag",
+                "security.spam_protection.score_weights.excessive_punctuation",
+                "security.spam_protection.score_weights.fast_submission",
+                "security.spam_protection.score_weights.honeypot",
+                "security.spam_protection.score_weights.ip_reputation",
+                "security.spam_protection.score_weights.multiple_links",
+                "security.spam_protection.score_weights.spam_phrases",
+                "security.spam_protection.spam_phrases",
+                "submission.max_depth",
+                "submission.max_items",
+                "submission.max_payload_bytes"
+            ]
+        }
+    }
+}

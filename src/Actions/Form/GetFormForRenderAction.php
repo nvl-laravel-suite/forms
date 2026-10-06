@@ -6,6 +6,7 @@ namespace Nvl\Forms\Actions\Form;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
+use Nvl\Forms\Contracts\GetFormForRenderContract;
 use Nvl\Forms\Models\Form;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
@@ -14,7 +15,7 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
  *
  * @api
  */
-final class GetFormForRenderAction
+final class GetFormForRenderAction implements GetFormForRenderContract
 {
     /** Create the canonical tenant-aware public form resolver. */
     public function __construct(private readonly TenantBoundary $boundary) {}

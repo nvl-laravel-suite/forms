@@ -6,6 +6,7 @@ namespace Nvl\Forms\Actions\Form;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Nvl\Forms\Contracts\ShowFormContract;
 use Nvl\Forms\Models\Form;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 
@@ -17,7 +18,7 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
  *
  * @api
  */
-final class ShowFormAction
+final class ShowFormAction implements ShowFormContract
 {
     /**
      * Create the action with view-recording dependency.

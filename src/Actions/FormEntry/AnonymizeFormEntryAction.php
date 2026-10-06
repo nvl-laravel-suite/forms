@@ -5,25 +5,26 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\FormEntry;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
+use Nvl\Forms\Contracts\AnonymizeFormEntryContract;
 use Nvl\Forms\Contracts\FormEntryPrivacyPolicy;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Events\DomainEventDispatcher;
 
 /**
  * Irreversibly removes all submitter-identifying data from an entry.
  *
  * @api
  */
-final readonly class AnonymizeFormEntryAction
+final readonly class AnonymizeFormEntryAction implements AnonymizeFormEntryContract
 {
-    public function __construct(private FormEntryPrivacyPolicy $privacyPolicy) {}
+    public function __construct(private FormEntryPrivacyPolicy $privacyPolicy, private DomainEventDispatcher $domainEvents) {}
 
     public function execute(
         FormEntry|string $entry,
         ?Authenticatable $actor = null,
     ): FormEntry {
-        $updated = DB::transaction(function () use ($entry, $actor): FormEntry {
+        $updated = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): FormEntry {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $model = FormEntry::query()
                 ->with('form')
@@ -47,10 +48,10 @@ final readonly class AnonymizeFormEntryAction
                 'anonymized_at' => now(),
             ])->save();
 
+            $this->domainEvents->dispatch(FormEntryChanged::for($model->form, $model, 'anonymized', $actor), $model->getConnection());
+
             return $model->refresh()->load('form');
         });
-
-        event(FormEntryChangedEvent::for($updated->form, $updated, 'anonymized', $actor));
 
         return $updated;
     }

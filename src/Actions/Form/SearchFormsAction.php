@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\Form;
 
 use Illuminate\Support\Str;
+use Nvl\Forms\Contracts\SearchFormsContract;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Results\FormSearchResult;
 
@@ -13,7 +14,7 @@ use Nvl\Forms\Results\FormSearchResult;
  *
  * @api
  */
-final class SearchFormsAction
+final class SearchFormsAction implements SearchFormsContract
 {
     /**
      * Execute the form search.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\Form;
 
+use Nvl\Forms\Contracts\GetFormAnalyticsBundleContract;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
@@ -15,7 +16,7 @@ use Nvl\Forms\Models\FormEntry;
  *
  * @api
  */
-final class GetFormAnalyticsBundleAction
+final class GetFormAnalyticsBundleAction implements GetFormAnalyticsBundleContract
 {
     /**
      * @param  ShowFormAction  $showForm  Action that resolves the display form

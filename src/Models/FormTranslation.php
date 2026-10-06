@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Nvl\Forms\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Nvl\Forms\Database\Factories\FormTranslationFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Support\Config\PackageStorage;
 
@@ -23,9 +25,16 @@ use Nvl\Support\Config\PackageStorage;
  * @property string|null $success_title
  * @property string|null $success_message
  * @property array<string, mixed>|null $content
+ *
+ * @api
+ *
+ * @nvl-consumer-read id
  */
 final class FormTranslation extends Model
 {
+    /** @use HasFactory<FormTranslationFactory> */
+    use HasFactory;
+
     use HasUuids;
 
     public const string TABLE = FormsTables::I18n;
@@ -77,5 +86,15 @@ final class FormTranslation extends Model
     public function getConnectionName(): ?string
     {
         return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): FormTranslationFactory
+    {
+        return FormTranslationFactory::new();
     }
 }

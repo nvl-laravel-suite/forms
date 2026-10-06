@@ -11,11 +11,13 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Contracts\ExportFormEntriesContract;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Services\FormEntryExportService;
+use Nvl\Support\Events\DomainEventDispatcher;
 
 /**
  * Orchestrates form entry export with permissions, progress tracking, and activity logging.
@@ -28,13 +30,14 @@ use Nvl\Forms\Services\FormEntryExportService;
  *
  * @api
  */
-final class ExportFormEntriesAction
+final class ExportFormEntriesAction implements ExportFormEntriesContract
 {
     /**
      * @param  FormEntryExportService  $exportService  CSV generation and sanitization service
      */
     public function __construct(
         private readonly FormEntryExportService $exportService,
+        private DomainEventDispatcher $domainEvents,
     ) {}
 
     /**
@@ -91,7 +94,7 @@ final class ExportFormEntriesAction
 
             Cache::put($progressKey, ['status' => 'completed', 'progress' => 100], now()->addHours());
 
-            event(FormChangedEvent::for(
+            $this->domainEvents->dispatch(FormChanged::for(
                 form: $form,
                 operation: 'entries_exported',
                 actor: $actor,
@@ -99,7 +102,7 @@ final class ExportFormEntriesAction
                     'entry_count' => $entries->count(),
                     'file_size' => strlen($csvContent),
                 ],
-            ));
+            ), $form->getConnection());
 
             return Storage::disk('local')->path($path);
         } catch (Exception $e) {

@@ -6,14 +6,15 @@ namespace Nvl\Forms\Actions\Form;
 
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
+use Nvl\Forms\Contracts\UpdateFormContract;
 use Nvl\Forms\Data\Mutations\MutateFormPayload;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormAllowedOriginService;
 use Nvl\Forms\Services\FormHandleService;
 use Nvl\Forms\Services\FormTranslationPayloadMapper;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Translatable\Services\TranslationWriter;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -29,7 +30,7 @@ use Throwable;
  *
  * @api
  */
-final class UpdateFormAction
+final class UpdateFormAction implements UpdateFormContract
 {
     /**
      * @param  FormHandleService  $handleService  Validates handle uniqueness
@@ -40,6 +41,7 @@ final class UpdateFormAction
         private readonly FormAllowedOriginService $originService,
         private readonly FormTranslationPayloadMapper $translationPayloadMapper,
         private readonly TranslationWriter $translationWriter,
+        private DomainEventDispatcher $domainEvents,
     ) {}
 
     /**
@@ -60,7 +62,7 @@ final class UpdateFormAction
     {
         $formId = $form instanceof Form ? $form->id : $form;
 
-        $updated = DB::transaction(function () use ($formId, $data) {
+        $updated = (new Form)->getConnection()->transaction(function () use ($formId, $data, $actor) {
             $form = Form::query()->lockForUpdate()->findOrFail($formId);
             $expectedRevision = $data->expectedRevision instanceof Optional
                 ? null
@@ -110,10 +112,10 @@ final class UpdateFormAction
             $form->refresh();
             $form->loadMissing(['allowedOrigins', 'translations']);
 
+            $this->domainEvents->dispatch(FormChanged::for($form, 'updated', $actor), $form->getConnection());
+
             return $form;
         });
-
-        event(FormChangedEvent::for($updated, 'updated', $actor));
 
         return $updated;
     }

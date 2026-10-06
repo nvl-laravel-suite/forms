@@ -268,7 +268,7 @@ test('submit endpoint blocks custom handlers when rate limit is exceeded', funct
     $response->assertStatus(429)
         ->assertJson([
             'success' => false,
-            'error' => trans('nvl-forms::forms/shared.messages.error.rate_limit_exceeded'),
+            'error' => trans('nvl-forms::responsecode.submission_rejected'),
         ]);
 
     $handlerRegistry->clear();
@@ -409,7 +409,7 @@ test('submit endpoint rejects requests missing required submission protection', 
     $response->assertStatus(419)
         ->assertJson([
             'success' => false,
-            'error' => trans('nvl-forms::forms/messages.error.csrf_failed'),
+            'error' => trans('nvl-forms::responsecode.submission_rejected'),
         ]);
 });
 
@@ -598,7 +598,7 @@ test('submit endpoint maps business exceptions to field errors via registry', fu
     $response->assertStatus(422)
         ->assertJson([
             'success' => false,
-            'error' => 'Voucher has expired',
+            'error' => trans('nvl-core::responsecode.operation_failed'),
             'errors' => ['submissionData.orderCode' => 'Voucher has expired'],
         ]);
 
@@ -638,7 +638,7 @@ test('submit endpoint returns generic error when no mapper handles business exce
     $response->assertStatus(422)
         ->assertJson([
             'success' => false,
-            'error' => 'Unknown business error',
+            'error' => trans('nvl-core::responsecode.operation_failed'),
         ]);
 
     expect($response->json('errors'))->toBeNull();

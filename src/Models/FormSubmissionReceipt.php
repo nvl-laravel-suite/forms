@@ -28,6 +28,10 @@ use Nvl\Support\Config\PackageStorage;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Form $form
+ *
+ * @api
+ *
+ * @nvl-consumer-read id
  */
 final class FormSubmissionReceipt extends Model
 {

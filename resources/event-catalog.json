@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "package": "nvl/forms",
+  "documentation": "docs/events.md",
+  "implementation_status": "implemented; executable acceptance proof pending",
+  "events": [
+    {
+      "class": "Nvl\\Forms\\Events\\FormChanged",
+      "source": "packages/nvl/forms/src/Events/FormChanged.php",
+      "constructor_fields": [
+        {
+          "name": "formId",
+          "type": "string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "actorId",
+          "type": "string|int|null",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "null"
+        },
+        {
+          "name": "context",
+          "type": "array",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "[]",
+          "phpdoc_type": "array<string, bool|float|int|string|null>"
+        },
+        {
+          "name": "schemaVersion",
+          "type": "int",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "1"
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "formId",
+          "type": "string"
+        },
+        {
+          "name": "operation",
+          "type": "string"
+        },
+        {
+          "name": "actorId",
+          "type": "string|int|null"
+        },
+        {
+          "name": "context",
+          "type": "array",
+          "phpdoc_type": "array<string, bool|float|int|string|null>"
+        },
+        {
+          "name": "schemaVersion",
+          "type": "int"
+        }
+      ],
+      "kind": "value_object",
+      "schema_version": 1,
+      "trigger": "Form lifecycle or completed export observation.",
+      "aliases": [
+        {
+          "legacy": "Nvl\\Forms\\Events\\FormChangedEvent",
+          "canonical": "Nvl\\Forms\\Events\\FormChanged",
+          "path": "packages/nvl/forms/src/Events/FormChangedEvent.php",
+          "deprecated_in_major": 5,
+          "removal_not_before_major": 6
+        }
+      ],
+      "producers": [
+        {
+          "path": "packages/nvl/forms/src/Actions/Form/CreateFormAction.php",
+          "trigger": "Form lifecycle or completed export observation.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormChanged::for($form, 'created', $actor)"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/Form/DeleteFormAction.php",
+          "trigger": "Form lifecycle or completed export observation.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormChanged::for($form, 'deleted', $actor)"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/Form/DuplicateFormAction.php",
+          "trigger": "Form lifecycle or completed export observation.",
+          "connection": "$newForm->getConnection()",
+          "construction_expression": "FormChanged::for( form: $newForm, operation: 'duplicated', actor: $actor, context: ['source_form_id' => $originalForm->id], )"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/Form/UpdateFormAction.php",
+          "trigger": "Form lifecycle or completed export observation.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormChanged::for($form, 'updated', $actor)"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/ExportFormEntriesAction.php",
+          "trigger": "Form lifecycle or completed export observation.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormChanged::for( form: $form, operation: 'entries_exported', actor: $actor, context: [ 'entry_count' => $entries->count(), 'file_size' => strlen($csvContent), ], )"
+        }
+      ],
+      "security_notes": [
+        "Scalar form/entry identifiers and bounded operation context. No submitted values, form/entry models or export file contents/path. Export observation includes count/size only."
+      ],
+      "no_op_semantics": "Existing lifecycle/privacy mutation branches and export completion decide publication. Repeated explicit operations may publish again; these constructors do not provide idempotency."
+    },
+    {
+      "class": "Nvl\\Forms\\Events\\FormEntryChanged",
+      "source": "packages/nvl/forms/src/Events/FormEntryChanged.php",
+      "constructor_fields": [
+        {
+          "name": "formId",
+          "type": "string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "entryId",
+          "type": "string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "actorId",
+          "type": "string|int|null",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "null"
+        },
+        {
+          "name": "context",
+          "type": "array",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "[]",
+          "phpdoc_type": "array<string, bool|float|int|string|null>"
+        },
+        {
+          "name": "schemaVersion",
+          "type": "int",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "1"
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "formId",
+          "type": "string"
+        },
+        {
+          "name": "entryId",
+          "type": "string"
+        },
+        {
+          "name": "operation",
+          "type": "string"
+        },
+        {
+          "name": "actorId",
+          "type": "string|int|null"
+        },
+        {
+          "name": "context",
+          "type": "array",
+          "phpdoc_type": "array<string, bool|float|int|string|null>"
+        },
+        {
+          "name": "schemaVersion",
+          "type": "int"
+        }
+      ],
+      "kind": "value_object",
+      "schema_version": 1,
+      "trigger": "Entry lifecycle/privacy/security operation persisted.",
+      "aliases": [
+        {
+          "legacy": "Nvl\\Forms\\Events\\FormEntryChangedEvent",
+          "canonical": "Nvl\\Forms\\Events\\FormEntryChanged",
+          "path": "packages/nvl/forms/src/Events/FormEntryChangedEvent.php",
+          "deprecated_in_major": 5,
+          "removal_not_before_major": 6
+        }
+      ],
+      "producers": [
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/AddFormEntrySecurityFlagAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormEntryChanged::for( form: $form, entry: $freshEntry, operation: 'security_flag_added', actor: $actor, context: ['flag_key' => $key], )"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/AnonymizeFormEntryAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$model->getConnection()",
+          "construction_expression": "FormEntryChanged::for($model->form, $model, 'anonymized', $actor)"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/CreateFormEntryAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$entry->getConnection()",
+          "construction_expression": "FormEntryChanged::for( form: $form, entry: $entry, operation: 'created', actor: $actor, context: ['is_spam' => (bool) $spamDetection['is_spam']], )"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/DeleteFormEntryAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormEntryChanged::for( form: $form, entry: $formEntry, operation: 'deleted', actor: $actor, context: ['was_spam' => $wasSpam], )"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/MarkFormEntryAsLegitimateAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormEntryChanged::for( form: $form, entry: $freshEntry, operation: 'marked_as_legitimate', actor: $actor, context: ['was_spam' => $wasSpam], )"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/MarkFormEntryAsSpamAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$form->getConnection()",
+          "construction_expression": "FormEntryChanged::for( form: $form, entry: $freshEntry, operation: 'marked_as_spam', actor: $actor, context: ['has_reason' => is_string($reason) && $reason !== ''], )"
+        },
+        {
+          "path": "packages/nvl/forms/src/Actions/FormEntry/RedactFormEntryAction.php",
+          "trigger": "Entry lifecycle/privacy/security operation persisted.",
+          "connection": "$model->getConnection()",
+          "construction_expression": "FormEntryChanged::for( $model->form, $model, 'redacted', $actor, ['field_count' => count($fields)], )"
+        }
+      ],
+      "security_notes": [
+        "Scalar form/entry identifiers and bounded operation context. No submitted values, form/entry models or export file contents/path. Export observation includes count/size only."
+      ],
+      "no_op_semantics": "Existing lifecycle/privacy mutation branches and export completion decide publication. Repeated explicit operations may publish again; these constructors do not provide idempotency."
+    }
+  ],
+  "value_types": [],
+  "aliases": [
+    {
+      "legacy": "Nvl\\Forms\\Events\\FormChangedEvent",
+      "canonical": "Nvl\\Forms\\Events\\FormChanged",
+      "path": "packages/nvl/forms/src/Events/FormChangedEvent.php",
+      "deprecated_in_major": 5,
+      "removal_not_before_major": 6
+    },
+    {
+      "legacy": "Nvl\\Forms\\Events\\FormEntryChangedEvent",
+      "canonical": "Nvl\\Forms\\Events\\FormEntryChanged",
+      "path": "packages/nvl/forms/src/Events/FormEntryChangedEvent.php",
+      "deprecated_in_major": 5,
+      "removal_not_before_major": 6
+    }
+  ],
+  "publication": {
+    "publication": "The native host dispatcher receives the captured event after the supplied source connection outer commit, or immediately when that connection has no active transaction.",
+    "rollback": "Callbacks attach to the matching native connection and current nesting record; native outer/savepoint rollback discards the corresponding callbacks.",
+    "registration_failure": "Missing source transaction records fail before commit; Mail Notifications reports and drops unusable observations.",
+    "host_policy": "Host after-commit listeners and queue after_commit policies can add their own deferral after publication. Host transaction infrastructure and dispatcher bindings are preserved.",
+    "delivery_limit": "Local callbacks are not an outbox. Process exit between commit and callback can lose delivery; no crash durability or exactly-once delivery is promised.",
+    "cardinality": "One canonical object is dispatched per qualifying producer call. This is local publication, not cross-process deduplication or a guarantee that repeated observations are unique.",
+    "manual_producers": "Use Nvl\\Support\\Events\\DomainEventDispatcher::dispatch($event, $writerConnection). Native Event::dispatch() is immediate and has no package interception."
+  },
+  "security_notes": [
+    "Scalar form/entry identifiers and bounded operation context. No submitted values, form/entry models or export file contents/path. Export observation includes count/size only."
+  ],
+  "no_op_semantics": "Existing lifecycle/privacy mutation branches and export completion decide publication. Repeated explicit operations may publish again; these constructors do not provide idempotency.",
+  "notes": [
+    "Factories accept native Form/FormEntry/Authenticatable inputs only to snapshot scalar event fields; those input models are not retained."
+  ],
+  "alias_policy": [
+    "Legacy names are deprecated for major 5 and removed no earlier than major 6. class_alias preserves imports, instanceof, listener type hints and the new versioned constructor, not the former model-bearing API.",
+    "The native Laravel exact-listener bridge reads getRawListeners at delivery time and prepares legacy listeners through makeListener; strict-identical canonical registrations are skipped. Late registration, subscribers, cached discovery and queued listener preparation use the native dispatcher seams; proof is pending.",
+    "One canonical object is emitted once. Native wildcard/interface listeners see the canonical event once; suffix-specific *Event wildcards must migrate. The bridge does not redispatch a legacy string.",
+    "Drain old queued model-bearing payloads and restart workers before upgrade. New serialized alias instances restore the canonical versioned class without model restoration.",
+    "Event fakes/filters and assertions use canonical class names. EventAliases::canonicalName() helps migrate old names; old fake filters are not automatically rewritten.",
+    "Host custom dispatchers are retained. Explicit EventAliases::listen($event, $listener) maps through the canonical adapter; absent native bridging/host adapter, Doctor reports the deprecated-name limitation."
+  ]
+}

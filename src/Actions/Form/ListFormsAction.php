@@ -7,6 +7,7 @@ namespace Nvl\Forms\Actions\Form;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Nvl\Filterable\Data\FilterSet;
+use Nvl\Forms\Contracts\ListFormsContract;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 
@@ -15,7 +16,7 @@ use Nvl\Forms\Models\Form;
  *
  * @api
  */
-final class ListFormsAction
+final class ListFormsAction implements ListFormsContract
 {
     /**
      * Execute the form listing.

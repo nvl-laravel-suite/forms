@@ -9,11 +9,41 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
 /**
+ * Builds native package fixture rows and declared parents.
+ *
+ * @api
+ *
  * @extends Factory<FormEntry>
  */
 final class FormEntryFactory extends Factory
 {
     protected $model = FormEntry::class;
+
+    /**
+     * Prepare native parent and owner facts after Laravel expands relationships.
+     *
+     * @internal
+     */
+    public function configure(): static
+    {
+        $expandRelationships = true;
+
+        return $this->state(function () use (&$expandRelationships): array {
+            $expandRelationships = $this->expandRelationships;
+
+            return [];
+        })->afterMaking(function (FormEntry $model) use (&$expandRelationships): void {
+            if (! $expandRelationships) {
+                return;
+            }
+
+            if ($model->getAttribute('form_id') !== null) {
+                $parent = Form::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('form_id')));
+                FactoryGuard::parent($parent, $model);
+                FactoryGuard::inherit($model, $parent);
+            }
+        });
+    }
 
     /**
      * Define the model's default state.
@@ -40,5 +70,16 @@ final class FormEntryFactory extends Factory
             'spam_score' => null,
             'security_flags' => null,
         ];
+    }
+
+    /** Associate a persisted form parent.
+     *
+     * @api
+     */
+    public function forForm(Form $form): static
+    {
+        FactoryGuard::parent($form, new FormEntry);
+
+        return $this->state(['form_id' => $form->getKey()]);
     }
 }

@@ -13,6 +13,10 @@ use Nvl\Forms\Models\FormTranslation;
 use Nvl\Support\Facades\Locales;
 
 /**
+ * Builds native package fixture rows and declared parents.
+ *
+ * @api
+ *
  * @extends Factory<Form>
  */
 final class FormFactory extends Factory
@@ -24,7 +28,18 @@ final class FormFactory extends Factory
      */
     public function configure(): static
     {
-        return $this
+        $expandRelationships = true;
+
+        return $this->state(function () use (&$expandRelationships): array {
+            $expandRelationships = $this->expandRelationships;
+
+            return [];
+        })
+            ->afterMaking(function (Form $form) use (&$expandRelationships): void {
+                if ($expandRelationships) {
+                    FactoryGuard::root($form, 'forms.forms');
+                }
+            })
             ->afterMaking(function (Form $form): void {
                 $name = $form->getAttribute('name');
                 $description = $form->getAttribute('description');
@@ -68,6 +83,7 @@ final class FormFactory extends Factory
 
                     FormTranslation::query()->create([
                         'form_id' => $form->getKey(),
+                        ...(config('nvl-tenancy.enabled') === true ? ['tenant_id' => $form->getRawOriginal('tenant_id')] : []),
                         'locale' => $translationLocale,
                         'name' => is_string($payload['name'] ?? null)
                             ? $payload['name']
@@ -111,5 +127,16 @@ final class FormFactory extends Factory
             'require_csrf' => true,
             'cors_settings' => null,
         ];
+    }
+
+    /** Omit automatically generated copy when a translation factory owns it.
+     *
+     * @api
+     */
+    public function withoutTranslations(): static
+    {
+        return $this->afterMaking(function (Form $form): void {
+            $form->setRelation('__factory_localized_copy', null);
+        });
     }
 }

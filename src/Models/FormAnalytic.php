@@ -6,10 +6,12 @@ namespace Nvl\Forms\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\Builder;
 use Nvl\Forms\Builders\FormAnalyticBuilder;
+use Nvl\Forms\Database\Factories\FormAnalyticFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Traits\FormAnalyticFilters;
@@ -33,10 +35,17 @@ use Nvl\Support\Config\PackageStorage;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Form $form
+ *
+ * @api
+ *
+ * @nvl-consumer-read id
  */
 class FormAnalytic extends Model
 {
     use FormAnalyticFilters;
+
+    /** @use HasFactory<FormAnalyticFactory> */
+    use HasFactory;
     use HasUuids;
 
     protected $table = FormsTables::Analytics;
@@ -103,5 +112,15 @@ class FormAnalytic extends Model
     public function getConnectionName(): ?string
     {
         return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('forms') ?? parent::getConnectionName());
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): FormAnalyticFactory
+    {
+        return FormAnalyticFactory::new();
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\Form;
 
 use Illuminate\Support\Collection;
+use Nvl\Forms\Contracts\GetFormAnalyticsSummaryContract;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
@@ -14,7 +15,7 @@ use Nvl\Support\Tenancy\Contracts\TenantBoundary;
  *
  * @api
  */
-final class GetFormAnalyticsSummaryAction
+final class GetFormAnalyticsSummaryAction implements GetFormAnalyticsSummaryContract
 {
     /** Create the tenant-scoped aggregator. */
     public function __construct(private readonly TenantBoundary $boundary) {}

@@ -7,16 +7,16 @@ namespace Nvl\Forms\Actions\FormEntry;
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Contracts\CreateFormEntryContract;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Data\FormEntryPayload;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Services\FormRegistrationFingerprint;
 use Nvl\Forms\Services\FormSpamRejectionRecorder;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -54,6 +54,7 @@ final class CreateFormEntryAction implements CreateFormEntryContract
         private readonly FormSpamRejectionRecorder $spamRejectionRecorder,
         private readonly FormRegistrationFingerprint $registrationFingerprint,
         private readonly TenantBoundary $boundary,
+        private DomainEventDispatcher $domainEvents,
     ) {}
 
     /**
@@ -86,7 +87,7 @@ final class CreateFormEntryAction implements CreateFormEntryContract
 
         try {
             /** @var array{entry?: FormEntry, form: Form, is_spam: bool, rejection?: string, duplicate?: bool} $result */
-            $result = DB::transaction(function () use ($data, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $trustedFormLoadTime, $payloadDigest) {
+            $result = (new FormEntry)->getConnection()->transaction(function () use ($data, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $trustedFormLoadTime, $payloadDigest, $actor) {
                 $formId = $data->formId;
                 if ($formId === '') {
                     throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.not_found', [
@@ -185,6 +186,14 @@ final class CreateFormEntryAction implements CreateFormEntryContract
                     ]));
                 }
 
+                $this->domainEvents->dispatch(FormEntryChanged::for(
+                    form: $form,
+                    entry: $entry,
+                    operation: 'created',
+                    actor: $actor,
+                    context: ['is_spam' => (bool) $spamDetection['is_spam']],
+                ), $entry->getConnection());
+
                 return [
                     'entry' => $fresh,
                     'form' => $form,
@@ -240,14 +249,6 @@ final class CreateFormEntryAction implements CreateFormEntryContract
         if (($result['duplicate'] ?? false) === true) {
             return $entry->markAsIdempotentReplay();
         }
-
-        event(FormEntryChangedEvent::for(
-            form: $result['form'],
-            entry: $entry,
-            operation: 'created',
-            actor: $actor,
-            context: ['is_spam' => $result['is_spam']],
-        ));
 
         return $entry;
     }

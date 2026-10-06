@@ -7,6 +7,7 @@ namespace Nvl\Forms\Actions\FormEntry;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Nvl\Filterable\Data\FilterSet;
+use Nvl\Forms\Contracts\ListFormEntriesContract;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
@@ -16,7 +17,7 @@ use Nvl\Forms\Models\FormEntry;
  *
  * @api
  */
-final class ListFormEntriesAction
+final class ListFormEntriesAction implements ListFormEntriesContract
 {
     /**
      * Execute the form entries listing.

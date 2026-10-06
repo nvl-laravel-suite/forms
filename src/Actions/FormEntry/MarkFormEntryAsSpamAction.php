@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\FormEntry;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Contracts\MarkFormEntryAsSpamContract;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
 /**
@@ -16,8 +17,11 @@ use Throwable;
  *
  * @api
  */
-final class MarkFormEntryAsSpamAction
+final class MarkFormEntryAsSpamAction implements MarkFormEntryAsSpamContract
 {
+    /** Retain the source-aware domain event dispatcher. */
+    public function __construct(private DomainEventDispatcher $domainEvents) {}
+
     /**
      * Mark the given entry as spam.
      *
@@ -33,7 +37,7 @@ final class MarkFormEntryAsSpamAction
         ?Authenticatable $actor = null,
     ): FormEntry {
         /** @var array{entry: FormEntry, form: Form} $result */
-        $result = DB::transaction(function () use ($entry, $reason): array {
+        $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $reason, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $form = Form::query()->lockForUpdate()->findOrFail($entryModel->form_id);
@@ -56,19 +60,19 @@ final class MarkFormEntryAsSpamAction
             $freshEntry = $entryModel->refresh();
             $freshEntry->setRelation('form', $form);
 
+            $this->domainEvents->dispatch(FormEntryChanged::for(
+                form: $form,
+                entry: $freshEntry,
+                operation: 'marked_as_spam',
+                actor: $actor,
+                context: ['has_reason' => is_string($reason) && $reason !== ''],
+            ), $form->getConnection());
+
             return [
                 'entry' => $freshEntry,
                 'form' => $form->fresh() ?? $form,
             ];
         });
-
-        event(FormEntryChangedEvent::for(
-            form: $result['form'],
-            entry: $result['entry'],
-            operation: 'marked_as_spam',
-            actor: $actor,
-            context: ['has_reason' => is_string($reason) && $reason !== ''],
-        ));
 
         return $result['entry'];
     }

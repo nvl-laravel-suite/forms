@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\FormEntry;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Contracts\MarkFormEntryAsLegitimateContract;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
 /**
@@ -16,8 +17,11 @@ use Throwable;
  *
  * @api
  */
-final class MarkFormEntryAsLegitimateAction
+final class MarkFormEntryAsLegitimateAction implements MarkFormEntryAsLegitimateContract
 {
+    /** Retain the source-aware domain event dispatcher. */
+    public function __construct(private DomainEventDispatcher $domainEvents) {}
+
     /**
      * Mark the given entry as legitimate.
      *
@@ -29,7 +33,7 @@ final class MarkFormEntryAsLegitimateAction
     public function execute(FormEntry|string $entry, ?Authenticatable $actor = null): FormEntry
     {
         /** @var array{entry: FormEntry, form: Form, was_spam: bool} $result */
-        $result = DB::transaction(function () use ($entry): array {
+        $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $form = Form::query()->lockForUpdate()->findOrFail($entryModel->form_id);
@@ -49,20 +53,20 @@ final class MarkFormEntryAsLegitimateAction
             $freshEntry = $entryModel->refresh()->load('form');
             $form = $freshEntry->form;
 
+            $this->domainEvents->dispatch(FormEntryChanged::for(
+                form: $form,
+                entry: $freshEntry,
+                operation: 'marked_as_legitimate',
+                actor: $actor,
+                context: ['was_spam' => $wasSpam],
+            ), $form->getConnection());
+
             return [
                 'entry' => $freshEntry,
                 'form' => $form->fresh() ?? $form,
                 'was_spam' => $wasSpam,
             ];
         });
-
-        event(FormEntryChangedEvent::for(
-            form: $result['form'],
-            entry: $result['entry'],
-            operation: 'marked_as_legitimate',
-            actor: $actor,
-            context: ['was_spam' => $result['was_spam']],
-        ));
 
         return $result['entry'];
     }

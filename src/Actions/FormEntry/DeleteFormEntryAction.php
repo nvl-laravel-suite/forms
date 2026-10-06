@@ -6,11 +6,12 @@ namespace Nvl\Forms\Actions\FormEntry;
 
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
+use Nvl\Forms\Contracts\DeleteFormEntryContract;
 use Nvl\Forms\Contracts\FormEntryDeletionPolicy;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
 /**
@@ -18,9 +19,9 @@ use Throwable;
  *
  * @api
  */
-final class DeleteFormEntryAction
+final class DeleteFormEntryAction implements DeleteFormEntryContract
 {
-    public function __construct(private readonly FormEntryDeletionPolicy $deletionPolicy) {}
+    public function __construct(private readonly FormEntryDeletionPolicy $deletionPolicy, private DomainEventDispatcher $domainEvents) {}
 
     /**
      * Execute the form entry deletion.
@@ -36,7 +37,7 @@ final class DeleteFormEntryAction
         $entryId = $formEntry instanceof FormEntry ? $formEntry->id : $formEntry;
 
         /** @var array{deleted: bool, form: Form, entry: FormEntry, was_spam: bool} $result */
-        $result = DB::transaction(function () use ($entryId, $actor) {
+        $result = (new FormEntry)->getConnection()->transaction(function () use ($entryId, $actor) {
             $formEntry = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $form = Form::query()->lockForUpdate()->findOrFail($formEntry->form_id);
             $formEntry->setRelation('form', $form);
@@ -59,6 +60,14 @@ final class DeleteFormEntryAction
                 $freshForm = $form;
             }
 
+            $this->domainEvents->dispatch(FormEntryChanged::for(
+                form: $form,
+                entry: $formEntry,
+                operation: 'deleted',
+                actor: $actor,
+                context: ['was_spam' => $wasSpam],
+            ), $form->getConnection());
+
             return [
                 'deleted' => $deleted,
                 'form' => $freshForm,
@@ -66,14 +75,6 @@ final class DeleteFormEntryAction
                 'was_spam' => $wasSpam,
             ];
         });
-
-        event(FormEntryChangedEvent::for(
-            form: $result['form'],
-            entry: $result['entry'],
-            operation: 'deleted',
-            actor: $actor,
-            context: ['was_spam' => $result['was_spam']],
-        ));
 
         return $result['deleted'];
     }

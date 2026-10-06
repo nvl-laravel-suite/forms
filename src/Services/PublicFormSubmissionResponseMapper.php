@@ -8,6 +8,7 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Results\FormSubmissionResult;
 use Nvl\Forms\Support\FormErrorMapperRegistry;
 use Nvl\Support\Exceptions\BusinessException;
+use Nvl\Support\Http\PackageExceptionPayload;
 
 /**
  * Maps reusable public submission warning and business-error response data.
@@ -19,6 +20,7 @@ final class PublicFormSubmissionResponseMapper
      */
     public function __construct(
         private readonly FormErrorMapperRegistry $errorMapperRegistry,
+        private readonly PackageExceptionPayload $payload,
     ) {}
 
     /**
@@ -45,11 +47,7 @@ final class PublicFormSubmissionResponseMapper
      */
     public function businessErrors(Form $form, BusinessException $exception): array
     {
-        $message = trim($exception->getMessage());
-
-        if ($message === '') {
-            return ['error' => (string) trans('nvl-forms::forms/messages.api.error')];
-        }
+        $message = $this->payload->for($exception)['message'];
 
         $mappedErrors = $this->errorMapperRegistry->map($form, $exception);
 

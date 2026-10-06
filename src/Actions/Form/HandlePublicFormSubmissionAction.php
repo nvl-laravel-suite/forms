@@ -7,6 +7,7 @@ namespace Nvl\Forms\Actions\Form;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Actions\FormEntry\CreateFormEntryAction;
+use Nvl\Forms\Contracts\HandlePublicFormSubmissionContract;
 use Nvl\Forms\Data\FormSubmissionCallbackContext;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
 use Nvl\Forms\Enums\FormAnalyticEventType;
@@ -36,7 +37,7 @@ use Throwable;
  *
  * @api
  */
-final class HandlePublicFormSubmissionAction
+final class HandlePublicFormSubmissionAction implements HandlePublicFormSubmissionContract
 {
     /**
      * Create the action with submission dependencies.

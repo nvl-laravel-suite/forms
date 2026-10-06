@@ -6,14 +6,14 @@ namespace Nvl\Forms\Actions\Form;
 
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Contracts\CreateFormContract;
 use Nvl\Forms\Data\Mutations\MutateFormPayload;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormAllowedOriginService;
 use Nvl\Forms\Services\FormHandleService;
 use Nvl\Forms\Services\FormTranslationPayloadMapper;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Translatable\Services\TranslationWriter;
 use Spatie\LaravelData\Optional;
@@ -42,6 +42,7 @@ final class CreateFormAction implements CreateFormContract
         private readonly FormTranslationPayloadMapper $translationPayloadMapper,
         private readonly TranslationWriter $translationWriter,
         private readonly TenantBoundary $boundary,
+        private DomainEventDispatcher $domainEvents,
     ) {}
 
     /**
@@ -59,7 +60,7 @@ final class CreateFormAction implements CreateFormContract
      */
     public function execute(MutateFormPayload $data, ?Authenticatable $actor = null): Form
     {
-        $form = DB::transaction(function () use ($data) {
+        $form = (new Form)->getConnection()->transaction(function () use ($data, $actor) {
             $translations = $data->translations instanceof Optional
                 ? []
                 : $data->translations;
@@ -106,10 +107,10 @@ final class CreateFormAction implements CreateFormContract
                 );
             }
 
+            $this->domainEvents->dispatch(FormChanged::for($form, 'created', $actor), $form->getConnection());
+
             return $freshForm->loadMissing(['allowedOrigins', 'translations']);
         });
-
-        event(FormChangedEvent::for($form, 'created', $actor));
 
         return $form;
     }

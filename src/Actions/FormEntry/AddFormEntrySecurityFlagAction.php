@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\FormEntry;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\DB;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
 /**
@@ -18,6 +18,9 @@ use Throwable;
  */
 final class AddFormEntrySecurityFlagAction
 {
+    /** Retain the source-aware domain event dispatcher. */
+    public function __construct(private DomainEventDispatcher $domainEvents) {}
+
     /**
      * Persist a security flag key/value pair on the given entry.
      *
@@ -35,7 +38,7 @@ final class AddFormEntrySecurityFlagAction
         ?Authenticatable $actor = null,
     ): FormEntry {
         /** @var array{entry: FormEntry, form: Form} $result */
-        $result = DB::transaction(function () use ($entry, $key, $value): array {
+        $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $key, $value, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
 
@@ -45,19 +48,19 @@ final class AddFormEntrySecurityFlagAction
             $freshEntry = $entryModel->refresh()->load('form');
             $form = $freshEntry->form;
 
+            $this->domainEvents->dispatch(FormEntryChanged::for(
+                form: $form,
+                entry: $freshEntry,
+                operation: 'security_flag_added',
+                actor: $actor,
+                context: ['flag_key' => $key],
+            ), $form->getConnection());
+
             return [
                 'entry' => $freshEntry,
                 'form' => $form->fresh() ?? $form,
             ];
         });
-
-        event(FormEntryChangedEvent::for(
-            form: $result['form'],
-            entry: $result['entry'],
-            operation: 'security_flag_added',
-            actor: $actor,
-            context: ['flag_key' => $key],
-        ));
 
         return $result['entry'];
     }

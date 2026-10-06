@@ -7,6 +7,7 @@ namespace Nvl\Forms\Enums;
 use Nvl\Support\Contracts\ResponseCode;
 
 /**
+ * @api
  * Catalog of response codes for the Forms module.
  *
  * Each case value is a short, opaque discriminator emitted by controllers in
@@ -16,6 +17,9 @@ use Nvl\Support\Contracts\ResponseCode;
  */
 enum FormResponseCode: string implements ResponseCode
 {
+    case SubmissionRejected = 'submission_rejected';
+    case OwnershipDenied = 'ownership_denied';
+
     case Created = 'created';
     case Updated = 'updated';
     case Deleted = 'deleted';
