@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Event;
 use Nvl\Forms\Actions\FormEntry\DeleteFormEntryAction;
 use Nvl\Forms\Contracts\FormEntryDeletionPolicy;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
 test('delete form entry action removes entry and updates counters', function (): void {
-    Event::fake([FormEntryChangedEvent::class]);
+    Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create(['submissions_count' => 1]);
     $entry = FormEntry::factory()->for($form)->create([
         'is_spam' => false,
@@ -24,7 +24,7 @@ test('delete form entry action removes entry and updates counters', function ():
 
     expect($deleted)->toBeTrue();
     $this->assertDatabaseMissing(FormsTables::Entries, ['id' => $entry->id]);
-    Event::assertDispatched(FormEntryChangedEvent::class);
+    Event::assertDispatched(FormEntryChanged::class);
 
     $form->refresh();
     expect($form->submissions_count)->toBe(0);
@@ -86,7 +86,7 @@ test('cancelled entry deletion preserves counters and emits no deletion event', 
     $entry = FormEntry::factory()->for($form)->create(['is_spam' => false]);
     Event::listen('eloquent.deleting: '.FormEntry::class, static fn (): bool => false);
     $deletionEvents = 0;
-    Event::listen(FormEntryChangedEvent::class, function () use (&$deletionEvents): void {
+    Event::listen(FormEntryChanged::class, function () use (&$deletionEvents): void {
         $deletionEvents++;
     });
 

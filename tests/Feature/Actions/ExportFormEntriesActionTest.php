@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Nvl\Forms\Actions\FormEntry\ExportFormEntriesAction;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
@@ -22,7 +22,7 @@ beforeEach(function (): void {
 });
 
 test('export form entries action writes csv and updates progress tracking', function (): void {
-    Event::fake([FormChangedEvent::class]);
+    Event::fake([FormChanged::class]);
     $user = TestFormsUser::factory()->create(['name' => 'Nicolas Vlachos']);
     $form = Form::factory()->create(['handle' => 'contact-form']);
     $foreignProgressKey = 'export_progress_'.$user->getAuthIdentifier().'_'.$form->id.'_host';
@@ -64,8 +64,8 @@ test('export form entries action writes csv and updates progress tracking', func
         ->and(array_column($rows, $notesIndex))->toContain('Follow up soon', 'Escalate later');
 
     Event::assertDispatched(
-        FormChangedEvent::class,
-        static fn (FormChangedEvent $event): bool => $event->operation === 'entries_exported'
+        FormChanged::class,
+        static fn (FormChanged $event): bool => $event->operation === 'entries_exported'
             && $event->context['entry_count'] === 2,
     );
 
@@ -116,7 +116,7 @@ test('exports in the same second preserve distinct selected datasets', function 
 });
 
 test('failed export writes cannot report a completed artifact', function (): void {
-    Event::fake([FormChangedEvent::class]);
+    Event::fake([FormChanged::class]);
     $user = TestFormsUser::factory()->create();
     $form = Form::factory()->create();
     FormEntry::factory()->for($form)->create();
@@ -126,5 +126,5 @@ test('failed export writes cannot report a completed artifact', function (): voi
 
     expect(fn () => app(ExportFormEntriesAction::class)->execute($form, [], $user))
         ->toThrow(FormException::class);
-    Event::assertNotDispatched(FormChangedEvent::class);
+    Event::assertNotDispatched(FormChanged::class);
 });

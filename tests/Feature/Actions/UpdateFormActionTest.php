@@ -7,12 +7,12 @@ use Nvl\Forms\Actions\Form\UpdateFormAction;
 use Nvl\Forms\Data\Mutations\MutateFormPayload;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 
 test('update form action updates persisted attributes', function (): void {
-    Event::fake([FormChangedEvent::class]);
+    Event::fake([FormChanged::class]);
     $form = Form::factory()->create([
         'name' => 'Legacy Form',
         'handle' => 'legacy-form',
@@ -34,7 +34,7 @@ test('update form action updates persisted attributes', function (): void {
         ->and($updated->type->value)->toBe(FormType::IFRAME->value)
         ->and($updated->revision)->toBe(2);
 
-    Event::assertDispatched(FormChangedEvent::class);
+    Event::assertDispatched(FormChanged::class);
 });
 
 test('update form action preserves omitted attributes and applies explicit null clears', function (): void {

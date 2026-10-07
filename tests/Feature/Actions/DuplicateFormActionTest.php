@@ -5,12 +5,12 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Event;
 use Nvl\Forms\Actions\Form\DuplicateFormAction;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 
 test('duplicate form action clones the form with reset counters', function (): void {
-    Event::fake([FormChangedEvent::class]);
+    Event::fake([FormChanged::class]);
     $form = Form::factory()->create([
         'name' => 'Signup Form',
         'description' => 'Collect account details.',
@@ -53,7 +53,7 @@ test('duplicate form action clones the form with reset counters', function (): v
         ->and($duplicate->views_count)->toBe(0)
         ->and($duplicate->spam_count)->toBe(0);
 
-    Event::assertDispatched(FormChangedEvent::class);
+    Event::assertDispatched(FormChanged::class);
 
     $this->assertDatabaseHas(FormsTables::AllowedOrigins, [
         'form_id' => $duplicate->id,

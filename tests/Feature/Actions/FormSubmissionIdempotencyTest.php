@@ -9,7 +9,7 @@ use Nvl\Forms\Actions\FormEntry\CreateFormEntryAction;
 use Nvl\Forms\Data\FormEntryPayload;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
 use Nvl\Forms\Enums\Resolvement;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
@@ -18,7 +18,7 @@ use Nvl\Forms\Services\EntryCallbackRegistry;
 use Nvl\Forms\Support\FormHandlerRegistry;
 
 test('submission idempotency returns the original entry without duplicate events', function (): void {
-    Event::fake([FormEntryChangedEvent::class]);
+    Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create([
         'restrict_public_access' => false,
         'enable_rate_limiting' => false,
@@ -50,7 +50,7 @@ test('submission idempotency returns the original entry without duplicate events
     expect($second->id)->toBe($first->id)
         ->and(FormEntry::query()->count())->toBe(1)
         ->and($form->fresh()->submissions_count)->toBe(1);
-    Event::assertDispatchedTimes(FormEntryChangedEvent::class, 1);
+    Event::assertDispatchedTimes(FormEntryChanged::class, 1);
 });
 
 test('submission idempotency rejects reuse with a different payload', function (): void {

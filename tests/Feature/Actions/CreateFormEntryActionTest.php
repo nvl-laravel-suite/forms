@@ -6,13 +6,13 @@ use Illuminate\Support\Facades\Event;
 use Nvl\Forms\Actions\FormEntry\CreateFormEntryAction;
 use Nvl\Forms\Data\FormEntryPayload;
 use Nvl\Forms\Enums\FormAnalyticEventType;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
 use Nvl\Forms\Models\FormEntry;
 
 test('create form entry action orchestrates dependencies for legitimate submission', function (): void {
-    Event::fake([FormEntryChangedEvent::class]);
+    Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create([
         'restrict_public_access' => false,
         'enable_rate_limiting' => false,
@@ -36,7 +36,7 @@ test('create form entry action orchestrates dependencies for legitimate submissi
     expect($entry)->toBeInstanceOf(FormEntry::class)
         ->and($entry->form_id)->toBe($form->id);
 
-    Event::assertDispatched(FormEntryChangedEvent::class);
+    Event::assertDispatched(FormEntryChanged::class);
 
     $form->refresh();
     expect($form->submissions_count)->toBe(1);

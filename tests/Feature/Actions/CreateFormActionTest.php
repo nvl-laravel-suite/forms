@@ -7,12 +7,12 @@ use Nvl\Forms\Actions\Form\CreateFormAction;
 use Nvl\Forms\Data\Mutations\MutateFormPayload;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
-use Nvl\Forms\Events\FormChangedEvent;
+use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Tests\Stubs\TestFormsUser;
 
 test('create form action persists a form with a generated handle', function (): void {
-    Event::fake([FormChangedEvent::class]);
+    Event::fake([FormChanged::class]);
     $data = MutateFormPayload::from([
         'translations' => ['en' => ['name' => 'Marketing Landing Page']],
         'resolvement' => Resolvement::ENTRIES->value,
@@ -28,7 +28,7 @@ test('create form action persists a form with a generated handle', function (): 
         ->and($form->displayName())->toBe('Marketing Landing Page')
         ->and($form->fresh())->not->toBeNull();
 
-    Event::assertDispatched(FormChangedEvent::class);
+    Event::assertDispatched(FormChanged::class);
 });
 
 test('create form action honours a provided handle', function (): void {

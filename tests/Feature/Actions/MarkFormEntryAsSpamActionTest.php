@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Event;
 use Nvl\Forms\Actions\FormEntry\MarkFormEntryAsSpamAction;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
 test('mark form entry as spam action sets is_spam and increments form counter', function (): void {
-    Event::fake([FormEntryChangedEvent::class]);
+    Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create(['spam_count' => 0]);
     $entry = FormEntry::factory()->for($form)->create(['is_spam' => false]);
 
@@ -19,7 +19,7 @@ test('mark form entry as spam action sets is_spam and increments form counter', 
         ->and($result->getSecurityFlag('marked_spam_at'))->not->toBeNull()
         ->and($result->form->spam_count)->toBe(1);
 
-    Event::assertDispatched(FormEntryChangedEvent::class);
+    Event::assertDispatched(FormEntryChanged::class);
 });
 
 test('mark form entry as spam action stores optional reason', function (): void {

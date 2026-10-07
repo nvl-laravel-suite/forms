@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Event;
 use Nvl\Forms\Actions\FormEntry\AddFormEntrySecurityFlagAction;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Tests\Stubs\TestFormsUser;
 
 test('add form entry security flag action persists a flag on the entry', function (): void {
-    Event::fake([FormEntryChangedEvent::class]);
+    Event::fake([FormEntryChanged::class]);
     $actor = TestFormsUser::factory()->create(['name' => 'Natali Necheva']);
     $this->actingAs($actor);
 
@@ -23,8 +23,8 @@ test('add form entry security flag action persists a flag on the entry', functio
         ->and($result->getSecurityFlag('flagged_reason'))->toBe('suspicious_timing');
 
     Event::assertDispatched(
-        FormEntryChangedEvent::class,
-        static fn (FormEntryChangedEvent $event): bool => $event->operation === 'security_flag_added'
+        FormEntryChanged::class,
+        static fn (FormEntryChanged $event): bool => $event->operation === 'security_flag_added'
             && $event->entryId === $entry->id,
     );
 });

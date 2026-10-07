@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Event;
 use Nvl\Forms\Actions\FormEntry\MarkFormEntryAsLegitimateAction;
-use Nvl\Forms\Events\FormEntryChangedEvent;
+use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
 test('mark form entry as legitimate action clears spam flag', function (): void {
-    Event::fake([FormEntryChangedEvent::class]);
+    Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create(['spam_count' => 1]);
     $entry = FormEntry::factory()->for($form)->create(['is_spam' => true]);
 
@@ -18,7 +18,7 @@ test('mark form entry as legitimate action clears spam flag', function (): void 
     expect($result->is_spam)->toBeFalse()
         ->and($result->getSecurityFlag('marked_legitimate_at'))->not->toBeNull();
 
-    Event::assertDispatched(FormEntryChangedEvent::class);
+    Event::assertDispatched(FormEntryChanged::class);
 });
 
 test('mark form entry as legitimate action decrements spam count when was spam', function (): void {
