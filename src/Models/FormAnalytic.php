@@ -46,6 +46,7 @@ class FormAnalytic extends Model
 
     /** @use HasFactory<FormAnalyticFactory> */
     use HasFactory;
+
     use HasUuids;
 
     protected $table = FormsTables::Analytics;

@@ -42,6 +42,7 @@ class FormRateLimit extends Model
 
     /** @use HasFactory<FormRateLimitFactory> */
     use HasFactory;
+
     use HasUuids;
 
     protected $table = FormsTables::RateLimits;
