@@ -120,9 +120,16 @@ final class FormsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../resources/boost/skills' => base_path('.agents/skills'),
         ], 'forms-skills');
-        $this->publishesMigrations([
-            __DIR__.'/../../database/migrations' => database_path('migrations'),
-        ], 'forms-migrations');
+        $migrations = array_values(array_filter(
+            glob(__DIR__.'/../../database/migrations/*.php') ?: [],
+            static fn (string $path): bool => basename($path) !== '2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php',
+        ));
+        $migrations[] = __DIR__.'/../../database/migrations/current/2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php';
+        $publishedMigrations = [];
+        foreach ($migrations as $path) {
+            $publishedMigrations[$path] = database_path('migrations/'.basename($path));
+        }
+        $this->publishesMigrations($publishedMigrations, 'forms-migrations');
 
         if ($this->app->runningInConsole()) {
             $this->registerCommands();
@@ -134,7 +141,7 @@ final class FormsServiceProvider extends ServiceProvider
         $this->registerMiddleware();
         $this->registerRegistries();
         if ((bool) config('nvl-forms.migrations.enabled', true)) {
-            $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+            $this->loadMigrationsFrom($migrations);
         }
 
         $translationResources->register(
