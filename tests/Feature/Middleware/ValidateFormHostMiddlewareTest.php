@@ -213,3 +213,35 @@ test('validate form host applies configured cors policy to real preflight reques
         ->assertHeader('Access-Control-Max-Age', '1200')
         ->assertHeaderMissing('Access-Control-Allow-Credentials');
 });
+
+test('public forms require an allowlisted origin before permitting credentialed reads', function (): void {
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/credentials/{form}', fn () => response()->json(['csrf_token' => csrf_token()]));
+    $form = Form::factory()->create(['restrict_public_access' => false]);
+    AllowedOrigin::factory()->for($form)->create(['origin' => 'trusted.test']);
+
+    $this->withHeader('Origin', 'https://attacker.test')
+        ->getJson("/testing/forms/credentials/{$form->id}")
+        ->assertOk()
+        ->assertHeader('Access-Control-Allow-Origin', 'https://attacker.test')
+        ->assertHeaderMissing('Access-Control-Allow-Credentials')
+        ->assertHeader('Cache-Control', 'max-age=0, no-store, private');
+
+    $this->withHeader('Origin', 'https://trusted.test')
+        ->getJson("/testing/forms/credentials/{$form->id}")
+        ->assertOk()
+        ->assertHeader('Access-Control-Allow-Credentials', 'true');
+});
+
+test('restricted forms reject malformed origins without falling back to spoofed headers', function (string $origin): void {
+    Route::middleware('nvl.forms.validate-host')->get('/testing/forms/malformed-origin/{form}', fn () => response()->json(['ok' => true]));
+    $form = Form::factory()->create(['restrict_public_access' => true]);
+    AllowedOrigin::factory()->for($form)->create(['origin' => 'trusted.test']);
+
+    $this->withHeaders([
+        'Origin' => $origin,
+        'Referer' => 'https://trusted.test/form',
+        'X-Form-Origin' => 'trusted.test',
+    ])->getJson("/testing/forms/malformed-origin/{$form->id}")
+        ->assertForbidden()
+        ->assertHeaderMissing('Access-Control-Allow-Origin');
+})->with(['null', 'trusted.test', 'https://trusted.test/path', 'https://user@trusted.test', 'ftp://trusted.test', 'https://trusted.test?foo=bar', 'https://trusted.test#fragment']);

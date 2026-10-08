@@ -178,6 +178,8 @@ final class ValidateFormHost
     ): Response {
         $settings = $this->corsPolicy->resolve($form, $originHost);
 
+        $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
+
         $response->headers->remove('X-Frame-Options');
         if ($originHeader !== null && $originHeader !== '') {
             $response->headers->set('Access-Control-Allow-Origin', $originHeader);
@@ -192,7 +194,8 @@ final class ValidateFormHost
         $response->headers->set('Access-Control-Allow-Headers', implode(', ', $settings->allowedHeaders));
         $response->headers->set('Access-Control-Max-Age', (string) $settings->maxAge);
 
-        if ($settings->allowCredentials) {
+        if ($settings->allowCredentials && $originHeader !== null && $originHost !== null
+            && $this->originAccess->resolveMatchingOrigin($form, $originHost) !== null) {
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
         } else {
             $response->headers->remove('Access-Control-Allow-Credentials');

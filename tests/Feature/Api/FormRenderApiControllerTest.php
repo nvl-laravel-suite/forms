@@ -325,7 +325,7 @@ test('submit endpoint passes normalized payload to custom handlers', function ()
             'phone' => '+359888123456',
             'submissionData' => ['notes' => 'hello'],
         ],
-        ['Origin' => 'https://landing.example.com/path']
+        ['Origin' => 'https://landing.example.com']
     );
 
     $response->assertCreated()

@@ -21,7 +21,21 @@ final class RequestOriginResolver
     {
         $origin = $request->header('Origin');
 
-        return is_string($origin) && $origin !== '' ? $origin : null;
+        if (! is_string($origin) || strlen($origin) > 2048
+            || filter_var($origin, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        $parts = parse_url($origin);
+
+        if ($parts === false
+            || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)
+            || isset($parts['user']) || isset($parts['pass'])
+            || isset($parts['path']) || isset($parts['query']) || isset($parts['fragment'])) {
+            return null;
+        }
+
+        return $origin;
     }
 
     /**
@@ -34,7 +48,9 @@ final class RequestOriginResolver
     {
         $origin = $request->header('Origin');
         if (is_string($origin) && $origin !== '') {
-            return $this->extractHost($origin);
+            $validated = $this->originHeader($request);
+
+            return $validated !== null ? $this->extractHost($validated) : null;
         }
 
         $referer = $request->header('Referer');
