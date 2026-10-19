@@ -19,6 +19,7 @@ use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Services\FormEntryExportService;
 use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Events\DomainEventDispatcher;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Orchestrates form entry export with permissions, progress tracking, and activity logging.
@@ -39,6 +40,7 @@ final class ExportFormEntriesAction implements ExportFormEntriesContract
     public function __construct(
         private readonly FormEntryExportService $exportService,
         private DomainEventDispatcher $domainEvents,
+        private readonly OwnershipBoundary $ownership,
     ) {}
 
     /**
@@ -58,8 +60,12 @@ final class ExportFormEntriesAction implements ExportFormEntriesContract
     {
         $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
 
+        $this->ownership->assertRecord($form, 'forms.forms');
         $this->validateExportPermissions($form, $actor);
-        $this->cleanupOldExportFiles();
+        $identity = 'exports/forms:'.($form->getConnection()->getName() ?? 'default');
+        $partition = $this->ownership->key('forms.forms', $identity);
+        $exportDirectory = $partition === $identity ? 'exports/forms' : 'exports/forms/'.hash('sha256', $partition);
+        $this->cleanupOldExportFiles($exportDirectory);
 
         $entries = $this->getEntriesToExport($form, $options);
 
@@ -74,7 +80,7 @@ final class ExportFormEntriesAction implements ExportFormEntriesContract
         $rawActorId = $actor?->getAuthIdentifier();
         $actorId = is_string($rawActorId) || is_int($rawActorId) ? $rawActorId : null;
         $exportId = Str::ulid()->toString();
-        $progressKey = 'nvl:forms:export-progress:'.($actorId !== null ? (string) $actorId : 'guest').':'.$form->id.':'.$exportId;
+        $progressKey = $this->ownership->key('forms.forms', 'nvl:forms:export-progress:'.($actorId !== null ? (string) $actorId : 'guest').':'.$form->id.':'.$exportId);
 
         Cache::put($progressKey, [
             'status' => 'started',
@@ -87,7 +93,7 @@ final class ExportFormEntriesAction implements ExportFormEntriesContract
             $csvContent = $this->exportService->generateCsvContent($form, $entries, $options);
 
             $filename = $this->exportService->generateFilename($form, $actorId);
-            $path = 'exports/forms/'.$exportId.'_'.$filename;
+            $path = $exportDirectory.'/'.$exportId.'_'.$filename;
 
             if (! Storage::disk('local')->put($path, $csvContent)) {
                 throw new FormException('Unable to store the form entry export.');
@@ -175,10 +181,9 @@ final class ExportFormEntriesAction implements ExportFormEntriesContract
     /**
      * Delete export files older than 1 hour to prevent disk accumulation.
      */
-    private function cleanupOldExportFiles(): void
+    private function cleanupOldExportFiles(string $exportDir): void
     {
         try {
-            $exportDir = 'exports/forms';
             /** @var array<int, string> $files */
             $files = Storage::disk('local')->files($exportDir);
             $cutoffTime = now()->subHour();

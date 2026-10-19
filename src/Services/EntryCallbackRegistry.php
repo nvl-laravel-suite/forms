@@ -44,8 +44,14 @@ final class EntryCallbackRegistry
         $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
         $this->container->make(OwnershipBoundary::class)->assertRecord($entry, 'forms.entries');
         foreach ($this->ownershipCallbacks[$form->handle] ?? [] as $class) {
-            $callback = $this->buildOwnershipCallback($class);
-            $callback->after($form, $entry, $context);
+            $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
+            $this->container->make(OwnershipBoundary::class)->assertRecord($entry, 'forms.entries');
+            try {
+                $callback = $this->buildOwnershipCallback($class);
+                $callback->after($form, $entry, $context);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
     }
 

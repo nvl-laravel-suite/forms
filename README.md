@@ -91,6 +91,8 @@ For support, [open an issue](https://github.com/nvl-laravel-suite/forms/issues).
 
 See the [installation and publishing guide](https://github.com/nvl-laravel-suite/laravel-suite/blob/main/docs/installation.md) for Composer setup, configuration, migration ownership, and agent skills.
 
+Owned exports validate the canonical Form before filesystem or cache effects. Export paths, progress keys and automatic expiry cleanup stay within the admitted owner/source generation. Cleanup across older generations requires an explicitly authorized maintenance workflow.
+
 ## Quick reference
 
 | Item | Value |

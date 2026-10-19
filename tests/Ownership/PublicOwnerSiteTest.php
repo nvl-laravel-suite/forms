@@ -8,6 +8,7 @@ use Nvl\Forms\Contracts\FormRenderDataProvider;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Services\CustomFormRegistry;
 use Nvl\Forms\Services\CustomSubmissionReceiptService;
@@ -17,6 +18,7 @@ use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Forms\Tests\Fixtures\Company;
 use Nvl\Forms\Tests\Fixtures\OwnedEntryCallback;
+use Nvl\Forms\Tests\Fixtures\ThrowingOwnedEntryCallback;
 use Nvl\Ownership\Contracts\OwnerSiteResolver;
 use Nvl\Ownership\Services\OwnerIdentityResolver;
 use Nvl\Ownership\Services\PublicOwnerSiteRunner;
@@ -127,5 +129,19 @@ it('rejects retained public extension objects and legacy closures in an owned gr
     app(PublicOwnerSiteRunner::class)->run(Request::create('https://a.forms.test'), function () use ($renders): void {
         expect(fn () => $renders->getData($this->forms[7], Request::create('/')))->toThrow(FormException::class)
             ->and(fn () => app(CustomFormRegistry::class)->resolve($this->forms[7]))->toThrow(FormException::class);
+    });
+});
+
+it('preserves committed submission success and later callbacks after an extension fails', function (): void {
+    OwnedEntryCallback::$calls = [];
+    app(EntryCallbackRegistry::class)->registerOwnership('contact', ThrowingOwnedEntryCallback::class);
+    app(EntryCallbackRegistry::class)->registerOwnership('contact', OwnedEntryCallback::class);
+    app(PublicOwnerSiteRunner::class)->run(Request::create('https://a.forms.test'), function (): void {
+        $request = Request::create('https://a.forms.test/submit', 'POST');
+        $request->headers->set('Origin', 'https://a.forms.test');
+        $request->headers->set('Idempotency-Key', 'callback-failure-proof');
+        $result = app(HandlePublicFormSubmissionAction::class)->execute($this->forms[7], SubmitFormPayload::from(['email' => 'durable@example.test', 'body' => 'Committed']), formSubmissionContext($request));
+        expect(OwnedEntryCallback::$calls)->toBe([['7', 'alpha', $result->entryId]]);
+        expect(FormEntry::whereKey($result->entryId)->exists())->toBeTrue();
     });
 });
