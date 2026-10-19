@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
 use Nvl\Forms\Contracts\GetFormForRenderContract;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Forms\Services\FormModelRegistry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Resolves a public form by model, UUID, or handle with render relations loaded.
@@ -37,7 +38,7 @@ final class GetFormForRenderAction implements GetFormForRenderContract
             ? $formIdentifier->identifier()
             : $formIdentifier;
 
-        $query = $this->boundary->query(Form::query(), 'forms.forms')
+        $query = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')
             ->withResolvedTranslations()
             ->where(function ($identity) use ($identifier): void {
                 $identity->where('handle', $identifier);

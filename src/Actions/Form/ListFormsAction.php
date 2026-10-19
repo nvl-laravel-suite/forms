@@ -10,6 +10,7 @@ use Nvl\Filterable\Data\FilterSet;
 use Nvl\Forms\Contracts\ListFormsContract;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 
 /**
  * Lists forms with filtering and pagination.
@@ -32,7 +33,7 @@ final class ListFormsAction implements ListFormsContract
         ?int $perPage = null,
         ?FilterSet $filters = null,
     ): LengthAwarePaginator|Collection {
-        $query = Form::query()
+        $query = FormModelRegistry::query()
             ->select($this->getSelectColumns())
             ->with($this->getEagerLoadRelations())
             ->applyFilterSet($filters ?? FilterSet::none());

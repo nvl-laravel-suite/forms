@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\Form;
 
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Actions\FormEntry\CheckFormRateLimitAction;
 use Nvl\Forms\Actions\FormEntry\DetectFormSubmissionSpamAction;
 use Nvl\Forms\Actions\FormEntry\ValidateFormHostAccessAction;
@@ -13,6 +12,7 @@ use Nvl\Forms\Data\FormEntryPayload;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormSpamRejectionRecorder;
 use Nvl\Forms\Services\PublicFormTokenService;
 use Nvl\Forms\Support\CustomFormGuardResult;
@@ -202,7 +202,7 @@ final class GuardCustomFormSubmissionAction
         ?string $userAgent,
         ?string $sessionId,
     ): void {
-        DB::transaction(function () use ($form, $reason, $score, $flags, $submittedFrom, $ipAddress, $userAgent, $sessionId): void {
+        FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $reason, $score, $flags, $submittedFrom, $ipAddress, $userAgent, $sessionId): void {
             $this->spamRejectionRecorder->record(
                 form: $form,
                 reason: $reason,

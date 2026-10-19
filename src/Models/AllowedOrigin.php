@@ -12,8 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\AllowedOriginFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Traits\AllowedOriginFilters;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 
 /**
  * AllowedOrigin model representing CORS-allowed origins for forms.
@@ -35,8 +38,12 @@ use Nvl\Support\Config\PackageStorage;
  *
  * @nvl-consumer-read id
  */
-class AllowedOrigin extends Model
+class AllowedOrigin extends Model implements Ownable
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.origins';
+
     use AllowedOriginFilters;
 
     /** @use HasFactory<AllowedOriginFactory> */
@@ -94,7 +101,7 @@ class AllowedOrigin extends Model
      */
     public function form(): BelongsTo
     {
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(FormModelRegistry::modelClass(), 'form_id');
     }
 
     /**

@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\FormRenderDataProvider;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Ownership\FormsOwnership;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Registry for form render data providers.
@@ -77,6 +79,9 @@ final class FormRenderDataRegistry
      */
     public function getData(Form $form, Request $request): array
     {
+        if (FormsOwnership::declared()) {
+            $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
+        }
         $handle = $form->handle;
 
         if (! $this->has($handle)) {
@@ -98,6 +103,9 @@ final class FormRenderDataRegistry
      */
     public function getTranslations(Form $form): array
     {
+        if (FormsOwnership::declared()) {
+            $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
+        }
         $handle = $form->handle;
 
         if (! $this->has($handle)) {
@@ -120,6 +128,13 @@ final class FormRenderDataRegistry
     private function resolveProvider(string $handle): ?FormRenderDataProvider
     {
         $entry = $this->providers[$handle] ?? null;
+        if (FormsOwnership::declared() && $entry !== null) {
+            if (! is_string($entry)) {
+                throw new FormException('Owned form render providers must be registered by class.');
+            }
+
+            return $this->buildOwnedProvider($entry);
+        }
 
         if ($entry === null) {
             return null;
@@ -132,5 +147,19 @@ final class FormRenderDataRegistry
         $instance = $this->container->make($entry);
 
         return $instance instanceof FormRenderDataProvider ? $instance : null;
+    }
+
+    /** Validate a raw native container result before resolving public extension copy. */
+    private function buildOwnedProvider(string $class): FormRenderDataProvider
+    {
+        if (! class_exists($class)) {
+            throw new FormException('An owned extension requires an existing concrete class.');
+        }
+        $provider = $this->container->build($class);
+        if (! $provider instanceof FormRenderDataProvider) {
+            throw new FormException('Owned form render providers require their declared contract.');
+        }
+
+        return $provider;
     }
 }

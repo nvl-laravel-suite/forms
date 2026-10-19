@@ -68,13 +68,15 @@ use Nvl\Forms\Events\FormEntryChangedEvent;
 use Nvl\Forms\Http\Middleware\EnsureFormIsAvailable;
 use Nvl\Forms\Http\Middleware\FormsLocaleMiddleware;
 use Nvl\Forms\Http\Middleware\ValidateFormHost;
-use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Ownership\FormsAdoptionAdapter;
+use Nvl\Forms\Ownership\FormsResourceRegistrar as OwnershipFormsResourceRegistrar;
 use Nvl\Forms\Policies\FormEntryPolicy;
 use Nvl\Forms\Policies\FormPolicy;
 use Nvl\Forms\Services\AllowFormEntryDeletion;
 use Nvl\Forms\Services\AllowFormEntryPrivacyOperations;
 use Nvl\Forms\Services\EntryCallbackRegistry;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormRateLimitService;
 use Nvl\Forms\Services\FormsDoctor;
 use Nvl\Forms\Services\FormSpamDetectionService;
@@ -82,9 +84,12 @@ use Nvl\Forms\Support\FormErrorMapperRegistry;
 use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Forms\Support\FormRenderDataRegistry;
 use Nvl\Forms\Tenancy\FormsResourceRegistrar;
+use Nvl\Ownership\Services\OwnershipAdoptionRegistry;
 use Nvl\Support\Doctor\PackageDoctorContributor;
 use Nvl\Support\Events\EventAliases;
 use Nvl\Support\Globals\GlobalNames;
+use Nvl\Support\Ownership\Contracts\OwnershipIntegratedProvider;
+use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Support\Providers\TenantServiceProvider;
 use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Support\Traits\MergesPackageConfiguration;
@@ -95,7 +100,7 @@ use Nvl\Translatable\Services\TranslationResourceRegistry;
 /**
  * Service provider for the Forms module.
  */
-final class FormsServiceProvider extends ServiceProvider
+final class FormsServiceProvider extends ServiceProvider implements OwnershipIntegratedProvider
 {
     use MergesPackageConfiguration;
     use RegistersNamespacedResources;
@@ -113,6 +118,12 @@ final class FormsServiceProvider extends ServiceProvider
         TranslationResourceRegistry $translationResources,
         TypeScriptSourceRegistry $typeScriptSources,
     ): void {
+        (new FormsResourceRegistrar)->register($this->app->make(TenantResourceRegistry::class));
+        $this->app->make(OwnershipFormsResourceRegistrar::class)->register($this->app->make(OwnershipResourceRegistry::class));
+        if ($this->app->bound(OwnershipAdoptionRegistry::class)) {
+            $this->app->make(OwnershipAdoptionRegistry::class)->register('forms', FormsAdoptionAdapter::class);
+        }
+
         $this->app->make(EventAliases::class)->register(FormChanged::class, FormChangedEvent::class);
         $this->app->make(EventAliases::class)->register(FormEntryChanged::class, FormEntryChangedEvent::class);
         $typeScriptSources->register(__DIR__.'/..', 'nvl/forms');
@@ -146,7 +157,7 @@ final class FormsServiceProvider extends ServiceProvider
 
         $translationResources->register(
             key: 'forms.forms',
-            modelClass: Form::class,
+            modelClass: FormModelRegistry::modelClass(),
             label: 'Forms',
             searchableColumns: ['handle'],
             displayColumns: ['handle', 'status'],
@@ -185,7 +196,8 @@ final class FormsServiceProvider extends ServiceProvider
 
         $this->app->register(TenantServiceProvider::class);
         $this->mergePackageConfiguration(__DIR__.'/../../config/nvl-forms.php', 'forms');
-        (new FormsResourceRegistrar)->register($this->app->make(TenantResourceRegistry::class));
+        $this->app->singleton(FormModelRegistry::class);
+        $this->app->booting(fn () => $this->app->make(FormModelRegistry::class)->prepare());
         $this->app->booted(function (): void {
             if ($this->app->bound(TenantAdoptionRegistry::class)) {
                 (new FormsResourceRegistrar)->register($this->app->make(TenantResourceRegistry::class), $this->app->make(TenantAdoptionRegistry::class));
@@ -220,7 +232,7 @@ final class FormsServiceProvider extends ServiceProvider
      */
     protected function registerPolicies(): void
     {
-        Gate::policy(Form::class, FormPolicy::class);
+        Gate::policy(FormModelRegistry::modelClass(), FormPolicy::class);
         Gate::policy(FormEntry::class, FormEntryPolicy::class);
     }
 

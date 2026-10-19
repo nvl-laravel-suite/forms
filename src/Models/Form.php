@@ -19,8 +19,10 @@ use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
 use Nvl\Forms\Traits\FormFilters;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Translatable\Contracts\TranslatableModel;
 use Nvl\Translatable\Enums\TranslationMutationPolicy;
 use Nvl\Translatable\RelatedTranslationDefinition;
@@ -63,8 +65,12 @@ use Nvl\Translatable\Translatable;
  *
  * @api
  */
-class Form extends Model implements TranslatableModel
+class Form extends Model implements Ownable, TranslatableModel
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.forms';
+
     use FormFilters;
 
     /** @use HasFactory<FormFactory> */
@@ -334,7 +340,7 @@ class Form extends Model implements TranslatableModel
      */
     public function entries(): HasMany
     {
-        return $this->hasMany(FormEntry::class);
+        return $this->hasMany(FormEntry::class, 'form_id');
     }
 
     /**
@@ -344,7 +350,7 @@ class Form extends Model implements TranslatableModel
      */
     public function allowedOrigins(): HasMany
     {
-        return $this->hasMany(AllowedOrigin::class);
+        return $this->hasMany(AllowedOrigin::class, 'form_id');
     }
 
     /**
@@ -354,7 +360,7 @@ class Form extends Model implements TranslatableModel
      */
     public function analytics(): HasMany
     {
-        return $this->hasMany(FormAnalytic::class);
+        return $this->hasMany(FormAnalytic::class, 'form_id');
     }
 
     /**
@@ -364,7 +370,7 @@ class Form extends Model implements TranslatableModel
      */
     public function rateLimits(): HasMany
     {
-        return $this->hasMany(FormRateLimit::class);
+        return $this->hasMany(FormRateLimit::class, 'form_id');
     }
 
     /**

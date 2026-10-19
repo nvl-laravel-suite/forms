@@ -8,6 +8,7 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Contracts\Auth\Authenticatable as User;
 use Illuminate\Support\Facades\Gate;
 use Nvl\Forms\Models\Form;
+use Nvl\Support\Ownership\Services\OwnerSiteContext;
 
 /**
  * Authorization policy for form management.
@@ -154,6 +155,9 @@ final class FormPolicy
      */
     private function isAuthoritative(?User $user): bool
     {
+        if (OwnerSiteContext::current() !== null) {
+            return false;
+        }
         if (! $user instanceof User) {
             return false;
         }

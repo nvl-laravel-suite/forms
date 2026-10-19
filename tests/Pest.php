@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Nvl\Forms\Services\RequestOriginResolver;
 use Nvl\Forms\Support\FormSubmissionContext;
 use Nvl\Forms\Tests\FormsTestCase;
+use Nvl\Forms\Tests\LegacyOwnershipTestCase;
+use Nvl\Forms\Tests\OwnershipTestCase;
+use Nvl\Forms\Tests\PivotOwnershipTestCase;
 use Nvl\Forms\Tests\TenancyTestCase;
 
 uses(FormsTestCase::class)->in('Feature');
@@ -18,3 +21,9 @@ function formSubmissionContext(Request $request): FormSubmissionContext
         app(RequestOriginResolver::class),
     );
 }
+
+uses(OwnershipTestCase::class)->in('Ownership');
+
+uses(LegacyOwnershipTestCase::class)->in('OwnershipAdoption');
+
+pest()->extend(PivotOwnershipTestCase::class)->in(__DIR__.'/OwnershipPivot');

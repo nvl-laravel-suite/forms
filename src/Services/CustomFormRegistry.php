@@ -9,8 +9,11 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\CustomFormHandler;
+use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Support\FormHandlerRegistry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 final readonly class CustomFormRegistry
 {
@@ -31,6 +34,15 @@ final readonly class CustomFormRegistry
         $entry = $this->registry->get($form->handle);
         if ($entry === null) {
             return null;
+        }
+
+        if (FormsOwnership::declared()) {
+            $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
+            if (! is_string($entry) || ! is_a($entry, CustomFormHandler::class, true)) {
+                throw new FormException('Owned custom form handlers must declare a named CustomFormHandler class.');
+            }
+
+            return $this->buildOwnedHandler($entry);
         }
 
         // Allow class-string
@@ -87,5 +99,19 @@ final readonly class CustomFormRegistry
         }
 
         return null;
+    }
+
+    /** Validate a raw native container result before granting the custom handler contract. */
+    private function buildOwnedHandler(string $class): CustomFormHandler
+    {
+        if (! class_exists($class)) {
+            throw new FormException('An owned extension requires an existing concrete class.');
+        }
+        $handler = $this->container->build($class);
+        if (! $handler instanceof CustomFormHandler) {
+            throw new FormException('The owned custom handler resolved to an invalid implementation.');
+        }
+
+        return $handler;
     }
 }

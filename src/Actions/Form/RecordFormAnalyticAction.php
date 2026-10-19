@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\Form;
 
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Forms\Services\FormModelRegistry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Records a forms analytics event.
@@ -36,12 +36,12 @@ final class RecordFormAnalyticAction
         ?array $metadata = null,
     ): FormAnalytic {
         $formId = $form instanceof Form ? $form->identifier() : $form;
-        $canonical = $this->boundary->query(Form::query(), 'forms.forms')->findOrFail($formId);
+        $canonical = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
         $event = $eventType instanceof FormAnalyticEventType
             ? $eventType
             : FormAnalyticEventType::from((string) $eventType);
 
-        return DB::transaction(fn (): FormAnalytic => FormAnalytic::create([
+        return FormModelRegistry::newInstance()->getConnection()->transaction(fn (): FormAnalytic => FormAnalytic::create([
             'form_id' => $canonical->getKey(),
             ...$this->childOwnership($canonical),
             'event_type' => $event,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\FormEntry;
 
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormOriginAccessService;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -32,7 +33,7 @@ final class ValidateFormHostAccessAction
      */
     public function execute(Form|string $form, ?string $submittedFrom): void
     {
-        $formModel = $form instanceof Form ? $form : Form::findOrFail($form);
+        $formModel = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
 
         if (! $formModel->restrict_public_access) {
             return;

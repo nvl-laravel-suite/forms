@@ -6,7 +6,8 @@ namespace Nvl\Forms\Actions\FormEntry;
 
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Forms\Services\FormModelRegistry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Records a submission attempt for rate limit tracking.
@@ -37,7 +38,7 @@ final class RecordFormRateLimitAction
     public function execute(Form|string $form, string $ipAddress, ?string $origin = null, ?string $userAgent = null, ?string $sessionId = null): void
     {
         $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(Form::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
         $this->rateLimitService->recordSubmissionAttempt($formModel, $ipAddress, $origin, $userAgent, $sessionId);
     }
 }

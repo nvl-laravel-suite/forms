@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Exception;
 use Illuminate\Support\Str;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Manages form handle generation and uniqueness validation.
@@ -83,7 +83,7 @@ final class FormHandleService
      */
     private function handleExists(string $handle, ?string $excludeFormId = null): bool
     {
-        $query = $this->boundary->query(Form::query(), 'forms.forms')->where('handle', $handle);
+        $query = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->where('handle', $handle);
 
         if ($excludeFormId !== null) {
             $query->where('id', '!=', $excludeFormId);

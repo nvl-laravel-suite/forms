@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Nvl\Forms\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Collection;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormTranslation;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Facades\Locales;
+use Nvl\Support\Ownership\Contracts\OwnershipWriter;
 
 /**
  * Builds native package fixture rows and declared parents.
@@ -21,7 +24,33 @@ use Nvl\Support\Facades\Locales;
  */
 final class FormFactory extends Factory
 {
+    /** Persist native factory roots under the same actual source assignment as Actions.
+     * @param  Collection<int,Form>  $results
+     */
+    protected function store(Collection $results): void
+    {
+        if (FormModelRegistry::modelClass()::ownershipDefinition()->strategy === 'unscoped') {
+            parent::store($results);
+
+            return;
+        }
+        foreach ($results as $model) {
+            app(OwnershipWriter::class)->create($model::class, function (array $attributes) use ($model): Form {
+                $model->forceFill($attributes);
+                parent::store(new Collection([$model]));
+
+                return $model;
+            });
+        }
+    }
+
     protected $model = Form::class;
+
+    /** Resolve the one configured concrete Form model. */
+    public function modelName(): string
+    {
+        return FormModelRegistry::modelClass();
+    }
 
     /**
      * Keep localized test copy out of the structural form row.

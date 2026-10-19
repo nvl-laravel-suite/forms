@@ -12,7 +12,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormSubmissionReceiptFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormSubmissionReceiptState;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 
 /**
  * Durable idempotency and registration claim for custom form handlers.
@@ -33,8 +36,12 @@ use Nvl\Support\Config\PackageStorage;
  *
  * @nvl-consumer-read id
  */
-final class FormSubmissionReceipt extends Model
+final class FormSubmissionReceipt extends Model implements Ownable
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.receipts';
+
     /** @use HasFactory<FormSubmissionReceiptFactory> */
     use HasFactory;
 
@@ -80,7 +87,7 @@ final class FormSubmissionReceipt extends Model
      */
     public function form(): BelongsTo
     {
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(FormModelRegistry::modelClass(), 'form_id');
     }
 
     /** Resolve the configured package storage table. */

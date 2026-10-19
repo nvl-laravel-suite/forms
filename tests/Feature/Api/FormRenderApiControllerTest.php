@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Mockery\MockInterface;
 use Nvl\Forms\Contracts\CustomFormHandler;
@@ -371,9 +370,9 @@ test('submit endpoint exposes a warning when custom submission bookkeeping degra
     $handlerRegistry->register($form->handle, $handlerClass);
     app()->instance($handlerClass, $handler);
 
-    DB::shouldReceive('transaction')
-        ->once()
-        ->andThrow(new RuntimeException('Forms bookkeeping failed'));
+    Form::updating(static function (): never {
+        throw new RuntimeException('Forms bookkeeping failed');
+    });
 
     $response = $this->postJson(
         "/nvl/api/v1/forms/{$form->id}/submit",

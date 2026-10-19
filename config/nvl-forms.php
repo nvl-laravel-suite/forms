@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use Nvl\Forms\Models\Form;
+
 /** Complete runtime defaults; publication sections are declared in ../resources/config/sections.json. */
 return [
+    'models' => ['form' => Form::class],
     'migrations' => [
         'enabled' => true,
     ],

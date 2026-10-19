@@ -17,6 +17,7 @@ use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Services\FormEntryExportService;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Events\DomainEventDispatcher;
 
 /**
@@ -55,7 +56,7 @@ final class ExportFormEntriesAction implements ExportFormEntriesContract
      */
     public function execute(Form|string $form, array $options = [], ?Authenticatable $actor = null): string
     {
-        $form = $form instanceof Form ? $form : Form::findOrFail($form);
+        $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
 
         $this->validateExportPermissions($form, $actor);
         $this->cleanupOldExportFiles();

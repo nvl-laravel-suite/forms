@@ -13,6 +13,7 @@ use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Data\FormsDoctorCheckData;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Support\Tenancy\Contracts\TenantContext;
 use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Throwable;
@@ -250,6 +251,11 @@ final readonly class FormsDoctor
             || ! $this->entryCallbacks->hasLegacyCallbacks();
 
         return [
+            $this->check(
+                'security.ownership_callbacks',
+                ! FormsOwnership::declared() || ! $this->entryCallbacks->hasNonOwnershipCallbacks(),
+                'Owned public callbacks require registerOwnership and immutable owner/site context.',
+            ),
             $this->check(
                 'security.application_key',
                 $hasApplicationKey,

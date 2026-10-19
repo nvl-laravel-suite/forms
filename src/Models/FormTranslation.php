@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormTranslationFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 
 /**
  * Stores locale-specific public copy and arbitrary form content.
@@ -30,8 +33,12 @@ use Nvl\Support\Config\PackageStorage;
  *
  * @nvl-consumer-read id
  */
-final class FormTranslation extends Model
+final class FormTranslation extends Model implements Ownable
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.translations';
+
     /** @use HasFactory<FormTranslationFactory> */
     use HasFactory;
 
@@ -73,7 +80,7 @@ final class FormTranslation extends Model
      */
     public function form(): BelongsTo
     {
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(FormModelRegistry::modelClass(), 'form_id');
     }
 
     /** Resolve the configured package storage table. */

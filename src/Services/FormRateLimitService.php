@@ -10,10 +10,12 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Actions\Form\RecordFormAnalyticAction;
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Enums\FormAnalyticEventType;
+use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Results\FormRateLimitAttemptResult;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Handles form rate limiting: per-IP submission tracking, blocking, and unblocking.
@@ -100,7 +102,7 @@ final class FormRateLimitService implements FormRateLimiter
         }
 
         /** @var FormRateLimitAttemptResult $result */
-        $result = DB::transaction(function () use ($form, $ipAddress, $origin, $userAgent, $sessionId): FormRateLimitAttemptResult {
+        $result = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $ipAddress, $origin, $userAgent, $sessionId): FormRateLimitAttemptResult {
             $rateLimit = $this->lockRateLimitForUpdate($form, $ipAddress);
 
             if ($this->isCurrentlyBlocked($rateLimit)) {
@@ -330,12 +332,24 @@ final class FormRateLimitService implements FormRateLimiter
         return $rateLimit;
     }
 
-    /** @return array{tenant_id?:mixed} */
+    /** @return array<string,int|string|null> */
     private function childOwnership(Form $form): array
     {
-        return array_key_exists('tenant_id', $form->getAttributes())
-            ? ['tenant_id' => $form->getRawOriginal('tenant_id')]
-            : [];
+        if (FormsOwnership::declared()) {
+            $this->boundary->assertRecord($form, 'forms.forms');
+
+            return $this->boundary->attributes('forms.rates');
+        }
+
+        if (! array_key_exists('tenant_id', $form->getAttributes())) {
+            return [];
+        }
+        $tenantId = $form->getRawOriginal('tenant_id');
+        if ($tenantId !== null && ! is_string($tenantId)) {
+            throw new FormException('Legacy Form ownership requires its native UUID identity.');
+        }
+
+        return ['tenant_id' => $tenantId];
     }
 
     /**

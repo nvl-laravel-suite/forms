@@ -475,6 +475,15 @@
             "properties": [],
             "constants": []
         },
+        "Nvl\\Forms\\Contracts\\OwnershipEntrySubmissionCallback": {
+            "kind": "interface",
+            "file": "src/Contracts/OwnershipEntrySubmissionCallback.php",
+            "methods": [
+                "after"
+            ],
+            "properties": [],
+            "constants": []
+        },
         "Nvl\\Forms\\Contracts\\RedactFormEntryContract": {
             "kind": "interface",
             "file": "src/Contracts/RedactFormEntryContract.php",
@@ -782,6 +791,22 @@
             ],
             "constants": []
         },
+        "Nvl\\Forms\\Data\\OwnershipFormSubmissionCallbackContext": {
+            "kind": "class",
+            "file": "src/Data/OwnershipFormSubmissionCallbackContext.php",
+            "methods": [
+                "__construct"
+            ],
+            "properties": [
+                "canonicalOrigin",
+                "correlationId",
+                "locale",
+                "origin",
+                "owner",
+                "site"
+            ],
+            "constants": []
+        },
         "Nvl\\Forms\\Database\\Factories\\AllowedOriginFactory": {
             "kind": "class",
             "file": "database/factories/AllowedOriginFactory.php",
@@ -818,6 +843,7 @@
             "methods": [
                 "configure",
                 "definition",
+                "modelName",
                 "withoutTranslations"
             ],
             "properties": [],
@@ -1252,10 +1278,25 @@
             "methods": [
                 "__construct",
                 "clear",
+                "dispatchOwnership",
                 "forget",
                 "hasLegacyCallbacks",
+                "hasNonOwnershipCallbacks",
                 "register",
+                "registerOwnership",
                 "registerTenant"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Services\\FormModelRegistry": {
+            "kind": "class",
+            "file": "src/Services/FormModelRegistry.php",
+            "methods": [
+                "__construct",
+                "formClass",
+                "persist",
+                "projectionColumns"
             ],
             "properties": [],
             "constants": []

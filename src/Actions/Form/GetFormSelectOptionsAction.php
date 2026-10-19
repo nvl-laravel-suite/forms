@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Contracts\GetFormSelectOptionsContract;
 use Nvl\Forms\Data\FormSelectOptionItem;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 
 /**
  * Retrieves form select options for dropdown/select components.
@@ -32,7 +33,7 @@ final class GetFormSelectOptionsAction implements GetFormSelectOptionsContract
             })
             ->toArray();
 
-        $query = Form::query()
+        $query = FormModelRegistry::query()
             ->withResolvedTranslations()
             ->select(['id', 'handle', 'status', 'restrict_public_access', 'submissions_count']);
 

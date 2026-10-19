@@ -8,7 +8,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Nvl\Forms\Contracts\ShowFormContract;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Forms\Services\FormModelRegistry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Orchestrates form retrieval, optional view recording, and display loading.
@@ -52,7 +53,7 @@ final class ShowFormAction implements ShowFormContract
         ?Authenticatable $actor = null,
     ): Form {
         $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(Form::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
 
         if ($recordView) {
             $formModel = $this->recordFormView->execute(

@@ -9,7 +9,11 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Str;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Forms\Ownership\FormsOwnership;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipContext;
+use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Support\Ownership\Services\OwnerSiteContext;
 use Nvl\Support\Tenancy\Contracts\TenantContext;
 use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Throwable;
@@ -27,6 +31,7 @@ final class PublicFormTokenService
     public function __construct(
         private readonly TenantContext $context,
         private readonly TenantBoundary $boundary,
+        private readonly OwnershipContext $ownership,
     ) {}
 
     /**
@@ -45,8 +50,12 @@ final class PublicFormTokenService
 
         $this->boundary->assertRecord($form, 'forms.forms');
         $snapshot = $this->context->snapshot();
+        $ownerSite = FormsOwnership::declared() ? OwnerSiteContext::require() : null;
+        if ($ownerSite !== null && $site !== $ownerSite->site) {
+            throw new OwnershipViolation('Public token site differs from the admitted site.');
+        }
         $payload = [
-            'v' => 2,
+            'v' => $ownerSite === null ? 2 : 3,
             'tenant_id' => $snapshot->tenantId?->value,
             'site' => $site,
             'form_id' => (string) $form->id,
@@ -55,6 +64,12 @@ final class PublicFormTokenService
             'nonce' => Str::random(16),
         ];
 
+        if ($ownerSite !== null) {
+            unset($payload['tenant_id']);
+            $payload['owner'] = $ownerSite->owner->toArray();
+            $payload['origin'] = $ownerSite->canonicalOrigin;
+            $payload['generations'] = $this->ownership->snapshot()->generations;
+        }
         $encodedPayload = $this->base64UrlEncode(json_encode($payload, JSON_THROW_ON_ERROR));
         $signature = $this->base64UrlEncode(hash_hmac('sha256', $encodedPayload, $key, true));
 
@@ -70,6 +85,9 @@ final class PublicFormTokenService
      */
     public function validate(?string $token, Form $form, string $site = 'default'): bool
     {
+        if (! $this->canonicalForm($form)) {
+            return false;
+        }
         $payload = $this->validatedPayload($token);
         if ($payload === null) {
             return false;
@@ -87,6 +105,9 @@ final class PublicFormTokenService
      */
     public function issuedAt(?string $token, Form $form, string $site = 'default'): ?float
     {
+        if (! $this->canonicalForm($form)) {
+            return null;
+        }
         $payload = $this->validatedPayload($token);
         if ($payload === null || ($payload['form_id'] ?? '') !== $form->id || ! $this->matchesOwnership($payload, $site)) {
             return null;
@@ -94,7 +115,7 @@ final class PublicFormTokenService
 
         $issuedAt = $payload['iat'] ?? 0;
 
-        return $issuedAt > 0 ? (float) $issuedAt : null;
+        return is_int($issuedAt) && $issuedAt > 0 ? (float) $issuedAt : null;
     }
 
     /**
@@ -116,7 +137,11 @@ final class PublicFormTokenService
             return false;
         }
 
-        return $this->boundary->query(Form::query(), 'forms.forms')
+        if (FormsOwnership::declared() && ! $this->matchesOwnership($payload, OwnerSiteContext::require()->site)) {
+            return false;
+        }
+
+        return $this->boundary->query(FormModelRegistry::query(), 'forms.forms')
             ->whereKey($formId)
             ->where('handle', $handle)
             ->exists();
@@ -151,7 +176,7 @@ final class PublicFormTokenService
     }
 
     /**
-     * @return array{v?:int,tenant_id?:string|null,site?:string,form_id?:string,iat?:int,exp?:int,nonce?:string}|null
+     * @return array<string,mixed>|null
      */
     private function validatedPayload(?string $token): ?array
     {
@@ -210,6 +235,18 @@ final class PublicFormTokenService
             return null;
         }
 
+        if (FormsOwnership::declared()) {
+            if ($version !== 3 || $expiresAt <= 0 || CarbonImmutable::now()->getTimestamp() > $expiresAt
+                || $issuedAt > CarbonImmutable::now()->getTimestamp() || ! is_array($decoded['owner'] ?? null)
+                || ! is_array($decoded['generations'] ?? null) || ! is_string($decoded['origin'] ?? null) || ! is_string($site)) {
+                return null;
+            }
+
+            return [
+                'v' => 3, 'owner' => $decoded['owner'], 'site' => $site, 'origin' => $decoded['origin'],
+                'generations' => $decoded['generations'], 'form_id' => $formId, 'iat' => $issuedAt, 'exp' => $expiresAt, 'nonce' => $nonce,
+            ];
+        }
         $mode = $this->context->snapshot()->mode;
         if ($version !== 2) {
             if ($expiresAt <= 0 || CarbonImmutable::now()->getTimestamp() > $expiresAt) {
@@ -251,6 +288,15 @@ final class PublicFormTokenService
      */
     private function matchesOwnership(array $payload, string $site): bool
     {
+        if (FormsOwnership::declared()) {
+            $admitted = OwnerSiteContext::require();
+
+            return ($payload['v'] ?? null) === 3
+                && ($payload['owner'] ?? null) === $admitted->owner->toArray()
+                && ($payload['site'] ?? null) === $site && $site === $admitted->site
+                && ($payload['origin'] ?? null) === $admitted->canonicalOrigin
+                && ($payload['generations'] ?? null) === $this->ownership->snapshot()->generations;
+        }
         $snapshot = $this->context->snapshot();
         if ($snapshot->mode === TenantContextMode::Disabled) {
             return ! isset($payload['v']) || $payload['v'] === 2;
@@ -259,6 +305,21 @@ final class PublicFormTokenService
         return $snapshot->mode === TenantContextMode::Tenant
             && ($payload['tenant_id'] ?? null) === $snapshot->tenantId?->value
             && ($payload['site'] ?? null) === $site;
+    }
+
+    /** Revalidate exact persisted Form identity before signed timing or form facts are trusted. */
+    private function canonicalForm(Form $form): bool
+    {
+        if (! FormsOwnership::declared()) {
+            return true;
+        }
+        try {
+            $this->boundary->assertRecord($form, 'forms.forms');
+
+            return true;
+        } catch (OwnershipViolation) {
+            return false;
+        }
     }
 
     private function base64UrlEncode(string $raw): string

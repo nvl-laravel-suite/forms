@@ -30,6 +30,7 @@ use Nvl\Forms\Data\Mutations\MutateFormPayload;
 use Nvl\Forms\Enums\FormResponseCode;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -57,7 +58,7 @@ final class FormsApiController extends Controller
             $perPage,
             $filterFactory->fromHttpQuery(
                 $this->queryParameters($request),
-                (new Form)->filterSchema(),
+                (FormModelRegistry::newInstance())->filterSchema(),
             ),
         );
 

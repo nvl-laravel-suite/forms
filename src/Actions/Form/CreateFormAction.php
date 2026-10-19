@@ -12,9 +12,9 @@ use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormAllowedOriginService;
 use Nvl\Forms\Services\FormHandleService;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormTranslationPayloadMapper;
 use Nvl\Support\Events\DomainEventDispatcher;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Translatable\Services\TranslationWriter;
 use Spatie\LaravelData\Optional;
 use Throwable;
@@ -41,7 +41,6 @@ final class CreateFormAction implements CreateFormContract
         private readonly FormAllowedOriginService $originService,
         private readonly FormTranslationPayloadMapper $translationPayloadMapper,
         private readonly TranslationWriter $translationWriter,
-        private readonly TenantBoundary $boundary,
         private DomainEventDispatcher $domainEvents,
     ) {}
 
@@ -60,7 +59,7 @@ final class CreateFormAction implements CreateFormContract
      */
     public function execute(MutateFormPayload $data, ?Authenticatable $actor = null): Form
     {
-        $form = (new Form)->getConnection()->transaction(function () use ($data, $actor) {
+        $form = (FormModelRegistry::newInstance())->getConnection()->transaction(function () use ($data, $actor) {
             $translations = $data->translations instanceof Optional
                 ? []
                 : $data->translations;
@@ -84,9 +83,7 @@ final class CreateFormAction implements CreateFormContract
 
             $this->handleService->validateUniqueness($handle);
 
-            $form = new Form;
-            $form->fill([...$formData, ...$this->boundary->attributes('forms.forms')]);
-            $form->save();
+            $form = FormModelRegistry::create($formData);
 
             if (is_array($data->allowedOrigins)) {
                 $this->originService->createOrigins($form, $data->allowedOrigins);

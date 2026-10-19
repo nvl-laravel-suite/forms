@@ -5,23 +5,32 @@ declare(strict_types=1);
 namespace Nvl\Forms\Actions\Form;
 
 use Closure;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Container\Container;
+use Illuminate\Http\Request;
 use Nvl\Forms\Actions\FormEntry\CreateFormEntryAction;
 use Nvl\Forms\Contracts\HandlePublicFormSubmissionContract;
 use Nvl\Forms\Data\FormSubmissionCallbackContext;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
+use Nvl\Forms\Data\OwnershipFormSubmissionCallbackContext;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Enums\Resolvement;
+use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Results\FormSubmissionResult;
 use Nvl\Forms\Services\CustomFormRegistry;
 use Nvl\Forms\Services\CustomSubmissionReceiptService;
 use Nvl\Forms\Services\EntryCallbackRegistry;
 use Nvl\Forms\Services\FormEntryLocator;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\PublicFormTokenService;
 use Nvl\Forms\Support\CustomFormGuardResult;
 use Nvl\Forms\Support\FormSubmissionContext;
+use Nvl\Ownership\Services\PublicOwnerSiteRunner;
+use Nvl\Support\Ownership\Contracts\OwnershipContext;
+use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Support\Ownership\Services\OwnerSiteContext;
 use Nvl\Support\Tenancy\Contracts\TenantContext;
 use Nvl\Support\Tenancy\Contracts\TenantQueueContext;
 use Nvl\Support\Tenancy\Enums\TenantContextMode;
@@ -69,6 +78,7 @@ final class HandlePublicFormSubmissionAction implements HandlePublicFormSubmissi
         private readonly TenantContext $tenantContext,
         private readonly TenantQueueContext $queueContext,
         private readonly FormEntryLocator $entryLocator,
+        private readonly Container $container,
     ) {}
 
     /**
@@ -88,6 +98,12 @@ final class HandlePublicFormSubmissionAction implements HandlePublicFormSubmissi
         FormSubmissionContext $context,
         bool $enforceSubmissionProtection = true
     ): FormSubmissionResult {
+        if (FormsOwnership::declared()) {
+            OwnerSiteContext::require();
+            if ($this->entryCallbacks->hasNonOwnershipCallbacks()) {
+                throw new FormException('Owned public submission requires registerOwnership callbacks with immutable owner facts.');
+            }
+        }
         $form = $this->getForm->execute($formIdentifier);
 
         if (! $form->isPubliclyAvailableNow()) {
@@ -200,7 +216,26 @@ final class HandlePublicFormSubmissionAction implements HandlePublicFormSubmissi
             $this->tokenService->issuedAt($context->publicToken, $form, $context->publicSite ?? 'default'),
         );
         if (! $entry->isIdempotentReplay()) {
-            if ($this->tenantContext->snapshot()->mode === TenantContextMode::Tenant) {
+            if (FormsOwnership::declared()) {
+                $site = OwnerSiteContext::require();
+                $generations = $this->container->make(OwnershipContext::class)->snapshot()->generations;
+                $callbackContext = new OwnershipFormSubmissionCallbackContext(
+                    $site->owner, $site->site, $site->canonicalOrigin, $context->originHost, $request->getLocale(), $context->idempotencyKey,
+                );
+                $formId = $form->identifier();
+                $entryId = $entry->identifier();
+                $form->getConnection()->afterCommit(function () use ($site, $generations, $callbackContext, $formId, $entryId): void {
+                    $this->container->make(PublicOwnerSiteRunner::class)->run(Request::create($site->canonicalOrigin), function () use ($site, $generations, $callbackContext, $formId, $entryId): void {
+                        $snapshot = $this->container->make(OwnershipContext::class)->snapshot();
+                        if ($snapshot->publicSite != $site || $snapshot->generations !== $generations) {
+                            throw new OwnershipViolation('Committed Forms callbacks require their original verified site and generation.');
+                        }
+                        $form = $this->getForm->execute($formId);
+                        $entry = $this->entryLocator->forForm($form, $entryId);
+                        $this->entryCallbacks->dispatchOwnership($form, $entry, $callbackContext);
+                    });
+                });
+            } elseif ($this->tenantContext->snapshot()->mode === TenantContextMode::Tenant) {
                 $envelope = TenantJobEnvelope::capture($this->tenantContext);
                 $callbackContext = new FormSubmissionCallbackContext(
                     tenantId: $this->tenantContext->requireTenant()->value,
@@ -218,7 +253,7 @@ final class HandlePublicFormSubmissionAction implements HandlePublicFormSubmissi
                     });
                 });
             } else {
-                DB::afterCommit(function () use ($form, $entry, $request): void {
+                FormModelRegistry::newInstance()->getConnection()->afterCommit(function () use ($form, $entry, $request): void {
                     $this->entryCallbacks->dispatch($form, $entry, $request);
                 });
             }

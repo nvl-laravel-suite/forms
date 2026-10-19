@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Stateless service for evaluating spam signals in form submissions.

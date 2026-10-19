@@ -11,6 +11,22 @@ In tenant deployments, resolve the public site/token before Form lookup and
 derive every entry-side record from the canonical Form. Never accept tenant
 identity in submission DTOs or restore it from ambient callback state.
 
+## Native ownership and verified public admission
+
+- Keep the default unscoped graph independent from NVL Auth, Tenancy and Ownership.
+- Use the package README ownership section for configured roots, exact native host
+  resources and reviewed per-row adoption; never infer an owner from request input.
+- Resolve owned public work with `OwnerSiteResolver` and `PublicOwnerSiteRunner`.
+  Use only the admitted `VerifiedOwnerSiteContext` for owner/site/origin/resources;
+  preserve locale and content scope as separate identities. Public admission cannot
+  become actor/system/central/queue authority.
+- Retain actual-source transactions, native parent/pivot constraints and canonical
+  re-reads. Existing tenant rows/IDs/morph values and released migrations remain intact.
+- Select `nvl-forms.models.form`; inherit every submission child from that root.
+- Use version-3 owner/site/origin/generation-bound tokens and fresh named public
+  extensions. Register immutable committed callbacks with `registerOwnership`.
+- Keep public Form management denied; use package counter-only bookkeeping.
+
 ## Manage definitions
 
 - Validate `MutateFormPayload`.

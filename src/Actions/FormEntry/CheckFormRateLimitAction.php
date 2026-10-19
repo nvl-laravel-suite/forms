@@ -6,6 +6,7 @@ namespace Nvl\Forms\Actions\FormEntry;
 
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 /**
@@ -35,7 +36,7 @@ final class CheckFormRateLimitAction
      */
     public function execute(Form|string $form, string $ipAddress, ?string $origin = null, ?string $userAgent = null, ?string $sessionId = null): void
     {
-        $formModel = $form instanceof Form ? $form : Form::findOrFail($form);
+        $formModel = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
 
         $attempt = $this->rateLimitService->consumeSubmissionAttempt($formModel, $ipAddress, $origin, $userAgent, $sessionId);
 

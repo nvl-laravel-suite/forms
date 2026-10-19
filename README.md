@@ -1,14 +1,75 @@
 # NVL Forms — API and usage
 
+## Optional native ownership
+
+The default `Form` remains unscoped. Apps without ownership do not need
+`nvl/ownership`, NVL Auth or NVL Tenancy. To opt in, extend the package model,
+retain its native table, UUID, casts and guarded persistence methods, and configure
+`nvl-forms.models.form` to that exact class. Every Action, relationship,
+translation registration and shipped root factory resolves that class.
+
+```php
+use Nvl\Forms\Models\Form as BaseForm;
+use Nvl\Support\Ownership\ValueObjects\OwnershipDefinition;
+
+class Form extends BaseForm
+{
+    public static function ownershipDefinition(): OwnershipDefinition
+    {
+        return OwnershipDefinition::column(Company::class, 'company_id');
+    }
+}
+```
+
+Create the native `company_id` FK yourself, or return
+`OwnershipDefinition::pivot(Company::class, 'company_forms_ownership',
+'form_id', 'company_id')` and create that concrete exclusive-primary pivot
+with native FKs and one primary assignment per record. The base already supplies
+`Ownable`/`HasOwnership`; a consumer does not add a second ownership scope.
+Inherited child records retain their canonical parent and cannot be reassigned.
+Existing records require explicit reviewed per-record mappings through the
+[Ownership adoption coordinator](https://github.com/nvl-laravel-suite/ownership#readme);
+selecting a subclass or enabling the runtime never adopts storage.
+
+Form handles become owner-local; entries, origins, translations, rates, analytics
+and custom submission receipts inherit the configured Form. Completed receipts
+retain their original IDs, retry keys, digests and results during adoption.
+
+Public routes require a host binding of `Nvl\Ownership\Contracts\OwnerSiteResolver`.
+Resolve only an enabled persisted origin mapping and return
+`VerifiedOwnerSiteContext(owner: $canonicalReference, site: 'storefront',
+canonicalOrigin: 'https://example.test', resources: $explicitResourceKeys)`.
+The middleware revalidates the canonical owner and exact request origin before
+bindings, caching and public work. Request query/header owner/site selections
+never choose the partition. Include every read dependency in the graph; public
+admission grants neither actor/system/central entry nor queue capture.
+
+Include `forms.forms`, `forms.translations`, `forms.origins`, `forms.entries`,
+`forms.receipts`, `forms.rates` and `forms.analytics` in the public graph. Grant only
+submission children in `writableResources`; ordinary Form management writes remain
+denied. Package bookkeeping uses a fixed counter-only native capability. Public
+tokens use version 3 and bind the full owner, site, canonical origin and activation
+generations; legacy tenant/unowned tokens cannot authorize an owned form.
+
+Use `EntryCallbackRegistry::registerOwnership('contact', ContactSubmitted::class)`
+with `OwnershipEntrySubmissionCallback::after(Form $form, FormEntry $entry,
+OwnershipFormSubmissionCallbackContext $context)`. The immutable context contains
+owner/site/origin/locale/correlation facts. Callbacks resolve freshly after the
+actual source commits, revalidate the original site/generation and receive fresh
+canonical models. Rollbacks and idempotent replays do not deliver callbacks.
+Custom handlers and render providers in owned mode must be named classes;
+legacy Request-dependent entry callbacks must migrate before activation. Default
+unscoped applications keep their existing extension API.
+
 ## Quickstart
 
 ```sh
-composer require nvl/forms:^5.0
+composer require nvl/forms:^5.1
 php artisan nvl:install forms --dry-run
 php artisan nvl:install forms
 ```
 
-Required NVL dependencies: `nvl/core` (`^5.0`), `nvl/filterable` (`^5.0`), `nvl/translatable` (`^5.0`). Configure authorization and explicitly opt into any routes or public submission origins. Keep sensitive entry data behind authorized projections.
+Required NVL dependencies: `nvl/core` (`^5.1`), `nvl/filterable` (`^5.0`), `nvl/translatable` (`^5.1`). Configure authorization and explicitly opt into any routes or public submission origins. Keep sensitive entry data behind authorized projections.
 Review the published common config, select one migration owner, and run schema preflight before existing-table upgrades. The installer does not enable features or run migrations. Follow the detailed installation and capability sections below before invoking a storage/provider operation.
 
 Inject `Nvl\Forms\Contracts\ListFormsContract` in a host service. After supplying the trusted inputs described above, the first public call is:
@@ -34,7 +95,7 @@ See the [installation and publishing guide](https://github.com/nvl-laravel-suite
 
 | Item | Value |
 |---|---|
-| Installed through | `composer require nvl/forms:^5.0` |
+| Installed through | `composer require nvl/forms:^5.1` |
 | Module identifier | `nvl/forms` |
 | PHP namespace | `Nvl\Forms` |
 | Service provider | `Nvl\Forms\Providers\FormsServiceProvider` |
@@ -44,12 +105,12 @@ See the [installation and publishing guide](https://github.com/nvl-laravel-suite
 
 `nvl/forms` is a headless form-definition and submission engine for Laravel 12–13 on PHP 8.4+. It owns secure form definitions, localized nested content, public rendering contracts, submissions, stored entries, analytics, and privacy operations. It does not ship an admin UI, frontend scaffold, mail provider, application-specific form types, or a required audit system.
 
-Forms depends on `nvl/core`, `nvl/filterable`, `nvl/tenancy`, and `nvl/translatable`. `nvl/activity` is an optional event-driven integration.
+Forms depends on `nvl/core`, `nvl/filterable`, and `nvl/translatable`. Ownership and legacy Tenancy are optional integrations. `nvl/activity` is an optional event-driven integration.
 
 ## Requirements and installation
 
 ```bash
-composer require nvl/forms:^5.0
+composer require nvl/forms:^5.1
 php artisan migrate
 ```
 

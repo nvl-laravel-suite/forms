@@ -153,9 +153,9 @@ test('handle public form submission preserves custom handler success when forms 
         return ['entry_id' => 'custom-bookkeeping-failure'];
     });
 
-    DB::shouldReceive('transaction')
-        ->once()
-        ->andThrow(new RuntimeException('Forms bookkeeping failed'));
+    Form::updating(static function (): never {
+        throw new RuntimeException('Forms bookkeeping failed');
+    });
 
     $data = SubmitFormPayload::from([
         'email' => 'custom@example.com',

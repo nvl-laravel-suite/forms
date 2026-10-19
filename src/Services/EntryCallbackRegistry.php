@@ -7,11 +7,14 @@ namespace Nvl\Forms\Services;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\EntrySubmissionCallback;
+use Nvl\Forms\Contracts\OwnershipEntrySubmissionCallback;
 use Nvl\Forms\Contracts\TenantEntrySubmissionCallback;
 use Nvl\Forms\Data\FormSubmissionCallbackContext;
+use Nvl\Forms\Data\OwnershipFormSubmissionCallbackContext;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Throwable;
 
 /**
@@ -21,6 +24,31 @@ use Throwable;
  */
 final class EntryCallbackRegistry
 {
+    /** @var array<string,list<class-string<OwnershipEntrySubmissionCallback>>> */
+    private array $ownershipCallbacks = [];
+
+    /** Register a class declaration without retaining any scoped callback object. */
+    public function registerOwnership(string $handle, string $callbackClass): void
+    {
+        $handle = trim($handle);
+        if ($handle === '' || ! is_a($callbackClass, OwnershipEntrySubmissionCallback::class, true)
+            || in_array($callbackClass, $this->ownershipCallbacks[$handle] ?? [], true)) {
+            throw new FormException('Ownership entry callbacks require unique named implementations.');
+        }
+        $this->ownershipCallbacks[$handle][] = $callbackClass;
+    }
+
+    /** Resolve callbacks only inside the freshly admitted committed owner/site context. @internal */
+    public function dispatchOwnership(Form $form, FormEntry $entry, OwnershipFormSubmissionCallbackContext $context): void
+    {
+        $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
+        $this->container->make(OwnershipBoundary::class)->assertRecord($entry, 'forms.entries');
+        foreach ($this->ownershipCallbacks[$form->handle] ?? [] as $class) {
+            $callback = $this->buildOwnershipCallback($class);
+            $callback->after($form, $entry, $context);
+        }
+    }
+
     /**
      * @var array<string, list<EntrySubmissionCallback|callable|string>>
      */
@@ -135,7 +163,7 @@ final class EntryCallbackRegistry
             return;
         }
 
-        unset($this->callbacks[$normalized]);
+        unset($this->callbacks[$normalized], $this->tenantCallbacks[$normalized], $this->ownershipCallbacks[$normalized]);
     }
 
     /**
@@ -145,6 +173,13 @@ final class EntryCallbackRegistry
     {
         $this->callbacks = [];
         $this->tenantCallbacks = [];
+        $this->ownershipCallbacks = [];
+    }
+
+    /** Report every callback registration lacking native immutable ownership facts. @internal */
+    public function hasNonOwnershipCallbacks(): bool
+    {
+        return $this->callbacks !== [] || $this->tenantCallbacks !== [];
     }
 
     /** Report legacy Request-dependent registrations for tenancy diagnostics. */
@@ -218,5 +253,19 @@ final class EntryCallbackRegistry
         }
 
         return [$callbacks];
+    }
+
+    /** Validate the freshly constructed native callback before delivering canonical records. */
+    private function buildOwnershipCallback(string $class): OwnershipEntrySubmissionCallback
+    {
+        if (! class_exists($class)) {
+            throw new FormException('An owned extension requires an existing concrete class.');
+        }
+        $callback = $this->container->build($class);
+        if (! $callback instanceof OwnershipEntrySubmissionCallback) {
+            throw new FormException('An ownership entry callback resolved to an invalid implementation.');
+        }
+
+        return $callback;
     }
 }

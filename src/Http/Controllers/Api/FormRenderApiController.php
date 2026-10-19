@@ -28,6 +28,7 @@ use Nvl\Forms\Support\FormSubmissionContext;
 use Nvl\Support\Contracts\RespondableException;
 use Nvl\Support\Exceptions\BusinessException;
 use Nvl\Support\Http\PackageExceptionPayload;
+use Nvl\Support\Ownership\Services\OwnerSiteContext;
 use Nvl\Support\Tenancy\Services\TenantSiteAttributes;
 use Nvl\Support\Tenancy\ValueObjects\TenantSiteContext;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -79,9 +80,9 @@ final class FormRenderApiController extends Controller
                         'nvl-forms.public.token_ttl_minutes',
                         15,
                     )),
-                    ($tenantSite instanceof TenantSiteContext)
+                    OwnerSiteContext::current()->site ?? (($tenantSite instanceof TenantSiteContext)
                         ? $tenantSite->site
-                        : 'default',
+                        : 'default'),
                 ),
                 'extension_translations' => $additionalTranslations !== [] ? $additionalTranslations : null,
             ], $additionalData));

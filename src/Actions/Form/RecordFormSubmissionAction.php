@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\Form;
 
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Enums\FormAnalyticEventType;
+use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormCounterWriter;
+use Nvl\Forms\Services\FormModelRegistry;
 use Throwable;
 
 /**
@@ -23,6 +25,7 @@ final class RecordFormSubmissionAction
      * @param  RecordFormAnalyticAction  $recordFormAnalytic  Analytics recorder
      */
     public function __construct(
+        private readonly FormCounterWriter $counters,
         private readonly RecordFormAnalyticAction $recordFormAnalytic,
     ) {}
 
@@ -45,19 +48,22 @@ final class RecordFormSubmissionAction
         ?string $userAgent,
         ?string $sessionId
     ): Form {
-        return DB::transaction(function () use ($form, $origin, $ipAddress, $userAgent, $sessionId) {
+        return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $origin, $ipAddress, $userAgent, $sessionId) {
             $formModel = $form instanceof Form
                 ? $form
-                : Form::findOrFail($form);
+                : FormModelRegistry::query()->findOrFail($form);
 
             $nowFormatted = $formModel->fromDateTime(now());
+            if (! is_string($nowFormatted)) {
+                throw new FormException('Forms bookkeeping requires a native timestamp.');
+            }
             $extra = ['last_used_at' => $nowFormatted];
             if ($formModel->first_used_at === null) {
                 $extra['first_used_at'] = $nowFormatted;
             }
 
             // Single UPDATE: increment + extra columns in one query
-            $formModel->increment('submissions_count', 1, $extra);
+            $this->counters->increment($formModel, 'submissions_count', $extra);
 
             $this->recordFormAnalytic->execute(
                 form: $formModel,

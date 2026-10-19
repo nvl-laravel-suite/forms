@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Nvl\Forms\Contracts\GetFormSuggestionsContract;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 
 /**
  * Retrieves form suggestions for autocomplete functionality.
@@ -29,7 +30,7 @@ final class GetFormSuggestionsAction implements GetFormSuggestionsContract
     {
         $lower = mb_strtolower($query);
 
-        return Form::query()
+        return FormModelRegistry::query()
             ->withResolvedTranslations()
             ->select(['id', 'handle', 'submissions_count', 'last_used_at'])
             ->where(function (Builder $q) use ($lower) {

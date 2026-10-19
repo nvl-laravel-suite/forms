@@ -11,6 +11,7 @@ use Nvl\Forms\Contracts\FormEntryDeletionPolicy;
 use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
@@ -39,7 +40,7 @@ final class DeleteFormEntryAction implements DeleteFormEntryContract
         /** @var array{deleted: bool, form: Form, entry: FormEntry, was_spam: bool} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entryId, $actor) {
             $formEntry = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
-            $form = Form::query()->lockForUpdate()->findOrFail($formEntry->form_id);
+            $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($formEntry->form_id);
             $formEntry->setRelation('form', $form);
             $this->validateCanDelete($formEntry, $actor);
             $wasSpam = $formEntry->is_spam;

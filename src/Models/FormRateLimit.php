@@ -12,8 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormRateLimitFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Traits\FormRateLimitFilters;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 
 /**
  * FormRateLimit model representing rate limiting data for forms.
@@ -36,8 +39,12 @@ use Nvl\Support\Config\PackageStorage;
  *
  * @api
  */
-class FormRateLimit extends Model
+class FormRateLimit extends Model implements Ownable
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.rates';
+
     use FormRateLimitFilters;
 
     /** @use HasFactory<FormRateLimitFactory> */
@@ -90,7 +97,7 @@ class FormRateLimit extends Model
      */
     public function form(): BelongsTo
     {
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(FormModelRegistry::modelClass(), 'form_id');
     }
 
     /**

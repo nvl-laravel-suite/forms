@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Nvl\Forms\Services\PublicFormTokenService;
 use Nvl\Forms\Services\RequestOriginResolver;
+use Nvl\Support\Ownership\Services\OwnerSiteContext;
 use Nvl\Support\Tenancy\Services\TenantSiteAttributes;
 use Nvl\Support\Tenancy\ValueObjects\TenantSiteContext;
 
@@ -83,7 +84,7 @@ final readonly class FormSubmissionContext
             originHost: $originResolver->originHost($request),
             originHeader: $originResolver->originHeader($request),
             requestHost: $request->getHost(),
-            publicSite: $tenantSite instanceof TenantSiteContext ? $tenantSite->site : null,
+            publicSite: OwnerSiteContext::current()->site ?? ($tenantSite instanceof TenantSiteContext ? $tenantSite->site : null),
             actor: $actor instanceof Authenticatable ? $actor : null,
             request: $request,
         );

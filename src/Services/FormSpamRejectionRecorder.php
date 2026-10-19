@@ -14,6 +14,7 @@ use Nvl\Forms\Models\Form;
 final readonly class FormSpamRejectionRecorder
 {
     public function __construct(
+        private readonly FormCounterWriter $counters,
         private RecordFormAnalyticAction $recordFormAnalytic,
     ) {}
 
@@ -42,7 +43,7 @@ final readonly class FormSpamRejectionRecorder
         ?string $userAgent,
         ?string $sessionId,
     ): Form {
-        $form->increment('spam_count');
+        $this->counters->increment($form, 'spam_count');
 
         $this->recordFormAnalytic->execute(
             form: $form,

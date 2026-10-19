@@ -8,7 +8,8 @@ use Illuminate\Support\Collection;
 use Nvl\Forms\Contracts\GetFormAnalyticsSummaryContract;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Forms\Services\FormModelRegistry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 
 /**
  * Provides aggregated analytics metrics for a form.
@@ -30,7 +31,7 @@ final class GetFormAnalyticsSummaryAction implements GetFormAnalyticsSummaryCont
     public function execute(Form|string $form, int $days = 30): array
     {
         $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(Form::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
         $startDate = now()->subDays($days);
 
         $totalViews = $formModel->analytics()

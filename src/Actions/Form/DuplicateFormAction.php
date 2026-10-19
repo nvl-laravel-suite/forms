@@ -11,7 +11,9 @@ use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormTranslation;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Services\FormHandleService;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Translatable\Services\TranslationWriter;
 use Throwable;
@@ -56,10 +58,14 @@ final class DuplicateFormAction implements DuplicateFormContract
     {
         $originalForm = $form instanceof Form
             ? $form->load(['allowedOrigins', 'translations'])
-            : Form::with(['allowedOrigins', 'translations'])->findOrFail($form);
+            : FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($form);
+
+        if (FormsOwnership::declared()) {
+            $originalForm = FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($originalForm->identifier());
+        }
 
         /** @var Form $newForm */
-        $newForm = (new Form)->getConnection()->transaction(function () use ($originalForm, $newName, $actor) {
+        $newForm = (FormModelRegistry::newInstance())->getConnection()->transaction(function () use ($originalForm, $newName, $actor) {
             $newForm = $originalForm->replicate();
 
             $sourceName = $originalForm->displayName();
@@ -75,7 +81,7 @@ final class DuplicateFormAction implements DuplicateFormContract
             $newForm->last_used_at = null;
             $newForm->first_used_at = null;
 
-            $newForm->saveQuietly();
+            $newForm = FormModelRegistry::persist($newForm);
 
             $this->duplicateAllowedOrigins($originalForm, $newForm);
             $this->duplicateTranslations($originalForm, $newForm, $newName);
@@ -111,6 +117,9 @@ final class DuplicateFormAction implements DuplicateFormContract
             $newOrigin->form_id = $newForm->id;
             $newOrigin->usage_count = 0;
             $newOrigin->last_used_at = null;
+            if (FormsOwnership::declared()) {
+                $newOrigin->offsetUnset('owner_scope_key');
+            }
             $newOrigin->saveQuietly();
         }
     }

@@ -14,8 +14,11 @@ use Nvl\Forms\Builders\FormAnalyticBuilder;
 use Nvl\Forms\Database\Factories\FormAnalyticFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormAnalyticEventType;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Traits\FormAnalyticFilters;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 
 /**
  * FormAnalytic model representing form analytics events.
@@ -40,8 +43,12 @@ use Nvl\Support\Config\PackageStorage;
  *
  * @nvl-consumer-read id
  */
-class FormAnalytic extends Model
+class FormAnalytic extends Model implements Ownable
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.analytics';
+
     use FormAnalyticFilters;
 
     /** @use HasFactory<FormAnalyticFactory> */
@@ -100,7 +107,7 @@ class FormAnalytic extends Model
      */
     public function form(): BelongsTo
     {
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(FormModelRegistry::modelClass(), 'form_id');
     }
 
     /** Resolve the configured package storage table. */

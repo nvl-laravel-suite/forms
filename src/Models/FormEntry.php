@@ -14,8 +14,11 @@ use LogicException;
 use Nvl\Forms\Builders\FormEntryBuilder;
 use Nvl\Forms\Database\Factories\FormEntryFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Traits\FormEntryFilters;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 
 /**
  * FormEntry model representing a submission to a form.
@@ -49,8 +52,12 @@ use Nvl\Support\Config\PackageStorage;
  *
  * @api
  */
-class FormEntry extends Model
+class FormEntry extends Model implements Ownable
 {
+    use GuardsTenantOwnership;
+
+    public const string TENANT_RESOURCE = 'forms.entries';
+
     use FormEntryFilters;
 
     /** @use HasFactory<FormEntryFactory> */
@@ -149,7 +156,7 @@ class FormEntry extends Model
      */
     public function form(): BelongsTo
     {
-        return $this->belongsTo(Form::class);
+        return $this->belongsTo(FormModelRegistry::modelClass(), 'form_id');
     }
 
     /**

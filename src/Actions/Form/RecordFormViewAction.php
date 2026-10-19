@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\Form;
 
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Actions\AllowedOrigin\RecordAllowedOriginUsageAction;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormCounterWriter;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormOriginAccessService;
 use Throwable;
 
@@ -27,6 +28,7 @@ final class RecordFormViewAction
      * @param  RecordAllowedOriginUsageAction  $recordAllowedOriginUsage  Allowed origin usage recorder
      */
     public function __construct(
+        private readonly FormCounterWriter $counters,
         private readonly RecordFormAnalyticAction $recordFormAnalytic,
         private readonly FormOriginAccessService $originAccess,
         private readonly RecordAllowedOriginUsageAction $recordAllowedOriginUsage,
@@ -51,12 +53,12 @@ final class RecordFormViewAction
         ?string $userAgent,
         ?string $sessionId
     ): Form {
-        return DB::transaction(function () use ($form, $origin, $ipAddress, $userAgent, $sessionId) {
+        return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $origin, $ipAddress, $userAgent, $sessionId) {
             $formModel = $form instanceof Form
                 ? $form
-                : Form::findOrFail($form);
+                : FormModelRegistry::query()->findOrFail($form);
 
-            $formModel->increment('views_count');
+            $this->counters->increment($formModel, 'views_count');
 
             $this->recordFormAnalytic->execute(
                 form: $formModel,

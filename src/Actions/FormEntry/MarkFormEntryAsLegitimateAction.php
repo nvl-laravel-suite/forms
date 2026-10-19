@@ -9,6 +9,7 @@ use Nvl\Forms\Contracts\MarkFormEntryAsLegitimateContract;
 use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
@@ -36,7 +37,7 @@ final class MarkFormEntryAsLegitimateAction implements MarkFormEntryAsLegitimate
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
-            $form = Form::query()->lockForUpdate()->findOrFail($entryModel->form_id);
+            $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($entryModel->form_id);
 
             $wasSpam = $entryModel->is_spam === true;
 

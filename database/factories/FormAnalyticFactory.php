@@ -7,6 +7,7 @@ namespace Nvl\Forms\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
+use Nvl\Forms\Services\FormModelRegistry;
 
 /**
  * Builds FormAnalytic fixture rows and their declared package parents.
@@ -38,7 +39,7 @@ final class FormAnalyticFactory extends Factory
             }
 
             if ($model->getAttribute('form_id') !== null) {
-                $parent = Form::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('form_id')));
+                $parent = FormModelRegistry::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('form_id')));
                 FactoryGuard::parent($parent, $model);
                 FactoryGuard::inherit($model, $parent);
             }

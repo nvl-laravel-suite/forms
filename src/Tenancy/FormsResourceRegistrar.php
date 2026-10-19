@@ -11,6 +11,7 @@ use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Models\FormTranslation;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Tenancy\Enums\TenantResourceKind;
 use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Support\Tenancy\ValueObjects\TenantResourceDefinition;
@@ -23,7 +24,7 @@ final readonly class FormsResourceRegistrar
     public function register(TenantResourceRegistry $resources, ?TenantAdoptionRegistry $adapters = null): void
     {
         foreach ([
-            new TenantResourceDefinition('forms.forms', 'forms', Form::class),
+            new TenantResourceDefinition('forms.forms', 'forms', FormModelRegistry::modelClass()),
             new TenantResourceDefinition('forms.entries', 'forms', FormEntry::class, TenantResourceKind::Inherited, 'forms.forms', 'form'),
             new TenantResourceDefinition('forms.receipts', 'forms', FormSubmissionReceipt::class, TenantResourceKind::Inherited, 'forms.forms', 'form'),
             new TenantResourceDefinition('forms.origins', 'forms', AllowedOrigin::class, TenantResourceKind::Inherited, 'forms.forms', 'form'),

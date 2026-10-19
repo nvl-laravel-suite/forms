@@ -13,6 +13,7 @@ use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormAllowedOriginService;
 use Nvl\Forms\Services\FormHandleService;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormTranslationPayloadMapper;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Translatable\Services\TranslationWriter;
@@ -62,8 +63,8 @@ final class UpdateFormAction implements UpdateFormContract
     {
         $formId = $form instanceof Form ? $form->id : $form;
 
-        $updated = (new Form)->getConnection()->transaction(function () use ($formId, $data, $actor) {
-            $form = Form::query()->lockForUpdate()->findOrFail($formId);
+        $updated = (FormModelRegistry::newInstance())->getConnection()->transaction(function () use ($formId, $data, $actor) {
+            $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($formId);
             $expectedRevision = $data->expectedRevision instanceof Optional
                 ? null
                 : $data->expectedRevision;

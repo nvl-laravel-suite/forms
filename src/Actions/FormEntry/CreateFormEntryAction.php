@@ -14,10 +14,11 @@ use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormRegistrationFingerprint;
 use Nvl\Forms\Services\FormSpamRejectionRecorder;
 use Nvl\Support\Events\DomainEventDispatcher;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
@@ -95,7 +96,7 @@ final class CreateFormEntryAction implements CreateFormEntryContract
                     ]));
                 }
 
-                $form = $this->boundary->query(Form::query(), 'forms.forms')
+                $form = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')
                     ->with('allowedOrigins')
                     ->whereKey($formId)
                     ->firstOrFail();
@@ -215,7 +216,7 @@ final class CreateFormEntryAction implements CreateFormEntryContract
                 }
             }
 
-            $form = $this->boundary->query(Form::query(), 'forms.forms')
+            $form = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')
                 ->whereKey($data->formId)
                 ->firstOrFail();
             $email = $data->email instanceof Optional ? null : $data->email;

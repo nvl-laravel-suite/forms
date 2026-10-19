@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Nvl\Forms\Contracts\DeleteFormContract;
 use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Throwable;
 
@@ -36,9 +37,9 @@ final class DeleteFormAction implements DeleteFormContract
         // Resolve model if ID provided
         $form = $form instanceof Form
             ? $form
-            : Form::findOrFail($form);
+            : FormModelRegistry::query()->findOrFail($form);
 
-        $deleted = (new Form)->getConnection()->transaction(function () use ($form, $actor) {
+        $deleted = (FormModelRegistry::newInstance())->getConnection()->transaction(function () use ($form, $actor) {
             // Check for dependencies (form entries)
             if ($form->entries()->exists()) {
                 throw new Exception((string) trans('nvl-forms::forms/messages.error.cannot_delete_with_entries'));

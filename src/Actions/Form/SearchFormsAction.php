@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Contracts\SearchFormsContract;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Results\FormSearchResult;
+use Nvl\Forms\Services\FormModelRegistry;
 
 /**
  * Searches forms with filtering and lightweight aggregation.
@@ -28,7 +29,7 @@ final class SearchFormsAction implements SearchFormsContract
             $normalizedFilters[Str::snake($key)] = $value;
         }
 
-        $query = Form::query()
+        $query = FormModelRegistry::query()
             ->select($this->getSelectColumns($normalizedFilters))
             ->withResolvedTranslations();
 

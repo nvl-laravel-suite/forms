@@ -5,6 +5,7 @@
             "common": [
                 "authorization.gate",
                 "migrations.enabled",
+                "models.form",
                 "routes.management.enabled",
                 "routes.management.middleware",
                 "routes.middleware",

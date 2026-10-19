@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Actions\FormEntry;
 
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Actions\Form\RecordFormSubmissionAction;
 use Nvl\Forms\Data\FormEntryPayload;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Forms\Services\FormSpamRejectionRecorder;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 use Spatie\LaravelData\Optional;
 use Throwable;
 
@@ -60,10 +60,10 @@ final class PersistFormEntryAction
         ?string $payloadDigest = null,
         ?string $registrationFingerprint = null,
     ): array {
-        return DB::transaction(function () use ($form, $data, $spamDetection, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $payloadDigest, $registrationFingerprint) {
+        return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $data, $spamDetection, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $payloadDigest, $registrationFingerprint) {
             $submittedFrom = $data->submittedFrom instanceof Optional ? null : $data->submittedFrom;
             $formId = $form instanceof Form ? $form->identifier() : $form;
-            $form = $this->boundary->query(Form::query(), 'forms.forms')->findOrFail($formId);
+            $form = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
 
             $entryPayload = $data->except('id', 'createdAt')->toModelFiltered();
             $entryPayload['ip_address'] = $ipAddress;

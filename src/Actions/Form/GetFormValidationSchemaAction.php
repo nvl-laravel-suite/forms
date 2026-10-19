@@ -11,6 +11,7 @@ use Nvl\Forms\Data\Display\PublicFormSchemaPayload;
 use Nvl\Forms\Data\Display\PublicSubmissionFieldPayload;
 use Nvl\Forms\Data\Mutations\SubmitFormPayload;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
 use Stringable;
 
 /**
@@ -28,7 +29,7 @@ final class GetFormValidationSchemaAction implements GetFormValidationSchemaCont
      */
     public function execute(string $formIdentifier): PublicFormSchemaPayload
     {
-        $query = Form::query()->where('handle', $formIdentifier);
+        $query = FormModelRegistry::query()->where('handle', $formIdentifier);
 
         if (Str::isUuid($formIdentifier)) {
             $query->orWhere('id', $formIdentifier);

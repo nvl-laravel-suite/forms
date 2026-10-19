@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Nvl\Forms\Services;
 
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Enums\FormSubmissionReceiptState;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Support\CustomSubmissionClaim;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 use Throwable;
 
 /**
@@ -50,7 +49,7 @@ final class CustomSubmissionReceiptService
         $payloadDigest = $this->payloadDigest($payload);
 
         try {
-            return DB::transaction(function () use ($form, $idempotencyKey, $fingerprint, $payloadDigest): CustomSubmissionClaim {
+            return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $idempotencyKey, $fingerprint, $payloadDigest): CustomSubmissionClaim {
                 if ($idempotencyKey !== null) {
                     $existing = $this->boundary->query(FormSubmissionReceipt::query(), 'forms.receipts')
                         ->where('form_id', $form->getKey())

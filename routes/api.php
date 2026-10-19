@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use Nvl\Forms\Http\Controllers\Api\FormRenderApiController;
 use Nvl\Forms\Http\Controllers\Api\FormsApiController;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Services\FormModelRegistry;
+use Nvl\Ownership\Http\Middleware\ResolvePublicOwnerSite;
 use Nvl\Tenancy\Http\Middleware\ResolvePublicTenant;
 
 $managementMiddleware = array_values(array_filter(
@@ -62,6 +64,9 @@ if ((bool) config('nvl-forms.routes.public.enabled', false)) {
     $tenantAdmissionMiddleware = (bool) config('nvl-tenancy.enabled', false)
         ? [ResolvePublicTenant::class]
         : [];
+    if (FormModelRegistry::modelClass()::ownershipDefinition()->strategy !== 'unscoped') {
+        $tenantAdmissionMiddleware = [ResolvePublicOwnerSite::class];
+    }
     Route::prefix('forms')
         ->name('nvl.forms.public.')
         ->middleware(array_values(array_unique([...$tenantAdmissionMiddleware, ...$publicMiddleware, 'nvl.forms.locale'])))
