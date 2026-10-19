@@ -64,12 +64,12 @@ unscoped applications keep their existing extension API.
 ## Quickstart
 
 ```sh
-composer require nvl/forms:^5.1
+composer require nvl/forms:^6.0
 php artisan nvl:install forms --dry-run
 php artisan nvl:install forms
 ```
 
-Required NVL dependencies: `nvl/core` (`^5.1`), `nvl/filterable` (`^5.0`), `nvl/translatable` (`^5.1`). Configure authorization and explicitly opt into any routes or public submission origins. Keep sensitive entry data behind authorized projections.
+Required NVL dependencies: `nvl/core` (`^6.0`), `nvl/filterable` (`^6.0`), `nvl/translatable` (`^6.0`). Configure authorization and explicitly opt into any routes or public submission origins. Keep sensitive entry data behind authorized projections.
 Review the published common config, select one migration owner, and run schema preflight before existing-table upgrades. The installer does not enable features or run migrations. Follow the detailed installation and capability sections below before invoking a storage/provider operation.
 
 Inject `Nvl\Forms\Contracts\ListFormsContract` in a host service. After supplying the trusted inputs described above, the first public call is:
@@ -97,7 +97,7 @@ Owned exports validate the canonical Form before filesystem or cache effects. Ex
 
 | Item | Value |
 |---|---|
-| Installed through | `composer require nvl/forms:^5.1` |
+| Installed through | `composer require nvl/forms:^6.0` |
 | Module identifier | `nvl/forms` |
 | PHP namespace | `Nvl\Forms` |
 | Service provider | `Nvl\Forms\Providers\FormsServiceProvider` |
@@ -112,7 +112,7 @@ Forms depends on `nvl/core`, `nvl/filterable`, and `nvl/translatable`. Ownership
 ## Requirements and installation
 
 ```bash
-composer require nvl/forms:^5.1
+composer require nvl/forms:^6.0
 php artisan migrate
 ```
 
