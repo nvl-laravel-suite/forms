@@ -6,16 +6,12 @@ namespace Nvl\Forms\Models\Concerns;
 
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Compatibility\LegacyModelOwnership;
 use Nvl\Support\Ownership\Contracts\OwnershipWriter;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Support\Ownership\Traits\HasOwnership;
-use Nvl\Support\Tenancy\Enums\TenantResourceKind;
-use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
-use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 
-/** Applies Forms's mandatory tenant predicate and immutable ownership stamp. */
+/** Preserves the package model hooks and delegates retained 6.x tenant behavior. */
 trait GuardsTenantOwnership
 {
     use HasOwnership { save as private saveOwned; }
@@ -45,48 +41,11 @@ trait GuardsTenantOwnership
     protected static function bootGuardsTenantOwnership(): void
     {
         static::creating(static function (Model $model): void {
-            $container = Container::getInstance();
-            if ($container->make('config')->get('nvl-tenancy.enabled') !== true) {
-                return;
-            }
-            $definition = $container->make(TenantResourceRegistry::class)->get(self::TENANT_RESOURCE);
-            $boundary = $container->make(TenantBoundary::class);
-
-            if ($definition->kind === TenantResourceKind::Root) {
-                $model->forceFill($boundary->attributes(self::TENANT_RESOURCE));
-
-                return;
-            }
-
-            if ($definition->kind !== TenantResourceKind::Inherited || $definition->parentRelation === null) {
-                return;
-            }
-
-            $relation = $model->{$definition->parentRelation}();
-            if (! $relation instanceof Relation) {
-                throw new TenantBoundaryViolation('Forms child ownership requires a canonical relation.');
-            }
-            $parent = $relation->getResults();
-            if (! $parent instanceof Model) {
-                throw new TenantBoundaryViolation('Forms child ownership requires a canonical parent.');
-            }
-
-            $parentDefinition = $container->make(TenantResourceRegistry::class)->forModel($parent);
-            $boundary->assertRecord($parent, $parentDefinition->key);
-            $tenantId = $parent->getRawOriginal('tenant_id') ?? $parent->getAttribute('tenant_id');
-            if (! is_string($tenantId)) {
-                throw new TenantBoundaryViolation('Forms child ownership requires a tenant parent.');
-            }
-
-            $model->forceFill(['tenant_id' => $tenantId]);
+            Container::getInstance()->make(LegacyModelOwnership::class)->creating($model, self::TENANT_RESOURCE, 'Forms');
         });
 
         static::updating(static function (Model $model): void {
-            if ($model->isDirty('tenant_id')) {
-                throw new TenantBoundaryViolation('Persisted Forms ownership is immutable.');
-            }
-
-            Container::getInstance()->make(TenantBoundary::class)->assertRecord($model, self::TENANT_RESOURCE);
+            Container::getInstance()->make(LegacyModelOwnership::class)->updating($model, self::TENANT_RESOURCE, 'Forms');
         });
     }
 }

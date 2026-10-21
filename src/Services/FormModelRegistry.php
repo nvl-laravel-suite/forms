@@ -8,7 +8,7 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Builder;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Models\ConfiguredModelResolver;
+use Nvl\Support\Models\ConfiguredModelRegistration;
 use Nvl\Support\OwnerRegistry;
 use Nvl\Support\Ownership\Contracts\OwnershipWriter;
 use Nvl\Support\Ownership\Exceptions\OwnershipConfigurationInvalid;
@@ -20,16 +20,27 @@ use Nvl\Support\Ownership\Exceptions\OwnershipConfigurationInvalid;
  */
 final class FormModelRegistry
 {
-    /** @var class-string<Form>|null */
-    private ?string $definition = null;
-
-    private bool $validated = false;
+    /** @var ConfiguredModelRegistration<Form> */
+    private readonly ConfiguredModelRegistration $registration;
 
     /** Retain deployment configuration and the shared identity registry. */
     public function __construct(
-        private readonly Repository $configuration,
-        private readonly OwnerRegistry $identities,
-    ) {}
+        Repository $configuration,
+        OwnerRegistry $identities,
+    ) {
+        $this->registration = new ConfiguredModelRegistration(
+            $configuration,
+            $identities,
+            'nvl-forms.models.form',
+            Form::class,
+            'forms.forms',
+            static function (string $class): void {
+                if (! in_array($class::ownershipDefinition()->strategy, ['unscoped', 'column', 'pivot'], true)) {
+                    throw new OwnershipConfigurationInvalid('Form roots require a native column or concrete primary pivot.');
+                }
+            },
+        );
+    }
 
     /** Resolve and freeze the concrete Form class before resource compilation.
      * @internal
@@ -38,21 +49,7 @@ final class FormModelRegistry
      */
     public function prepare(): string
     {
-        if ($this->definition !== null) {
-            return $this->definition;
-        }
-        $configured = $this->configuration->get('nvl-forms.models.form', Form::class);
-        if (! is_string($configured)) {
-            throw new OwnershipConfigurationInvalid('Form model configuration must name a concrete Form subclass.');
-        }
-        $class = (new ConfiguredModelResolver)->resolve($configured, Form::class);
-        if (! in_array($class::ownershipDefinition()->strategy, ['unscoped', 'column', 'pivot'], true)) {
-            throw new OwnershipConfigurationInvalid('Form roots require a native column or concrete primary pivot.');
-        }
-        $this->identities->registerReplacement('forms.forms', Form::class, $class);
-        $this->definition = $class;
-
-        return $class;
+        return $this->registration->prepare();
     }
 
     /** Validate native capabilities after Laravel installs Eloquent's dispatcher.
@@ -60,16 +57,7 @@ final class FormModelRegistry
      */
     public function formClass(): string
     {
-        $class = $this->prepare();
-        if ($this->validated) {
-            return $class;
-        }
-        $model = new $class;
-        $base = new Form;
-        (new ConfiguredModelResolver)->assertOwnershipCapabilities($model, $base);
-        $this->validated = true;
-
-        return $class;
+        return $this->registration->modelClass();
     }
 
     /** Resolve the immutable model from native framework entry points.
