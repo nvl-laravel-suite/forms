@@ -197,7 +197,7 @@ class Form extends Model implements Ownable, TranslatableModel
                 'success_message',
                 'content',
             ],
-            mutationPolicy: TranslationMutationPolicy::DomainActionOnly,
+            mutationPolicy: TranslationMutationPolicy::OwningServiceOnly,
             ownershipResource: 'forms.forms',
         );
     }
