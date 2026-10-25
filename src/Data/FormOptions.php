@@ -10,9 +10,6 @@ use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Display, styling and behavioral options for public form rendering.
@@ -22,7 +19,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormOptions extends Data
 {
     use DataTransform;
@@ -40,35 +36,15 @@ class FormOptions extends Data
      * @param  bool  $compactLayout  Use reduced spacing and padding
      */
     public function __construct(
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $showHeader = true,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $showLogo = false,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $submitButtonLabel = null,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $successRedirectUrl = null,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $theme = null,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $maxWidth = null,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $backgroundColor = null,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $accentColor = null,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $showPoweredBy = true,
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $compactLayout = false,
     ) {}
 }

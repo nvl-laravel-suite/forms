@@ -9,8 +9,6 @@ use Spatie\LaravelData\Attributes\MapInputName;
 use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Typed select option returned by form select endpoints.
@@ -19,7 +17,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 final class FormSelectOptionItem extends Data
 {
     use DataTransform;
@@ -28,11 +25,8 @@ final class FormSelectOptionItem extends Data
      * Create one form select option.
      */
     public function __construct(
-        #[LiteralTypeScriptType('string')]
         public readonly string $id,
-        #[LiteralTypeScriptType('string')]
         public readonly string $label,
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $sublabel,
     ) {}
 }

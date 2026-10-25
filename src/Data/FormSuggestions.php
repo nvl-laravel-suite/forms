@@ -10,16 +10,12 @@ use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * DTO for lightweight suggestion lookups while typing form names.
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormSuggestions extends Data
 {
     use DataTransform;
@@ -34,15 +30,11 @@ class FormSuggestions extends Data
         /**
          * @var string
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string $q,
 
         /**
          * @var int|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int|Optional $limit = 10,
     ) {}
 

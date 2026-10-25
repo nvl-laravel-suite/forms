@@ -10,16 +10,12 @@ use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Query DTO powering select/combobox options endpoints.
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormSelectOption extends Data
 {
     use DataTransform;
@@ -37,36 +33,26 @@ class FormSelectOption extends Data
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $q = null,
 
         /**
          * @var bool|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean | null')]
         public readonly bool|Optional|null $activeOnly = null,
 
         /**
          * @var bool|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean | null')]
         public readonly bool|Optional|null $publicOnly = null,
 
         /**
          * @var bool|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean | null')]
         public readonly bool|Optional|null $withSubmissions = null,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $status = null,
     ) {}
 

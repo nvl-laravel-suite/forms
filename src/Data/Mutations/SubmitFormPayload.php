@@ -12,9 +12,6 @@ use Spatie\LaravelData\Attributes\Validation\Nullable;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Write-only mutation DTO for public form submission payloads.
@@ -23,7 +20,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class SubmitFormPayload extends Data
 {
     use DataTransform;
@@ -40,43 +36,27 @@ class SubmitFormPayload extends Data
      */
     public function __construct(
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $subject = null,
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $firstName = null,
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $lastName = null,
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $email = null,
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $phone = null,
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $address = null,
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $body = null,
 
         /** @var array<string, mixed>|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('Record<string, unknown> | null')]
         #[Nullable]
         public readonly array|Optional|null $submissionData = null,
 

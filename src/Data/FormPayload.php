@@ -15,10 +15,6 @@ use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Attributes\Validation\Nullable;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Read-only transfer object for form display and listing.
@@ -29,7 +25,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormPayload extends Data
 {
     use DataTransform;
@@ -71,187 +66,139 @@ class FormPayload extends Data
         /**
          * @var string $id
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string $id,
 
         /**
          * @var string
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string $name,
 
         /**
          * @var string|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $description,
 
         /**
          * @var string|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $handle,
 
         /**
          * @var array<string, mixed>|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('Record<string, unknown> | null')]
         #[Nullable]
         public readonly ?array $translations,
 
         /**
          * @var FormStatus
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormStatus::class)]
         public readonly FormStatus $status = FormStatus::DRAFT,
 
         /**
          * @var Resolvement
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(Resolvement::class)]
         public readonly Resolvement $resolvement = Resolvement::ENTRIES,
 
         /**
          * @var FormType
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormType::class)]
         public readonly FormType $type = FormType::LANDING_PAGE,
 
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int $revision = 1,
 
         /**
          * @var bool
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $restrictPublicAccess = false,
 
         /**
          * @var bool
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $allowMultipleRegistrations = true,
 
         /**
          * @var bool
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $dateRestricted = false,
 
         /**
          * @var Carbon|null
          */
-        #[TypeScriptOptional]
         public readonly ?Carbon $availableFrom = null,
 
         /**
          * @var Carbon|null
          */
-        #[TypeScriptOptional]
         public readonly ?Carbon $availableUntil = null,
 
         /**
          * @var int
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int $submissionsCount = 0,
 
         /**
          * @var int
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int $viewsCount = 0,
 
         /**
          * @var int
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int $spamCount = 0,
 
         /**
          * @var Carbon|null
          */
-        #[TypeScriptOptional]
         public readonly ?Carbon $lastUsedAt = null,
 
         /**
          * @var Carbon|null
          */
-        #[TypeScriptOptional]
         public readonly ?Carbon $firstUsedAt = null,
 
         /**
          * @var bool
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $enableHoneypot = true,
 
         /**
          * @var bool
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $enableRateLimiting = true,
 
         /**
          * @var int|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number | null')]
         public readonly ?int $rateLimitPerHour = 10,
 
         /**
          * @var bool
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $requireCsrf = true,
 
         /** @var FormCorsSettings|null */
-        #[TypeScriptOptional]
         #[Nullable]
         public readonly ?FormCorsSettings $corsSettings = null,
 
         /**
          * @var array<string, mixed>|null
          */
-        #[TypeScriptOptional]
         public readonly ?array $options = null,
 
         /**
          * @var array<int, string>|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string[] | null')]
         #[Nullable]
         public readonly ?array $allowedOrigins = null,
 
         /**
          * @var Carbon|null
          */
-        #[TypeScriptOptional]
         public readonly ?Carbon $createdAt = null,
 
         /**
          * @var Carbon|null
          */
-        #[TypeScriptOptional]
         public readonly ?Carbon $updatedAt = null,
     ) {}
 

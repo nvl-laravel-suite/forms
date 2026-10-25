@@ -14,10 +14,6 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Lazy;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Read-only transfer object for form entry display and listing.
@@ -28,7 +24,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormEntryPayload extends Data
 {
     use DataTransform;
@@ -62,141 +57,103 @@ class FormEntryPayload extends Data
         /**
          * @var string|Optional $id
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $id,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $formId,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $subject,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $email,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $firstName,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $lastName,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $phone,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $address,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $body,
 
         /**
          * @var array<string, mixed>|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('Record<string, unknown> | null')]
         #[Nullable]
         public readonly array|Optional|null $submissionData,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $submittedFrom,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $ipAddress,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $userAgent,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $sessionId,
 
         /**
          * @var bool|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $isSpam = false,
 
         /**
          * @var int|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number | null')]
         public readonly int|Optional|null $spamScore = null,
 
         /**
          * @var array<string, mixed>|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('Record<string, unknown> | null')]
         #[Nullable]
         public readonly array|Optional|null $securityFlags = null,
 
         /**
          * @var Lazy|Optional|FormPayload|null
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormPayload::class)]
         public readonly Lazy|Optional|FormPayload|null $form = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $createdAt = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $updatedAt = null,
     ) {}
 

@@ -10,9 +10,6 @@ use Spatie\LaravelData\Attributes\MapInputName;
 use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Validated CORS behavior for a form or allowed-origin override.
@@ -21,7 +18,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
-#[TypeScript]
 final class FormCorsSettings extends Data
 {
     use DataTransform;
@@ -35,24 +31,18 @@ final class FormCorsSettings extends Data
      * @param  list<string>  $allowedHeaders  Allowed cross-origin request headers
      */
     public function __construct(
-        #[TypeScriptType(CorsPolicy::class)]
         public readonly CorsPolicy $policy = CorsPolicy::Moderate,
 
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $allowCredentials = true,
 
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $allowWildcards = false,
 
-        #[LiteralTypeScriptType('number')]
         public readonly int $maxAge = 600,
 
         /** @var list<string> */
-        #[LiteralTypeScriptType('string[]')]
         public readonly array $allowedMethods = ['GET', 'POST', 'OPTIONS'],
 
         /** @var list<string> */
-        #[LiteralTypeScriptType('string[]')]
         public readonly array $allowedHeaders = [
             'Content-Type',
             'X-CSRF-TOKEN',

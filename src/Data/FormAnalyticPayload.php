@@ -17,17 +17,12 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Lazy;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Transfer object encapsulating individual form analytic events.
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormAnalyticPayload extends Data
 {
     use DataTransform;
@@ -52,77 +47,57 @@ class FormAnalyticPayload extends Data
         /**
          * @var string|Optional $id
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $id,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $formId,
 
         /**
          * @var FormAnalyticEventType|Optional
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormAnalyticEventType::class)]
         public readonly FormAnalyticEventType|Optional $eventType,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $origin,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $ipAddress,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $userAgent,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $sessionId,
 
         /**
          * @var array<string, mixed>|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('Record<string, unknown> | null')]
         #[Nullable]
         public readonly array|Optional|null $metadata,
 
         /**
          * @var Lazy|Optional|FormPayload|null
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormPayload::class)]
         public readonly Lazy|Optional|FormPayload|null $form,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $createdAt = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $updatedAt = null,
     ) {}
 

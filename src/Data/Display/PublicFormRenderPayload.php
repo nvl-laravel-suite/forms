@@ -12,16 +12,12 @@ use Spatie\LaravelData\Attributes\MapInputName;
 use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Public-safe localized form contract used by render consumers.
  */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
-#[TypeScript]
 final class PublicFormRenderPayload extends Data
 {
     use DataTransform;
@@ -43,47 +39,33 @@ final class PublicFormRenderPayload extends Data
      * @param  FormOptions|null  $options  Public display and behavior options
      */
     public function __construct(
-        #[LiteralTypeScriptType('string')]
         public readonly string $id,
 
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $handle,
 
-        #[LiteralTypeScriptType('string')]
         public readonly string $name,
 
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $description,
 
-        #[TypeScriptType(FormStatus::class)]
         public readonly FormStatus $status,
 
-        #[TypeScriptType(FormType::class)]
         public readonly FormType $type,
 
-        #[LiteralTypeScriptType('string')]
         public readonly string $locale,
 
         /** @var array<string, mixed> */
-        #[LiteralTypeScriptType('Record<string, unknown>')]
         public readonly array $content,
 
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $submitButtonLabel,
 
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $successTitle,
 
-        #[LiteralTypeScriptType('string | null')]
         public readonly ?string $successMessage,
 
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $restrictPublicAccess,
 
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $allowMultipleRegistrations,
 
-        #[LiteralTypeScriptType('Nvl.Forms.Data.FormOptions | null')]
         public readonly ?FormOptions $options,
     ) {}
 }

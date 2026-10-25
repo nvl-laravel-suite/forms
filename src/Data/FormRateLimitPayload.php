@@ -14,17 +14,12 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Lazy;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Transfer object representing form rate limit state per IP.
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormRateLimitPayload extends Data
 {
     use DataTransform;
@@ -50,80 +45,61 @@ class FormRateLimitPayload extends Data
         /**
          * @var string|Optional $id
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $id,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $formId,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $ipAddress,
 
         /**
          * @var Carbon|Optional
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional $windowStart,
 
         /**
          * @var Carbon|Optional
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional $lastSubmissionAt,
 
         /**
          * @var int|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int|Optional $submissionCount = 0,
 
         /**
          * @var bool|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $isBlocked = false,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $blockedUntil = null,
 
         /**
          * @var int|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int|Optional $violationCount = 0,
 
         /**
          * @var Lazy|Optional|FormPayload|null
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormPayload::class)]
         public readonly Lazy|Optional|FormPayload|null $form = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $createdAt = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $updatedAt = null,
     ) {}
 

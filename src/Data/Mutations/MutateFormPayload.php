@@ -22,10 +22,6 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
 use Spatie\LaravelData\Support\Validation\ValidationContext;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Write-only mutation DTO for form create and update operations.
@@ -34,7 +30,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class MutateFormPayload extends Data
 {
     use DataTransform;
@@ -63,95 +58,61 @@ class MutateFormPayload extends Data
     public function __construct(
 
         /** @var string|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $handle = new Optional,
 
         /** @var array<string, mixed>|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('Record<string, unknown> | null')]
         #[Nullable]
         public readonly array|Optional|null $translations = new Optional,
 
         /** @var FormStatus|Optional */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormStatus::class)]
         public readonly FormStatus|Optional $status = new Optional,
 
         /** @var Resolvement|Optional */
-        #[TypeScriptOptional]
-        #[TypeScriptType(Resolvement::class)]
         public readonly Resolvement|Optional $resolvement = new Optional,
 
         /** @var FormType|Optional */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormType::class)]
         public readonly FormType|Optional $type = new Optional,
 
         /** @var bool|Optional */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $restrictPublicAccess = new Optional,
 
         /** @var bool|Optional */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $allowMultipleRegistrations = new Optional,
 
         /** @var bool|Optional */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $dateRestricted = new Optional,
 
         /** @var Carbon|Optional|null */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $availableFrom = new Optional,
 
         /** @var Carbon|Optional|null */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $availableUntil = new Optional,
 
         /** @var bool|Optional */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $enableHoneypot = new Optional,
 
         /** @var bool|Optional */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $enableRateLimiting = new Optional,
 
         /** @var int|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number | null')]
         public readonly int|Optional|null $rateLimitPerHour = new Optional,
 
         /** @var bool|Optional */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $requireCsrf = new Optional,
 
         /** @var FormCorsSettings|Optional|null */
-        #[TypeScriptOptional]
         #[Nullable]
         public readonly FormCorsSettings|Optional|null $corsSettings = new Optional,
 
         /** @var array<string, mixed>|Optional|null */
-        #[TypeScriptOptional]
         public readonly array|Optional|null $options = new Optional,
 
         /** @var array<int, string>|Optional|null */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string[] | null')]
         #[Nullable]
         public readonly array|Optional|null $allowedOrigins = new Optional,
 
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType("'patch' | 'replace'")]
         public readonly TranslationSyncMode $translationMode = TranslationSyncMode::Patch,
 
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int|Optional $expectedRevision = new Optional,
     ) {}
 

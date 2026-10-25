@@ -9,8 +9,6 @@ use Spatie\LaravelData\Attributes\MapInputName;
 use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * JSON-safe validation metadata for one public submission field.
@@ -19,7 +17,6 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
-#[TypeScript]
 final class PublicSubmissionFieldPayload extends Data
 {
     use DataTransform;
@@ -30,14 +27,11 @@ final class PublicSubmissionFieldPayload extends Data
      * @param  list<string>  $rules  Normalized validation rules
      */
     public function __construct(
-        #[LiteralTypeScriptType('string')]
         public readonly string $key,
 
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool $required,
 
         /** @var list<string> */
-        #[LiteralTypeScriptType('string[]')]
         public readonly array $rules,
     ) {}
 }

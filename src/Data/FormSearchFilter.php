@@ -11,16 +11,12 @@ use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Query DTO used to filter forms for admin search APIs.
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class FormSearchFilter extends Data
 {
     use DataTransform;
@@ -43,69 +39,51 @@ class FormSearchFilter extends Data
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $search = null,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $handle = null,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $status = null,
 
         /**
          * @var bool|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean | null')]
         public readonly bool|Optional|null $restrictPublicAccess = null,
 
         /**
          * @var bool|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean | null')]
         public readonly bool|Optional|null $hasSubmissions = null,
 
         /**
          * @var bool|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean | null')]
         public readonly bool|Optional|null $recentlyUsed = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $createdAfter = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $createdBefore = null,
 
         /**
          * @var int|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int|Optional $limit = 25,
 
         /**
          * @var array<int, string>|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string[] | null')]
         public readonly array|Optional|null $with = null,
     ) {}
 

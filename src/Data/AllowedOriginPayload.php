@@ -20,17 +20,12 @@ use Spatie\LaravelData\Lazy;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\LaravelData\Optional;
 use Spatie\LaravelData\Support\Validation\ValidationContext;
-use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
-use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-use Spatie\TypeScriptTransformer\Attributes\TypeScriptType;
 
 /**
  * Transfer object for allowed origin records scoped to forms.
  */
 #[MapOutputName(CamelCaseMapper::class)]
 #[MapInputName(CamelCaseMapper::class)]
-#[TypeScript]
 class AllowedOriginPayload extends Data
 {
     use DataTransform;
@@ -55,73 +50,55 @@ class AllowedOriginPayload extends Data
         /**
          * @var string|Optional $id
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $id,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $formId,
 
         /**
          * @var string|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string')]
         public readonly string|Optional $origin,
 
         /**
          * @var bool|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('boolean')]
         public readonly bool|Optional $isActive = true,
 
         /**
          * @var string|Optional|null
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('string | null')]
         public readonly string|Optional|null $description = null,
 
         /** @var FormCorsSettings|Optional|null */
-        #[TypeScriptOptional]
         #[Nullable]
         public readonly FormCorsSettings|Optional|null $corsSettings = null,
 
         /**
          * @var int|Optional
          */
-        #[TypeScriptOptional]
-        #[LiteralTypeScriptType('number')]
         public readonly int|Optional $usageCount = 0,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $lastUsedAt = null,
 
         /**
          * @var Lazy|Optional|FormPayload|null
          */
-        #[TypeScriptOptional]
-        #[TypeScriptType(FormPayload::class)]
         public readonly Lazy|Optional|FormPayload|null $form = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $createdAt = null,
 
         /**
          * @var Carbon|Optional|null
          */
-        #[TypeScriptOptional]
         public readonly Carbon|Optional|null $updatedAt = null,
     ) {}
 
