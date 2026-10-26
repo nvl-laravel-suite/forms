@@ -15,7 +15,7 @@ test('form data validation passes with valid payload', function (): void {
 });
 test('form data validation leaves tenant scoped handle uniqueness to domain actions', function (): void {
     $form = Form::factory()->create(['handle' => 'existing']);
-    $payload = ['translations' => ['en' => ['name' => 'Updated Form']], 'expectedRevision' => $form->revision, 'handle' => 'existing', 'resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'status' => FormStatus::ACTIVE->value];
+    $payload = ['translations' => ['en' => ['name' => 'Updated Form']], 'expected_revision' => $form->revision, 'handle' => 'existing', 'resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'status' => FormStatus::ACTIVE->value];
     $validator = Validator::make($payload, MutateFormPayload::rulesForUpdate($form->id));
     expect($validator->passes())->toBeTrue();
     Form::factory()->create(['handle' => 'taken']);

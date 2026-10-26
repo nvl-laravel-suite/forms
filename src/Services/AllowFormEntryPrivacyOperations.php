@@ -10,6 +10,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Default policy for action callers; HTTP access remains protected by policies.
+ *
+ * @internal
  */
 final class AllowFormEntryPrivacyOperations implements FormEntryPrivacyPolicy
 {

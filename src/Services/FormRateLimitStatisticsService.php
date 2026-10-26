@@ -11,6 +11,8 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Read-only service for rate-limit statistics and maintenance operations.
+ *
+ * @internal
  */
 final class FormRateLimitStatisticsService
 {

@@ -15,6 +15,8 @@ use Throwable;
 
 /**
  * Owns durable claims around side-effecting custom form handlers.
+ *
+ * @internal
  */
 final class CustomSubmissionReceiptService
 {

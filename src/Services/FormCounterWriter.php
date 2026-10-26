@@ -11,7 +11,11 @@ use Nvl\Ownership\Services\OwnershipWriteLease;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 
-/** Owns the narrow counter capability required by public Forms without granting management writes. @internal */
+/**
+ * Owns the narrow counter capability required by public Forms without granting management writes.
+ *
+ * @internal
+ */
 final readonly class FormCounterWriter
 {
     public function __construct(private OwnershipBoundary $boundary, private Container $container) {}

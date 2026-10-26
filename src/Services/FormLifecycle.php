@@ -57,7 +57,7 @@ final class FormLifecycle
         $data = array_intersect_key($data, $this->mutationRules(false));
         $form = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($data, $actor) {
             $translations = is_array($data['translations'] ?? null) ? $data['translations'] : [];
-            $formData = $this->attributes($data, ['allowedOrigins', 'translations', 'translationMode', 'expectedRevision']);
+            $formData = $this->attributes($data, ['allowedOrigins', 'translations', 'translation_mode', 'expected_revision']);
             $translationRows = $this->translationPayloadMapper->rows(array_filter($translations, is_string(...), ARRAY_FILTER_USE_KEY));
             // Generate handle if not provided
             $handle = $formData['handle'] ?? null;
@@ -121,7 +121,7 @@ final class FormLifecycle
         $formId = $form instanceof Form ? $form->id : $form;
         $updated = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($formId, $data, $actor) {
             $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($formId);
-            $expectedRevision = $data['expectedRevision'] ?? null;
+            $expectedRevision = $data['expected_revision'] ?? null;
             if ($expectedRevision === null || $form->revision !== $expectedRevision) {
                 throw new FormException('The form was changed by another writer.', 409);
             }
@@ -130,7 +130,7 @@ final class FormLifecycle
                 $this->handleService->validateUniqueness($data['handle'], $form->id);
             }
             // Update form data
-            $payload = $this->attributes($data, ['translationMode', 'translations', 'expectedRevision']);
+            $payload = $this->attributes($data, ['translation_mode', 'translations', 'expected_revision']);
             $allowedOrigins = $payload['allowed_origins'] ?? null;
             unset($payload['allowed_origins']);
             $translations = is_array($data['translations'] ?? null) ? $data['translations'] : null;
@@ -288,8 +288,8 @@ final class FormLifecycle
             'translations.*.submitButtonLabel' => ['nullable', 'string', 'max:100'],
             'translations.*.successTitle' => ['nullable', 'string', 'max:255'],
             'translations.*.successMessage' => ['nullable', 'string', 'max:5000'],
-            'translationMode' => ['sometimes', Rule::enum(TranslationSyncMode::class)],
-            'expectedRevision' => [$updating ? 'required' : 'prohibited', 'integer', 'min:1'],
+            'translation_mode' => ['sometimes', Rule::enum(TranslationSyncMode::class)],
+            'expected_revision' => [$updating ? 'required' : 'prohibited', 'integer', 'min:1'],
             'resolvement' => [$presenceRule, Rule::enum(Resolvement::class)],
             'type' => [$presenceRule, Rule::enum(FormType::class)],
             'status' => ['sometimes', Rule::enum(FormStatus::class)],
@@ -330,7 +330,7 @@ final class FormLifecycle
     /** @param array<string,mixed> $data */
     private function translationMode(array $data): TranslationSyncMode
     {
-        $mode = $data['translationMode'] ?? TranslationSyncMode::Patch;
+        $mode = $data['translation_mode'] ?? TranslationSyncMode::Patch;
 
         return $mode instanceof TranslationSyncMode ? $mode : TranslationSyncMode::from(is_string($mode) ? $mode : 'patch');
     }

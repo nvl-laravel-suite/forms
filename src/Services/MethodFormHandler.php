@@ -10,6 +10,8 @@ use Nvl\Forms\Models\Form;
 
 /**
  * Action-backed custom handler adapter for form submissions.
+ *
+ * @internal
  */
 final class MethodFormHandler implements CustomFormHandler
 {

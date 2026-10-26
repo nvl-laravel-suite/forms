@@ -32,12 +32,12 @@ function formsApiMutationPayload(array $overrides = []): array
 test('canonical forms api routes cover crud and duplication', function (): void {
     Form::factory()->create(['name' => 'Index Form One', 'handle' => 'index-form-one']);
     Form::factory()->create(['name' => 'Index Form Two', 'handle' => 'index-form-two']);
-    $this->getJson(route('nvl.forms.management.index', ['per_page' => 1]))->assertOk()->assertJsonPath('data.forms.meta.perPage', 1)->assertJsonCount(1, 'data.forms.items')->assertJsonMissingPath('data.forms.items.0.restrict_public_access');
+    $this->getJson(route('nvl.forms.management.index', ['per_page' => 1]))->assertOk()->assertJsonPath('data.forms.meta.per_page', 1)->assertJsonCount(1, 'data.forms.items')->assertJsonMissingPath('data.forms.items.0.restrict_public_access');
     $createResponse = $this->postJson(route('nvl.forms.management.store'), formsApiMutationPayload(['translations' => ['en' => ['name' => 'Created API Form']], 'handle' => 'created-api-form']));
     $createResponse->assertCreated()->assertJsonPath('data.name', 'Created API Form')->assertJsonPath('data.handle', 'created-api-form')->assertJsonMissingPath('data.restrict_public_access');
     $createdId = (string) $createResponse->json('data.id');
     $this->getJson(route('nvl.forms.management.show', $createdId))->assertOk()->assertJsonPath('data.form.id', $createdId)->assertJsonPath('data.form.name', 'Created API Form')->assertJsonMissingPath('data.form.restrict_public_access')->assertJsonStructure(['data' => ['form', 'states' => ['status', 'security', 'links', 'stats']]]);
-    $this->putJson(route('nvl.forms.management.update', $createdId), formsApiMutationPayload(['translations' => ['en' => ['name' => 'Updated API Form']], 'handle' => 'updated-api-form', 'allowedOrigins' => ['updated.example.com'], 'expectedRevision' => 1]))->assertOk()->assertJsonPath('data.name', 'Updated API Form')->assertJsonPath('data.handle', 'updated-api-form')->assertJsonPath('data.allowedOrigins.0', 'updated.example.com');
+    $this->putJson(route('nvl.forms.management.update', $createdId), formsApiMutationPayload(['translations' => ['en' => ['name' => 'Updated API Form']], 'handle' => 'updated-api-form', 'allowedOrigins' => ['updated.example.com'], 'expected_revision' => 1]))->assertOk()->assertJsonPath('data.name', 'Updated API Form')->assertJsonPath('data.handle', 'updated-api-form')->assertJsonPath('data.allowedOrigins.0', 'updated.example.com');
     $duplicateResponse = $this->postJson(route('nvl.forms.management.duplicate', $createdId), ['name' => 'Duplicated API Form']);
     $duplicateResponse->assertCreated()->assertJsonPath('data.name', 'Duplicated API Form');
     expect((string) $duplicateResponse->json('data.id'))->not->toBe($createdId);

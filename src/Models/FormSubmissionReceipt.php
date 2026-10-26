@@ -41,7 +41,11 @@ final class FormSubmissionReceipt extends Model implements Ownable
 
     private bool $bookkeepingWarning = false;
 
-    /** Record a non-durable diagnostic without changing the completed handler result. @internal */
+    /**
+     * Record a non-durable diagnostic without changing the completed handler result.
+     *
+     * @internal
+     */
     public function withBookkeepingWarning(bool $warning): self
     {
         $this->bookkeepingWarning = $warning;

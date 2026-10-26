@@ -8,6 +8,9 @@ use Closure;
 use Nvl\Forms\Contracts\CustomFormHandler;
 use Nvl\Forms\Models\Form;
 
+/**
+ * @internal
+ */
 final class CallbackFormHandler implements CustomFormHandler
 {
     /** @var Closure(Form,array<string,mixed>,array<string,mixed>):array<string,mixed> */

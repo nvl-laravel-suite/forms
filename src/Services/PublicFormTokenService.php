@@ -20,6 +20,8 @@ use Throwable;
  * Issues and validates short-lived tokens for public embed endpoints (e.g. suggestions).
  *
  * Token format: base64url(json_payload) . '.' . base64url(hmac_sha256(payload, app_key))
+ *
+ * @api
  */
 final class PublicFormTokenService
 {

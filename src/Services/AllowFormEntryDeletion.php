@@ -10,6 +10,8 @@ use Nvl\Forms\Models\FormEntry;
 
 /**
  * Default deletion policy; applications may bind stricter legal-hold rules.
+ *
+ * @internal
  */
 final class AllowFormEntryDeletion implements FormEntryDeletionPolicy
 {

@@ -6,7 +6,7 @@ namespace Nvl\Forms\Exceptions;
 
 /**
  * @api
-
+ *
  * Thrown when a form submission is rejected by spam protection, honeypot, or other security rules.
  */
 final class FormSubmissionRejectionException extends FormException

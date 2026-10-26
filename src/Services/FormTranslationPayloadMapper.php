@@ -8,6 +8,8 @@ use Nvl\Support\Contracts\LocaleCatalog;
 
 /**
  * Maps localized form payloads into dedicated translation rows.
+ *
+ * @internal
  */
 final readonly class FormTranslationPayloadMapper
 {

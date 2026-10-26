@@ -16,13 +16,13 @@ test('native form lifecycle requires explicit authority and preserves revisions 
     $actor = TestFormsUser::factory()->create();
     $form = app(FormLifecycle::class)->create($input, $actor);
     expect($form->displayName())->toBe('Native form')->and($form->localizedContent()['sections'])->toBe([['title' => 'Details']]);
-    $updated = app(FormLifecycle::class)->update($form, ['handle' => 'native-updated', 'expectedRevision' => 1], $actor);
+    $updated = app(FormLifecycle::class)->update($form, ['handle' => 'native-updated', 'expected_revision' => 1], $actor);
     expect($updated->revision)->toBe(2);
 });
 
 test('native submissions persist once and reject untrusted protection claims', function (): void {
     $form = Form::factory()->create(['require_csrf' => false, 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
-    $protection = ['origin' => 'https://example.com', 'ipAddress' => '192.0.2.1', 'idempotencyKey' => 'native-retry'];
+    $protection = ['origin' => 'https://example.com', 'ipAddress' => '192.0.2.1', 'idempotency_key' => 'native-retry'];
     $service = app(FormSubmissions::class);
     $entry = $service->submit($form, ['email' => 'native@example.com', 'body' => 'A normal enquiry.'], $protection);
     expect($entry)->toBeInstanceOf(FormEntry::class);

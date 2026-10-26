@@ -26,10 +26,10 @@ test('form copy and arbitrary content resolve through deterministic field fallba
 });
 test('form translation mutations patch by default and replace only omitted non-base locales', function (): void {
     $form = app(FormLifecycle::class)->create(formNativeInput(MutateFormPayload::from(['resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'translations' => ['en' => ['name' => 'Base form'], 'bg' => ['name' => 'Базова форма'], 'fr' => ['name' => 'Formulaire de base']]])), actor: formActor());
-    app(FormLifecycle::class)->update($form, formNativeInput(MutateFormPayload::from(['resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'translations' => ['bg' => ['name' => 'Променена форма']], 'expectedRevision' => $form->revision])), actor: formActor());
+    app(FormLifecycle::class)->update($form, formNativeInput(MutateFormPayload::from(['resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'translations' => ['bg' => ['name' => 'Променена форма']], 'expected_revision' => $form->revision])), actor: formActor());
     expect($form->fresh()->getAvailableLocales())->toEqualCanonicalizing(['en', 'bg', 'fr']);
     $form->refresh();
-    app(FormLifecycle::class)->update($form, formNativeInput(MutateFormPayload::from(['resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'translations' => ['bg' => ['name' => 'Променена форма']], 'translationMode' => TranslationSyncMode::Replace->value, 'expectedRevision' => $form->revision])), actor: formActor());
+    app(FormLifecycle::class)->update($form, formNativeInput(MutateFormPayload::from(['resolvement' => Resolvement::ENTRIES->value, 'type' => FormType::LANDING_PAGE->value, 'translations' => ['bg' => ['name' => 'Променена форма']], 'translation_mode' => TranslationSyncMode::Replace->value, 'expected_revision' => $form->revision])), actor: formActor());
     expect($form->fresh()->getAvailableLocales())->toEqualCanonicalizing(['bg']);
 });
 test('form factory stores localized content only in dedicated rows', function (): void {

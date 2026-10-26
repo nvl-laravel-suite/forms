@@ -18,6 +18,8 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
  * only scored when a trusted server-issued load timestamp is provided.
  *
  * All scoring weights and thresholds are driven by the `forms.security.spam_protection` config.
+ *
+ * @internal
  */
 final class FormSpamDetectionService implements FormSpamDetector
 {

@@ -42,7 +42,9 @@ final class FormModelRegistry
         );
     }
 
-    /** Resolve and freeze the concrete Form class before resource compilation.
+    /**
+     * Resolve and freeze the concrete Form class before resource compilation.
+     *
      * @internal
      *
      * @return class-string<Form>
@@ -60,7 +62,9 @@ final class FormModelRegistry
         return $this->registration->modelClass();
     }
 
-    /** Resolve the immutable model from native framework entry points.
+    /**
+     * Resolve the immutable model from native framework entry points.
+     *
      * @internal
      *
      * @return class-string<Form>
@@ -70,7 +74,9 @@ final class FormModelRegistry
         return Container::getInstance()->make(self::class)->formClass();
     }
 
-    /** Construct the configured root.
+    /**
+     * Construct the configured root.
+     *
      * @internal
      *
      * @param  array<string,mixed>  $attributes
@@ -82,7 +88,9 @@ final class FormModelRegistry
         return new $class($attributes);
     }
 
-    /** Persist a package-authored attribute map under the exact source assignment.
+    /**
+     * Persist a package-authored attribute map under the exact source assignment.
+     *
      * @internal
      *
      * @param  array<string, mixed>  $attributes
@@ -97,7 +105,11 @@ final class FormModelRegistry
         });
     }
 
-    /** Persist a package-authored replica under a new exact primary assignment. @internal */
+    /**
+     * Persist a package-authored replica under a new exact primary assignment.
+     *
+     * @internal
+     */
     public static function persist(Form $model): Form
     {
         return app(OwnershipWriter::class)->create(self::modelClass(), static function (array $attributes) use ($model): Form {
@@ -121,7 +133,9 @@ final class FormModelRegistry
         return array_values(array_unique([...$columns, 'owner_scope_key', ...($definition->foreignKey === null ? [] : [$definition->foreignKey])]));
     }
 
-    /** Create the exact configured query.
+    /**
+     * Create the exact configured query.
+     *
      * @internal
      *
      * @return Builder<Form>

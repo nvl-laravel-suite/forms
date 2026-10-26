@@ -9,6 +9,8 @@ use Nvl\Forms\Support\AllowedOriginExpression;
 
 /**
  * Matches incoming origin/host values against allowed-origin patterns.
+ *
+ * @internal
  */
 final class OriginMatchingService
 {

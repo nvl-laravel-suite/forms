@@ -9,7 +9,11 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
-/** Reloads a submitted entry beneath its canonical tenant-owned Form. */
+/**
+ * Reloads a submitted entry beneath its canonical tenant-owned Form.
+ *
+ * @internal
+ */
 final readonly class FormEntryLocator
 {
     /** Create the tenant-scoped locator. */

@@ -15,7 +15,11 @@ use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Support\Ownership\ValueObjects\OwnershipDefinition;
 use Nvl\Support\Ownership\ValueObjects\OwnershipResourceDefinition;
 
-/** Compiles the configured Form root and the complete inherited submission graph. @internal */
+/**
+ * Compiles the configured Form root and the complete inherited submission graph.
+ *
+ * @internal
+ */
 final readonly class FormsResourceRegistrar
 {
     public function __construct(private FormModelRegistry $models) {}

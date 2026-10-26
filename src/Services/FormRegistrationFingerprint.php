@@ -9,6 +9,8 @@ use Nvl\Forms\Models\Form;
 
 /**
  * Derives a non-reversible identity used to enforce one registration per client.
+ *
+ * @internal
  */
 final class FormRegistrationFingerprint
 {

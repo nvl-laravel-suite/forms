@@ -14,6 +14,9 @@ use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Support\FormHandlerRegistry;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
+/**
+ * @api
+ */
 final readonly class CustomFormRegistry
 {
     /**

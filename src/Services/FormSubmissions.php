@@ -39,7 +39,7 @@ use Throwable;
  *
  * @phpstan-type SubmissionFields array{subject?:?string,firstName?:?string,lastName?:?string,email?:?string,phone?:?string,address?:?string,body?:?string,submissionData?:array<string,mixed>|null}
  * @phpstan-type EntryFields array{formId:string,submittedFrom:string,subject?:?string,firstName?:?string,lastName?:?string,email?:?string,phone?:?string,address?:?string,body?:?string,submissionData?:array<string,mixed>|null}
- * @phpstan-type Protection array{origin:string,originHost:string,requestHost:string,ipAddress:string,userAgent:?string,sessionId:?string,session:?Session,csrfToken:?string,publicToken:?string,idempotencyKey:?string,publicSite:string,actor:?Authenticatable,locale:string}
+ * @phpstan-type Protection array{origin:string,originHost:string,requestHost:string,ipAddress:string,userAgent:?string,sessionId:?string,session:?Session,csrfToken:?string,publicToken:?string,idempotency_key:?string,publicSite:string,actor:?Authenticatable,locale:string}
  * @phpstan-type Guard array{submittedFrom:string,ipAddress:string,userAgent:?string,sessionId:?string,handlerPayload:array<string,mixed>}
  *
  * @api
@@ -96,7 +96,7 @@ final class FormSubmissions
             throw new FormSubmissionRejectionException(message: (string) trans('nvl-forms::forms/messages.api.error'), statusCode: 400);
         }
         $guard = $this->guardCustom($form, $data, $context);
-        $claim = $this->customReceipts->claim($form, $guard['handlerPayload'], $guard['sessionId'], $context['idempotencyKey']);
+        $claim = $this->customReceipts->claim($form, $guard['handlerPayload'], $guard['sessionId'], $context['idempotency_key']);
         if ($claim->isReplay === true) {
             return $claim->receipt;
         }
@@ -128,12 +128,12 @@ final class FormSubmissions
     private function executeEntrySubmission(Form $form, array $data, array $context): FormEntry
     {
         $entryData = $this->prepare($form, $data, $context);
-        $entry = $this->createEntry($entryData, $context['ipAddress'], $context['userAgent'], $context['sessionId'], $context['actor'], $context['idempotencyKey'], $this->tokenService->issuedAt($context['publicToken'], $form, $context['publicSite']));
+        $entry = $this->createEntry($entryData, $context['ipAddress'], $context['userAgent'], $context['sessionId'], $context['actor'], $context['idempotency_key'], $this->tokenService->issuedAt($context['publicToken'], $form, $context['publicSite']));
         if (! $entry->isIdempotentReplay()) {
             if (FormsOwnership::declared()) {
                 $site = OwnerSiteContext::require();
                 $generations = $this->container->make(OwnershipContext::class)->snapshot()->generations;
-                $callbackContext = ['owner' => $site->owner, 'site' => $site->site, 'canonicalOrigin' => $site->canonicalOrigin, 'origin' => $context['origin'], 'locale' => $context['locale'], 'correlationId' => $context['idempotencyKey']];
+                $callbackContext = ['owner' => $site->owner, 'site' => $site->site, 'canonicalOrigin' => $site->canonicalOrigin, 'origin' => $context['origin'], 'locale' => $context['locale'], 'correlationId' => $context['idempotency_key']];
                 $formId = $form->identifier();
                 $entryId = $entry->identifier();
                 $form->getConnection()->afterCommit(function () use ($site, $generations, $callbackContext, $formId, $entryId): void {
@@ -630,7 +630,7 @@ final class FormSubmissions
      */
     private function protection(array $protection): array
     {
-        $allowed = ['origin', 'ipAddress', 'userAgent', 'sessionId', 'session', 'csrfToken', 'publicToken', 'idempotencyKey', 'publicSite', 'actor', 'locale'];
+        $allowed = ['origin', 'ipAddress', 'userAgent', 'sessionId', 'session', 'csrfToken', 'publicToken', 'idempotency_key', 'publicSite', 'actor', 'locale'];
         if (array_diff(array_keys($protection), $allowed) !== []) {
             throw ValidationException::withMessages(['protection' => 'Unknown submission protection metadata.']);
         }
@@ -641,7 +641,7 @@ final class FormSubmissions
             'sessionId' => ['nullable', 'string', 'max:100'],
             'csrfToken' => ['nullable', 'string', 'max:2048'],
             'publicToken' => ['nullable', 'string', 'max:8192'],
-            'idempotencyKey' => ['nullable', 'string', 'min:1', 'max:128'],
+            'idempotency_key' => ['nullable', 'string', 'min:1', 'max:128'],
             'publicSite' => ['sometimes', 'string', 'min:1', 'max:100'],
             'locale' => ['sometimes', 'string', 'max:32'],
         ])->validate();
@@ -676,7 +676,7 @@ final class FormSubmissions
             'ipAddress' => $validated['ipAddress'], 'userAgent' => $validated['userAgent'] ?? null,
             'sessionId' => $session?->getId() ?? ($validated['sessionId'] ?? null), 'session' => $session,
             'csrfToken' => $validated['csrfToken'] ?? null, 'publicToken' => $validated['publicToken'] ?? null,
-            'idempotencyKey' => $validated['idempotencyKey'] ?? null, 'publicSite' => $site !== null ? $site->site : ($validated['publicSite'] ?? 'default'),
+            'idempotency_key' => $validated['idempotency_key'] ?? null, 'publicSite' => $site !== null ? $site->site : ($validated['publicSite'] ?? 'default'),
             'actor' => $actor, 'locale' => $validated['locale'] ?? app(ContentLocale::class)->get(),
         ];
     }

@@ -9,6 +9,8 @@ use Nvl\Forms\Models\Form;
 
 /**
  * Records Forms-owned bookkeeping for spam-classified or blocked submissions.
+ *
+ * @internal
  */
 final readonly class FormSpamRejectionRecorder
 {

@@ -14,6 +14,8 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
  *
  * Provides slug-based handle generation from form names with automatic
  * counter-suffixed deduplication for uniqueness.
+ *
+ * @internal
  */
 final class FormHandleService
 {

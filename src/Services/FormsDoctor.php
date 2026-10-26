@@ -17,6 +17,8 @@ use Throwable;
 
 /**
  * Performs read-only production-readiness diagnostics for Forms.
+ *
+ * @internal
  */
 final readonly class FormsDoctor
 {

@@ -68,10 +68,10 @@ test('submission context normalizes every supported transport source', function 
     $request->setUserResolver(static fn (): GenericUser => new GenericUser(['id' => 1]));
     $context = FormSubmissionContext::fromRequest($request, app(RequestOriginResolver::class));
     expect($context->ipAddress)->toBe('192.0.2.30')->and($context->userAgent)->toBe('Consumer/2.0')->and($context->sessionId)->toBe($session->getId())->and($context->sessionToken)->toBe($session->token())->and($context->csrfToken)->toBe('csrf-header')->and($context->publicToken)->toBe('public-header')->and($context->idempotencyKey)->toBe('retry-1')->and($context->originHost)->toBe('embed.example.test:8443')->and($context->originHeader)->toBe('https://embed.example.test:8443')->and($context->requestHost)->toBe('forms.test')->and($context->actor)->toBeInstanceOf(GenericUser::class)->and($context->resolvedIpAddress())->toBe('192.0.2.30')->and($context->httpRequest())->toBe($request);
-    $xsrf = Request::create('/', 'POST', ['public_token' => 'body-public', 'idempotencyKey' => 'body-retry'], server: ['HTTP_X_XSRF_TOKEN' => 'encoded%20csrf']);
+    $xsrf = Request::create('/', 'POST', ['public_token' => 'body-public', 'idempotency_key' => 'body-retry'], server: ['HTTP_X_XSRF_TOKEN' => 'encoded%20csrf']);
     $xsrfContext = FormSubmissionContext::fromRequest($xsrf, app(RequestOriginResolver::class));
     expect($xsrfContext->csrfToken)->toBe('encoded csrf')->and($xsrfContext->publicToken)->toBe('body-public')->and($xsrfContext->idempotencyKey)->toBe('body-retry');
-    $body = Request::create('/', 'POST', ['_token' => ' body-csrf ', 'publicToken' => ' body-token ', 'idempotencyKey' => str_repeat('x', 129)]);
+    $body = Request::create('/', 'POST', ['_token' => ' body-csrf ', 'publicToken' => ' body-token ', 'idempotency_key' => str_repeat('x', 129)]);
     $bodyContext = FormSubmissionContext::fromRequest($body, app(RequestOriginResolver::class));
     expect($bodyContext->csrfToken)->toBe('body-csrf')->and($bodyContext->publicToken)->toBe('body-token')->and($bodyContext->idempotencyKey)->toBeNull();
     $fallback = new FormSubmissionContext(ipAddress: '', request: null);

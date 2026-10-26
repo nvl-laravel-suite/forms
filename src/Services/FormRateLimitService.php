@@ -27,6 +27,8 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
  *
  * @property FormAnalytics $recordFormAnalytic
  * @property FormRateLimitStatisticsService $statistics
+ *
+ * @api
  */
 final class FormRateLimitService implements FormRateLimiter
 {

@@ -34,7 +34,11 @@ final class EntryCallbackRegistry
         $this->ownershipCallbacks[$handle][] = $callbackClass;
     }
 
-    /** Resolve callbacks only inside the freshly admitted committed owner/site context. @internal */
+    /**
+     * Resolve callbacks only inside the freshly admitted committed owner/site context.
+     *
+     * @internal
+     */
     /** @param array<string,mixed> $context */
     public function dispatchOwnership(Form $form, FormEntry $entry, array $context): void
     {
@@ -143,7 +147,11 @@ final class EntryCallbackRegistry
         $this->ownershipCallbacks = [];
     }
 
-    /** Report every callback registration lacking native immutable ownership facts. @internal */
+    /**
+     * Report every callback registration lacking native immutable ownership facts.
+     *
+     * @internal
+     */
     public function hasNonOwnershipCallbacks(): bool
     {
         return $this->callbacks !== [];

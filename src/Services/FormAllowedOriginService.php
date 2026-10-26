@@ -16,6 +16,8 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
  * Provides a single source of truth for origin string normalization (trim, filter,
  * deduplicate by lowercase) and the two write operations: batch create (for new forms)
  * and sync (upsert + deactivate removed for existing forms).
+ *
+ * @internal
  */
 final class FormAllowedOriginService
 {

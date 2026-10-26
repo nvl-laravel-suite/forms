@@ -9,6 +9,8 @@ use Nvl\Forms\Models\Form;
 
 /**
  * Resolves form-level CORS policy with an optional matching-origin override.
+ *
+ * @internal
  */
 final class FormCorsPolicyResolver
 {

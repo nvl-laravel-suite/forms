@@ -120,7 +120,7 @@ final readonly class FormSubmissionContext
     {
         $value = $request->header('Idempotency-Key');
         if (! is_string($value)) {
-            $value = $request->input('idempotencyKey');
+            $value = $request->input('idempotency_key');
         }
         if (! is_string($value)) {
             return null;
@@ -146,7 +146,7 @@ final readonly class FormSubmissionContext
         return [
             'origin' => $origin, 'ipAddress' => $this->resolvedIpAddress(), 'userAgent' => $this->userAgent,
             'sessionId' => $this->sessionId, 'session' => $session, 'csrfToken' => $this->csrfToken,
-            'publicToken' => $this->publicToken, 'idempotencyKey' => $this->idempotencyKey,
+            'publicToken' => $this->publicToken, 'idempotency_key' => $this->idempotencyKey,
             'publicSite' => $this->publicSite ?? 'default', 'actor' => $this->actor,
             'locale' => $this->request?->getLocale() ?? 'en',
         ];

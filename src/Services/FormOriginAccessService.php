@@ -10,6 +10,8 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Resolves host/origin access checks for restricted public forms.
+ *
+ * @api
  */
 final class FormOriginAccessService
 {

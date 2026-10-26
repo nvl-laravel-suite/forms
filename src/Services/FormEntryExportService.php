@@ -15,6 +15,8 @@ use Nvl\Forms\Models\FormEntry;
  *
  * Provides the core export logic extracted from the action layer so that
  * ExportFormEntriesAction remains a thin orchestrator.
+ *
+ * @api
  */
 final class FormEntryExportService
 {
