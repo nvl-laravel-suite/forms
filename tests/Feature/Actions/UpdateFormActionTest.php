@@ -9,6 +9,7 @@ use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormLifecycle;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\MutateFormPayload;
+use Nvl\Translatable\Enums\TranslationSyncMode;
 
 test('update form action updates persisted attributes', function (): void {
     Event::fake([FormChanged::class]);
@@ -42,4 +43,49 @@ test('update form action syncs allowed origins by deactivating removed and creat
     expect($active)->toEqual(['*.allowed.com', 'example.com']);
     $existing->refresh();
     expect($existing->is_active)->toBeFalse();
+});
+
+test('native form translation patches preserve omitted copy and content', function (): void {
+    $service = app(FormLifecycle::class);
+    $form = $service->create([
+        'translations' => ['en' => ['name' => 'Preserved name', 'description' => 'Clear me', 'fields' => [['key' => 'email']]]],
+        'resolvement' => Resolvement::ENTRIES->value,
+        'type' => FormType::IFRAME->value,
+    ], formActor());
+
+    $updated = $service->update($form, [
+        'expectedRevision' => $form->revision,
+        'translations' => ['en' => ['description' => null]],
+    ], formActor());
+
+    $translation = $updated->translations->firstWhere('locale', 'en');
+    expect($translation->name)->toBe('Preserved name')
+        ->and($translation->description)->toBeNull()
+        ->and($translation->content['fields'])->toBe([['key' => 'email']]);
+});
+
+test('native form updates clear explicitly nullable origin lists', function (): void {
+    $form = Form::factory()->create();
+    $origin = AllowedOrigin::factory()->create(['form_id' => $form->id, 'origin' => 'clear.example.com', 'is_active' => true]);
+
+    app(FormLifecycle::class)->update($form, ['expectedRevision' => $form->revision, 'allowedOrigins' => null], formActor());
+
+    expect($origin->fresh()->is_active)->toBeFalse();
+});
+
+test('native form updates honor a translation mode enum', function (): void {
+    $service = app(FormLifecycle::class);
+    $form = $service->create([
+        'translations' => ['en' => ['name' => 'English'], 'bg' => ['name' => 'Bulgarian']],
+        'resolvement' => Resolvement::ENTRIES->value,
+        'type' => FormType::IFRAME->value,
+    ], formActor());
+
+    $updated = $service->update($form, [
+        'expectedRevision' => $form->revision,
+        'translationMode' => TranslationSyncMode::Replace,
+        'translations' => ['en' => ['name' => 'Replacement']],
+    ], formActor());
+
+    expect($updated->translations->pluck('locale')->all())->toBe(['en']);
 });

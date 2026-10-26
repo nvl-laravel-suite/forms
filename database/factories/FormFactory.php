@@ -24,7 +24,9 @@ use Nvl\Support\Ownership\Contracts\OwnershipWriter;
  */
 final class FormFactory extends Factory
 {
-    /** Persist native factory roots under the same actual source assignment as Actions.
+    /**
+     * Persist native factory roots under the same actual source assignment as services.
+     *
      * @param  Collection<int,Form>  $results
      */
     protected function store(Collection $results): void
@@ -157,7 +159,8 @@ final class FormFactory extends Factory
         ];
     }
 
-    /** Omit automatically generated copy when a translation factory owns it.
+    /**
+     * Omit automatically generated copy when a translation factory owns it.
      *
      * @api
      */

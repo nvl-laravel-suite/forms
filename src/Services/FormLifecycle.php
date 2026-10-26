@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Nvl\Forms\Enums\CorsPolicy;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
@@ -51,6 +52,7 @@ final class FormLifecycle
     public function create(array $data, ?Authenticatable $actor = null): Form
     {
         FormManagement::authorize($actor);
+        $this->validateMutationKeys($data);
         Validator::make($data, $this->mutationRules(false))->validate();
         $data = array_intersect_key($data, $this->mutationRules(false));
         $form = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($data, $actor) {
@@ -68,7 +70,7 @@ final class FormLifecycle
             if (is_array($data['allowedOrigins'] ?? null)) {
                 $this->originService->createOrigins($form, array_values($data['allowedOrigins']));
             }
-            $this->syncTranslations($form, $translationRows, TranslationSyncMode::from(is_string($data['translationMode'] ?? null) ? $data['translationMode'] : 'patch'));
+            $this->syncTranslations($form, $translationRows, $this->translationMode($data));
             $freshForm = $form->fresh();
             if ($freshForm === null) {
                 throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.refresh_failed', ['item' => (string) trans('nvl-forms::forms/general.entities.singular')]));
@@ -113,6 +115,7 @@ final class FormLifecycle
     public function update(Form|string $form, array $data, ?Authenticatable $actor = null): Form
     {
         FormManagement::authorize($actor);
+        $this->validateMutationKeys($data);
         Validator::make($data, $this->mutationRules(true))->validate();
         $data = array_intersect_key($data, $this->mutationRules(true));
         $formId = $form instanceof Form ? $form->id : $form;
@@ -134,12 +137,12 @@ final class FormLifecycle
             $payload['revision'] = $form->revision + 1;
             $form->fill($payload);
             $form->save();
-            if (is_array($allowedOrigins)) {
-                $this->originService->syncOrigins($form, array_values($allowedOrigins));
+            if (array_key_exists('allowedOrigins', $data)) {
+                $this->originService->syncOrigins($form, is_array($allowedOrigins) ? array_values($allowedOrigins) : []);
             }
             $translationRows = $this->translationPayloadMapper->rows($translations === null ? null : array_filter($translations, is_string(...), ARRAY_FILTER_USE_KEY));
-            if ($translationRows !== [] || TranslationSyncMode::from(is_string($data['translationMode'] ?? null) ? $data['translationMode'] : 'patch')->value === 'replace') {
-                $this->syncTranslations($form, $translationRows, TranslationSyncMode::from(is_string($data['translationMode'] ?? null) ? $data['translationMode'] : 'patch'));
+            if ($translationRows !== [] || $this->translationMode($data)->value === 'replace') {
+                $this->syncTranslations($form, $translationRows, $this->translationMode($data));
             }
             $form->refresh();
             $form->loadMissing(['allowedOrigins', 'translations']);
@@ -324,6 +327,22 @@ final class FormLifecycle
         ];
     }
 
+    /** @param array<string,mixed> $data */
+    private function translationMode(array $data): TranslationSyncMode
+    {
+        $mode = $data['translationMode'] ?? TranslationSyncMode::Patch;
+
+        return $mode instanceof TranslationSyncMode ? $mode : TranslationSyncMode::from(is_string($mode) ? $mode : 'patch');
+    }
+
+    /** @param array<string, mixed> $data */
+    private function validateMutationKeys(array $data): void
+    {
+        if (array_diff(array_keys($data), array_filter(array_keys($this->mutationRules(false)), static fn (string $key): bool => ! str_contains($key, '.'))) !== []) {
+            throw ValidationException::withMessages(['attributes' => ['Unknown or protected form attributes are not accepted.']]);
+        }
+    }
+
     /**
      * @param  array<string,mixed>  $data
      * @param  list<string>  $except
@@ -344,7 +363,17 @@ final class FormLifecycle
     {
         $definition = $form->translationDefinition();
         app(TranslationPayloadValidator::class)->validate($definition, $rows);
+        $form->loadMissing('translations');
         foreach ($rows as $locale => $attributes) {
+            if ($mode === TranslationSyncMode::Patch) {
+                $existing = $form->translations->firstWhere('locale', $locale);
+                if ($existing instanceof FormTranslation) {
+                    $content = $attributes['content'] ?? [];
+                    if (is_array($content)) {
+                        $attributes['content'] = array_replace($existing->content ?? [], $content);
+                    }
+                }
+            }
             $this->translationWriter->upsert($form, $definition, $locale, $attributes);
         }
         if ($mode === TranslationSyncMode::Replace) {

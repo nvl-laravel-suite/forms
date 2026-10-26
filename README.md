@@ -6,7 +6,7 @@ Forms provides native Laravel services for localized definitions, protected subm
 
 Resolve these concrete services through Laravel's container:
 
-- `FormLifecycle::create($attributes, $actor)`, `update($form, $attributes, $actor)`, `duplicate($form, $newName, $actor)` and `delete($form, $actor)` return models or deletion status. Updates require `expectedRevision`; `translationMode` is `patch` or `replace`. Translations retain arbitrary nested content by locale; duplicates reset counters.
+- `FormLifecycle::create($attributes, $actor)`, `update($form, $attributes, $actor)`, `duplicate($form, $newName, $actor)` and `delete($form, $actor)` return models or deletion status. Updates require `expectedRevision`; `translationMode` is `patch` or `replace`. Translations retain arbitrary nested content by locale; patch updates preserve omitted copy and content keys, and explicit null clears nullable copy. Unknown and protected mutation keys are rejected. Duplicates reset counters.
 - `FormReader::get($form)` resolves public forms; `schema($identifier)` returns native arrays. `details`, `paginate`, `search`, `analytics` and `summary` accept explicit management actors. `options` and `suggestions` return native collections or arrays.
 - `FormSubmissions::submit(Form|string $formIdentifier, array $fields, array $protection): FormEntry|FormSubmissionReceipt` performs the complete submission workflow. Call this entry point for public submissions.
 - `FormEntries` owns `get`, `paginate`, `update`, `delete`, `redact`, `anonymize`, `flag`, `markSpam`, `markLegitimate` and `export`. Supply the authorized actor; export returns its generated file path for consumer delivery.

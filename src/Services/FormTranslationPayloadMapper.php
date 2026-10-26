@@ -48,23 +48,22 @@ final readonly class FormTranslationPayloadMapper
      */
     private function translationAttributes(array $content): array
     {
-        return [
-            'name' => $this->stringValue($content, ['name']),
-            'description' => $this->stringValue($content, ['description']),
-            'submit_button_label' => $this->stringValue(
-                $content,
-                ['submitButtonLabel'],
-            ),
-            'success_title' => $this->stringValue(
-                $content,
-                ['successTitle'],
-            ),
-            'success_message' => $this->stringValue(
-                $content,
-                ['successMessage'],
-            ),
-            'content' => $content,
+        $attributes = ['content' => $content];
+        $copyFields = [
+            'name' => 'name',
+            'description' => 'description',
+            'submitButtonLabel' => 'submit_button_label',
+            'successTitle' => 'success_title',
+            'successMessage' => 'success_message',
         ];
+
+        foreach ($copyFields as $input => $column) {
+            if (array_key_exists($input, $content)) {
+                $attributes[$column] = $this->stringValue($content, [$input]);
+            }
+        }
+
+        return $attributes;
     }
 
     /**
