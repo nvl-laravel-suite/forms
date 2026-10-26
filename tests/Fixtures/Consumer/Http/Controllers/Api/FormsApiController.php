@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
-use Nvl\Data\Data\PaginatedCollection;
 use Nvl\Forms\Enums\FormResponseCode;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
@@ -22,6 +21,7 @@ use Nvl\Forms\Tests\Fixtures\Consumer\Data\FormSuggestion;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\FormSuggestions;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\DuplicateFormData;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\MutateFormPayload;
+use Nvl\Forms\Tests\Fixtures\Consumer\Data\PaginatedCollection;
 use Nvl\Forms\Tests\Fixtures\Consumer\Presentation\BuildFormShowPayloadAction;
 use Symfony\Component\HttpFoundation\Response;
 

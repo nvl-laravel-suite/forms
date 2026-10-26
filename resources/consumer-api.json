@@ -7,43 +7,6 @@
         "Nvl\\Forms\\Database\\Seeders\\": "database/seeders"
     },
     "symbols": {
-        "Nvl\\Forms\\Builders\\FormAnalyticBuilder": {
-            "kind": "class",
-            "file": "src/Builders/FormAnalyticBuilder.php",
-            "methods": [
-                "views",
-                "submissions",
-                "spamBlocked",
-                "today",
-                "thisWeek",
-                "thisMonth"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Builders\\FormEntryBuilder": {
-            "kind": "class",
-            "file": "src/Builders/FormEntryBuilder.php",
-            "methods": [
-                "withEmail",
-                "fromDomain",
-                "recent",
-                "legitimate",
-                "spam",
-                "fromIp"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Console\\Commands\\FormsDoctorCommand": {
-            "kind": "class",
-            "file": "src/Console/Commands/FormsDoctorCommand.php",
-            "methods": [
-                "handle"
-            ],
-            "properties": [],
-            "constants": []
-        },
         "Nvl\\Forms\\Contracts\\CustomFormHandler": {
             "kind": "interface",
             "file": "src/Contracts/CustomFormHandler.php",
@@ -93,13 +56,13 @@
             "kind": "interface",
             "file": "src/Contracts/FormRateLimiter.php",
             "methods": [
-                "isRateLimited",
-                "consumeSubmissionAttempt",
-                "recordSubmissionAttempt",
                 "blockIpAddress",
-                "unblockIpAddress",
-                "getRateLimitStatus",
                 "cleanupExpiredRecords",
+                "consumeSubmissionAttempt",
+                "getRateLimitStatus",
+                "isRateLimited",
+                "recordSubmissionAttempt",
+                "unblockIpAddress",
                 "whitelistIpAddress"
             ],
             "properties": [],
@@ -119,8 +82,8 @@
             "kind": "interface",
             "file": "src/Contracts/FormSpamDetector.php",
             "methods": [
-                "checkHoneypot",
                 "calculateSpamScore",
+                "checkHoneypot",
                 "shouldBlockSubmission",
                 "shouldFlagSubmission"
             ],
@@ -136,103 +99,189 @@
             "properties": [],
             "constants": []
         },
-        "Nvl\\Forms\\Definitions\\Tables\\FormsTables": {
+        "Nvl\\Forms\\Database\\Factories\\AllowedOriginFactory": {
             "kind": "class",
-            "file": "src/Definitions/Tables/FormsTables.php",
+            "file": "database/factories/AllowedOriginFactory.php",
             "methods": [
-                "get"
+                "definition",
+                "forForm"
             ],
             "properties": [],
-            "constants": [
-                "Forms",
-                "I18n",
-                "Entries",
-                "SubmissionReceipts",
-                "AllowedOrigins",
-                "Analytics",
-                "RateLimits",
-                "FORMS",
-                "FORM_I18N",
-                "FORM_ENTRIES",
-                "FORM_SUBMISSION_RECEIPTS",
-                "ALLOWED_ORIGINS",
-                "FORM_ANALYTICS",
-                "FORM_RATE_LIMITS"
-            ]
+            "constants": []
+        },
+        "Nvl\\Forms\\Database\\Factories\\FormAnalyticFactory": {
+            "kind": "class",
+            "file": "database/factories/FormAnalyticFactory.php",
+            "methods": [
+                "definition",
+                "forForm"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Database\\Factories\\FormEntryFactory": {
+            "kind": "class",
+            "file": "database/factories/FormEntryFactory.php",
+            "methods": [
+                "definition",
+                "forForm"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Database\\Factories\\FormFactory": {
+            "kind": "class",
+            "file": "database/factories/FormFactory.php",
+            "methods": [
+                "configure",
+                "definition",
+                "modelName",
+                "withoutTranslations"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Database\\Factories\\FormRateLimitFactory": {
+            "kind": "class",
+            "file": "database/factories/FormRateLimitFactory.php",
+            "methods": [
+                "definition",
+                "forForm"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Database\\Factories\\FormSubmissionReceiptFactory": {
+            "kind": "class",
+            "file": "database/factories/FormSubmissionReceiptFactory.php",
+            "methods": [
+                "definition",
+                "forForm"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Forms\\Database\\Factories\\FormTranslationFactory": {
+            "kind": "class",
+            "file": "database/factories/FormTranslationFactory.php",
+            "methods": [
+                "definition",
+                "forForm"
+            ],
+            "properties": [],
+            "constants": []
         },
         "Nvl\\Forms\\Enums\\CorsPolicy": {
             "kind": "enum",
             "file": "src/Enums/CorsPolicy.php",
             "methods": [
-                "getLabel",
+                "cases",
                 "description",
+                "from",
                 "getDefaultSettings",
-                "supportsWildcards",
-                "options"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Enums\\FormAnalyticEventType": {
-            "kind": "enum",
-            "file": "src/Enums/FormAnalyticEventType.php",
-            "methods": [
                 "getLabel",
-                "description",
-                "isPositive",
-                "isSecurity",
-                "options"
+                "options",
+                "supportsWildcards",
+                "tryFrom"
             ],
-            "properties": [],
-            "constants": []
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Custom",
+                "Moderate",
+                "Permissive",
+                "Strict"
+            ]
         },
         "Nvl\\Forms\\Enums\\FormResponseCode": {
             "kind": "enum",
             "file": "src/Enums/FormResponseCode.php",
-            "methods": [],
-            "properties": [],
-            "constants": []
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "CreateFailed",
+                "Created",
+                "DeleteFailed",
+                "Deleted",
+                "Duplicated",
+                "OperationFailed",
+                "OwnershipDenied",
+                "SubmissionRejected",
+                "UpdateFailed",
+                "Updated"
+            ]
         },
         "Nvl\\Forms\\Enums\\FormStatus": {
             "kind": "enum",
             "file": "src/Enums/FormStatus.php",
             "methods": [
-                "getLabel",
-                "description",
-                "colorClass",
                 "canAcceptSubmissions",
                 "canBeEdited",
-                "options"
+                "cases",
+                "colorClass",
+                "description",
+                "from",
+                "getLabel",
+                "options",
+                "tryFrom"
             ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Enums\\FormSubmissionReceiptState": {
-            "kind": "enum",
-            "file": "src/Enums/FormSubmissionReceiptState.php",
-            "methods": [],
-            "properties": [],
-            "constants": []
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "ACTIVE",
+                "ARCHIVED",
+                "DRAFT",
+                "PAUSED"
+            ]
         },
         "Nvl\\Forms\\Enums\\FormType": {
             "kind": "enum",
             "file": "src/Enums/FormType.php",
             "methods": [
+                "cases",
+                "from",
                 "getLabel",
-                "options"
+                "options",
+                "tryFrom"
             ],
-            "properties": [],
-            "constants": []
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "IFRAME",
+                "LANDING_PAGE"
+            ]
         },
         "Nvl\\Forms\\Enums\\Resolvement": {
             "kind": "enum",
             "file": "src/Enums/Resolvement.php",
             "methods": [
+                "cases",
+                "from",
                 "getLabel",
-                "options"
+                "options",
+                "tryFrom"
             ],
-            "properties": [],
-            "constants": []
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "CUSTOM",
+                "ENTRIES"
+            ]
         },
         "Nvl\\Forms\\Events\\FormChanged": {
             "kind": "class",
@@ -242,7 +291,13 @@
                 "for",
                 "schemaVersion"
             ],
-            "properties": [],
+            "properties": [
+                "actorId",
+                "context",
+                "formId",
+                "operation",
+                "schemaVersion"
+            ],
             "constants": []
         },
         "Nvl\\Forms\\Events\\FormEntryChanged": {
@@ -253,20 +308,43 @@
                 "for",
                 "schemaVersion"
             ],
-            "properties": [],
+            "properties": [
+                "actorId",
+                "context",
+                "entryId",
+                "formId",
+                "operation",
+                "schemaVersion"
+            ],
             "constants": []
         },
         "Nvl\\Forms\\Exceptions\\FormException": {
             "kind": "class",
             "file": "src/Exceptions/FormException.php",
-            "methods": [],
+            "methods": [
+                "package",
+                "publicContext",
+                "responseCode",
+                "responseHeaders",
+                "suggestedStatus",
+                "translationKey",
+                "translationParameters"
+            ],
             "properties": [],
             "constants": []
         },
         "Nvl\\Forms\\Exceptions\\FormOwnershipException": {
             "kind": "class",
             "file": "src/Exceptions/FormOwnershipException.php",
-            "methods": [],
+            "methods": [
+                "package",
+                "publicContext",
+                "responseCode",
+                "responseHeaders",
+                "suggestedStatus",
+                "translationKey",
+                "translationParameters"
+            ],
             "properties": [],
             "constants": []
         },
@@ -275,8 +353,15 @@
             "file": "src/Exceptions/FormSubmissionRejectionException.php",
             "methods": [
                 "__construct",
+                "package",
+                "publicContext",
+                "responseCode",
+                "responseHeaders",
+                "retryAfterSeconds",
                 "statusCode",
-                "retryAfterSeconds"
+                "suggestedStatus",
+                "translationKey",
+                "translationParameters"
             ],
             "properties": [],
             "constants": []
@@ -285,49 +370,127 @@
             "kind": "class",
             "file": "src/Models/AllowedOrigin.php",
             "methods": [
+                "bootHasOwnership",
+                "delete",
                 "form",
-                "scopeActive",
-                "scopeRecentlyUsed",
+                "fresh",
+                "getConnectionName",
                 "getTable",
-                "getConnectionName"
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "scopeActive",
+                "scopeRecentlyUsed"
             ],
-            "properties": [],
+            "properties": [
+                "cors_settings",
+                "created_at",
+                "description",
+                "form",
+                "form_id",
+                "id",
+                "is_active",
+                "last_used_at",
+                "origin",
+                "updated_at",
+                "usage_count"
+            ],
             "constants": [
                 "OWNERSHIP_RESOURCE"
             ]
-        },
-        "Nvl\\Forms\\Models\\Concerns\\HasFormOwnership": {
-            "kind": "trait",
-            "file": "src/Models/Concerns/HasFormOwnership.php",
-            "methods": [
-                "save"
-            ],
-            "properties": [],
-            "constants": []
         },
         "Nvl\\Forms\\Models\\Form": {
             "kind": "class",
             "file": "src/Models/Form.php",
             "methods": [
-                "identifier",
-                "displayName",
+                "allowedOrigins",
+                "allowsMultipleRegistrations",
+                "analytics",
+                "bootHasOwnership",
+                "delete",
                 "displayDescription",
-                "localizedContent",
-                "translationPayloads",
+                "displayName",
+                "entries",
+                "fresh",
+                "getAllTranslations",
+                "getAvailableLocales",
+                "getConnectionName",
+                "getCurrentLocale",
+                "getRelationValue",
+                "getTable",
+                "getTranslatedAttributes",
+                "getTranslation",
+                "hasTranslation",
+                "identifier",
                 "isAvailableNow",
                 "isPubliclyAvailableNow",
-                "allowsMultipleRegistrations",
-                "entries",
+                "isTranslatableAttribute",
+                "localizedContent",
+                "newQueryForRestoration",
+                "orderByTranslated",
+                "ownershipDefinition",
+                "rateLimits",
+                "refresh",
+                "refreshForUpdate",
+                "resolveTranslation",
+                "save",
+                "scopeActive",
+                "scopeOrderByTranslated",
+                "scopeRecentlyUsed",
+                "scopeWhereTranslated",
+                "scopeWhereTranslationNotNull",
+                "scopeWhereTranslationNull",
+                "scopeWithAllTranslations",
+                "scopeWithResolvedTranslations",
+                "scopeWithSubmissions",
+                "setLocale",
+                "translated",
+                "translation",
+                "translationDefinition",
+                "translationOptions",
+                "translationPayloads",
+                "translationResourceKey",
+                "translations",
+                "whereTranslated",
+                "whereTranslationNotNull",
+                "whereTranslationNull",
+                "withAllTranslations",
+                "withResolvedTranslations"
+            ],
+            "properties": [
+                "allow_multiple_registrations",
                 "allowedOrigins",
                 "analytics",
+                "available_from",
+                "available_until",
+                "cors_settings",
+                "created_at",
+                "date_restricted",
+                "deleted_at",
+                "enable_honeypot",
+                "enable_rate_limiting",
+                "entries",
+                "first_used_at",
+                "handle",
+                "id",
+                "last_used_at",
+                "options",
                 "rateLimits",
-                "scopeRecentlyUsed",
-                "scopeActive",
-                "scopeWithSubmissions",
-                "getTable",
-                "getConnectionName"
+                "rate_limit_per_hour",
+                "require_csrf",
+                "resolvement",
+                "restrict_public_access",
+                "revision",
+                "spam_count",
+                "status",
+                "submissions_count",
+                "translations",
+                "type",
+                "updated_at",
+                "views_count"
             ],
-            "properties": [],
             "constants": [
                 "OWNERSHIP_RESOURCE"
             ]
@@ -336,12 +499,32 @@
             "kind": "class",
             "file": "src/Models/FormAnalytic.php",
             "methods": [
-                "newEloquentBuilder",
+                "bootHasOwnership",
+                "delete",
                 "form",
+                "fresh",
+                "getConnectionName",
                 "getTable",
-                "getConnectionName"
+                "newEloquentBuilder",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save"
             ],
-            "properties": [],
+            "properties": [
+                "created_at",
+                "event_type",
+                "form",
+                "form_id",
+                "id",
+                "ip_address",
+                "metadata",
+                "origin",
+                "session_id",
+                "updated_at",
+                "user_agent"
+            ],
             "constants": [
                 "OWNERSHIP_RESOURCE"
             ]
@@ -350,19 +533,53 @@
             "kind": "class",
             "file": "src/Models/FormEntry.php",
             "methods": [
-                "identifier",
-                "newEloquentBuilder",
+                "bootHasOwnership",
+                "delete",
                 "form",
+                "fresh",
+                "getConnectionName",
                 "getFullNameAttribute",
-                "hasContactInfo",
-                "markAsIdempotentReplay",
-                "isIdempotentReplay",
                 "getSecurityFlag",
-                "setSecurityFlag",
                 "getTable",
-                "getConnectionName"
+                "hasContactInfo",
+                "identifier",
+                "isIdempotentReplay",
+                "markAsIdempotentReplay",
+                "newEloquentBuilder",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "setSecurityFlag"
             ],
-            "properties": [],
+            "properties": [
+                "address",
+                "anonymized_at",
+                "body",
+                "created_at",
+                "email",
+                "first_name",
+                "form",
+                "form_id",
+                "id",
+                "idempotency_key",
+                "ip_address",
+                "is_spam",
+                "last_name",
+                "payload_digest",
+                "phone",
+                "redacted_at",
+                "registration_fingerprint",
+                "security_flags",
+                "session_id",
+                "spam_score",
+                "subject",
+                "submission_data",
+                "submitted_from",
+                "updated_at",
+                "user_agent"
+            ],
             "constants": [
                 "OWNERSHIP_RESOURCE"
             ]
@@ -371,13 +588,34 @@
             "kind": "class",
             "file": "src/Models/FormRateLimit.php",
             "methods": [
+                "bootHasOwnership",
+                "delete",
                 "form",
-                "scopeBlocked",
-                "scopeActiveWindow",
+                "fresh",
+                "getConnectionName",
                 "getTable",
-                "getConnectionName"
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "scopeActiveWindow",
+                "scopeBlocked"
             ],
-            "properties": [],
+            "properties": [
+                "blocked_until",
+                "created_at",
+                "form",
+                "form_id",
+                "id",
+                "ip_address",
+                "is_blocked",
+                "last_submission_at",
+                "submission_count",
+                "updated_at",
+                "violation_count",
+                "window_start"
+            ],
             "constants": [
                 "OWNERSHIP_RESOURCE"
             ]
@@ -386,13 +624,32 @@
             "kind": "class",
             "file": "src/Models/FormSubmissionReceipt.php",
             "methods": [
-                "withBookkeepingWarning",
-                "hasBookkeepingWarning",
+                "bootHasOwnership",
+                "delete",
                 "form",
+                "fresh",
+                "getConnectionName",
                 "getTable",
-                "getConnectionName"
+                "hasBookkeepingWarning",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "withBookkeepingWarning"
             ],
-            "properties": [],
+            "properties": [
+                "created_at",
+                "form",
+                "form_id",
+                "id",
+                "idempotency_key",
+                "payload_digest",
+                "registration_fingerprint",
+                "result_id",
+                "state",
+                "updated_at"
+            ],
             "constants": [
                 "OWNERSHIP_RESOURCE"
             ]
@@ -401,202 +658,62 @@
             "kind": "class",
             "file": "src/Models/FormTranslation.php",
             "methods": [
+                "bootHasOwnership",
+                "delete",
                 "form",
+                "fresh",
+                "getConnectionName",
                 "getTable",
-                "getConnectionName"
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save"
             ],
-            "properties": [],
+            "properties": [
+                "content",
+                "description",
+                "form_id",
+                "id",
+                "locale",
+                "name",
+                "submit_button_label",
+                "success_message",
+                "success_title"
+            ],
             "constants": [
                 "OWNERSHIP_RESOURCE",
                 "TABLE"
             ]
         },
-        "Nvl\\Forms\\Ownership\\FormsAdoptionAdapter": {
-            "kind": "class",
-            "file": "src/Ownership/FormsAdoptionAdapter.php",
-            "methods": [
-                "__construct",
-                "resources",
-                "prepare",
-                "backfill",
-                "verify",
-                "activate"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Ownership\\FormsOwnership": {
-            "kind": "class",
-            "file": "src/Ownership/FormsOwnership.php",
-            "methods": [
-                "declared",
-                "violation",
-                "snapshotContext",
-                "active",
-                "resource",
-                "envelope"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Ownership\\FormsResourceRegistrar": {
-            "kind": "class",
-            "file": "src/Ownership/FormsResourceRegistrar.php",
-            "methods": [
-                "__construct",
-                "register"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Policies\\FormEntryPolicy": {
-            "kind": "class",
-            "file": "src/Policies/FormEntryPolicy.php",
-            "methods": [
-                "viewAny",
-                "view",
-                "create",
-                "delete",
-                "export"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Policies\\FormPolicy": {
-            "kind": "class",
-            "file": "src/Policies/FormPolicy.php",
-            "methods": [
-                "viewAny",
-                "view",
-                "create",
-                "update",
-                "delete",
-                "duplicate",
-                "export",
-                "viewAnalytics",
-                "manageFields",
-                "manageOrigins",
-                "manageRateLimits"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Providers\\FormsServiceProvider": {
-            "kind": "class",
-            "file": "src/Providers/FormsServiceProvider.php",
-            "methods": [
-                "boot",
-                "register",
-                "registerTranslations",
-                "provides"
-            ],
-            "properties": [],
-            "constants": []
-        },
         "Nvl\\Forms\\Results\\FormRateLimitAttemptResult": {
             "kind": "class",
             "file": "src/Results/FormRateLimitAttemptResult.php",
             "methods": [
-                "__construct",
+                "__construct"
+            ],
+            "properties": [
                 "allowed",
-                "denied"
+                "blockedUntil",
+                "rateLimit",
+                "retryAfterSeconds",
+                "submissionCount",
+                "violationCount"
             ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Rules\\AllowedOriginExpressionRule": {
-            "kind": "class",
-            "file": "src/Rules/AllowedOriginExpressionRule.php",
-            "methods": [
-                "validate"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Rules\\BoundedSubmissionPayload": {
-            "kind": "class",
-            "file": "src/Rules/BoundedSubmissionPayload.php",
-            "methods": [
-                "validate"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\AllowFormEntryDeletion": {
-            "kind": "class",
-            "file": "src/Services/AllowFormEntryDeletion.php",
-            "methods": [
-                "authorize"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\AllowFormEntryPrivacyOperations": {
-            "kind": "class",
-            "file": "src/Services/AllowFormEntryPrivacyOperations.php",
-            "methods": [
-                "authorize"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\CallbackFormHandler": {
-            "kind": "class",
-            "file": "src/Services/CallbackFormHandler.php",
-            "methods": [
-                "__construct",
-                "handle"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\CustomFormRegistry": {
-            "kind": "class",
-            "file": "src/Services/CustomFormRegistry.php",
-            "methods": [
-                "__construct",
-                "resolve"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\CustomSubmissionReceiptService": {
-            "kind": "class",
-            "file": "src/Services/CustomSubmissionReceiptService.php",
-            "methods": [
-                "__construct",
-                "claim",
-                "complete",
-                "fail"
-            ],
-            "properties": [],
             "constants": []
         },
         "Nvl\\Forms\\Services\\EntryCallbackRegistry": {
             "kind": "class",
             "file": "src/Services/EntryCallbackRegistry.php",
             "methods": [
-                "registerOwnership",
-                "dispatchOwnership",
                 "__construct",
-                "register",
-                "dispatch",
-                "forget",
                 "clear",
+                "dispatchOwnership",
+                "forget",
+                "hasLegacyCallbacks",
                 "hasNonOwnershipCallbacks",
-                "hasLegacyCallbacks"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormAllowedOriginService": {
-            "kind": "class",
-            "file": "src/Services/FormAllowedOriginService.php",
-            "methods": [
-                "__construct",
-                "normalizeOrigins",
-                "createOrigins",
-                "syncOrigins"
+                "register",
+                "registerOwnership"
             ],
             "properties": [],
             "constants": []
@@ -606,31 +723,11 @@
             "file": "src/Services/FormAnalytics.php",
             "methods": [
                 "__construct",
+                "originUsage",
+                "rateLimit",
                 "record",
                 "submission",
-                "view",
-                "rateLimit",
-                "originUsage"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormCorsPolicyResolver": {
-            "kind": "class",
-            "file": "src/Services/FormCorsPolicyResolver.php",
-            "methods": [
-                "__construct",
-                "resolve"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormCounterWriter": {
-            "kind": "class",
-            "file": "src/Services/FormCounterWriter.php",
-            "methods": [
-                "__construct",
-                "increment"
+                "view"
             ],
             "properties": [],
             "constants": []
@@ -640,52 +737,18 @@
             "file": "src/Services/FormEntries.php",
             "methods": [
                 "__construct",
-                "delete",
-                "redact",
                 "anonymize",
-                "flag",
-                "markSpam",
-                "markLegitimate",
+                "delete",
                 "export",
                 "exportFilename",
+                "flag",
                 "get",
+                "markLegitimate",
+                "markSpam",
                 "paginate",
-                "validateOwnership",
-                "update"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormEntryExportService": {
-            "kind": "class",
-            "file": "src/Services/FormEntryExportService.php",
-            "methods": [
-                "generateCsvContent",
-                "extractDynamicFields",
-                "generateFilename",
-                "sanitizeForExport"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormEntryLocator": {
-            "kind": "class",
-            "file": "src/Services/FormEntryLocator.php",
-            "methods": [
-                "__construct",
-                "forForm"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormHandleService": {
-            "kind": "class",
-            "file": "src/Services/FormHandleService.php",
-            "methods": [
-                "__construct",
-                "generateHandle",
-                "generateUniqueHandle",
-                "validateUniqueness"
+                "redact",
+                "update",
+                "validateOwnership"
             ],
             "properties": [],
             "constants": []
@@ -696,18 +759,9 @@
             "methods": [
                 "__construct",
                 "create",
-                "update",
+                "delete",
                 "duplicate",
-                "delete"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormManagement": {
-            "kind": "class",
-            "file": "src/Services/FormManagement.php",
-            "methods": [
-                "authorize"
+                "update"
             ],
             "properties": [],
             "constants": []
@@ -717,54 +771,9 @@
             "file": "src/Services/FormModelRegistry.php",
             "methods": [
                 "__construct",
-                "prepare",
                 "formClass",
-                "modelClass",
-                "newInstance",
-                "create",
                 "persist",
-                "projectionColumns",
-                "query"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormOriginAccessService": {
-            "kind": "class",
-            "file": "src/Services/FormOriginAccessService.php",
-            "methods": [
-                "__construct",
-                "isOriginAllowed",
-                "resolveMatchingOrigin"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormRateLimitService": {
-            "kind": "class",
-            "file": "src/Services/FormRateLimitService.php",
-            "methods": [
-                "__construct",
-                "isRateLimited",
-                "consumeSubmissionAttempt",
-                "recordSubmissionAttempt",
-                "blockIpAddress",
-                "unblockIpAddress",
-                "getRateLimitStatus",
-                "cleanupExpiredRecords",
-                "whitelistIpAddress"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormRateLimitStatisticsService": {
-            "kind": "class",
-            "file": "src/Services/FormRateLimitStatisticsService.php",
-            "methods": [
-                "__construct",
-                "cleanupExpiredRecords",
-                "getGlobalStatistics",
-                "getFormStatistics"
+                "projectionColumns"
             ],
             "properties": [],
             "constants": []
@@ -774,51 +783,15 @@
             "file": "src/Services/FormReader.php",
             "methods": [
                 "__construct",
-                "get",
+                "analytics",
                 "details",
+                "get",
+                "options",
                 "paginate",
                 "schema",
-                "analytics",
-                "summary",
                 "search",
-                "options",
-                "suggestions"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormRegistrationFingerprint": {
-            "kind": "class",
-            "file": "src/Services/FormRegistrationFingerprint.php",
-            "methods": [
-                "resolve"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormSpamDetectionService": {
-            "kind": "class",
-            "file": "src/Services/FormSpamDetectionService.php",
-            "methods": [
-                "__construct",
-                "checkHoneypot",
-                "calculateSpamScore",
-                "analyzeSubmission",
-                "shouldBlockSubmission",
-                "shouldFlagSubmission",
-                "analyzeTextForSpam",
-                "analyzeEmailForSpam",
-                "isSuspiciousUserAgent"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormSpamRejectionRecorder": {
-            "kind": "class",
-            "file": "src/Services/FormSpamRejectionRecorder.php",
-            "methods": [
-                "__construct",
-                "record"
+                "suggestions",
+                "summary"
             ],
             "properties": [],
             "constants": []
@@ -828,84 +801,8 @@
             "file": "src/Services/FormSubmissions.php",
             "methods": [
                 "__construct",
-                "submit",
-                "fieldRules"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormTranslationPayloadMapper": {
-            "kind": "class",
-            "file": "src/Services/FormTranslationPayloadMapper.php",
-            "methods": [
-                "__construct",
-                "rows"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\FormsDoctor": {
-            "kind": "class",
-            "file": "src/Services/FormsDoctor.php",
-            "methods": [
-                "__construct",
-                "inspect"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\MethodFormHandler": {
-            "kind": "class",
-            "file": "src/Services/MethodFormHandler.php",
-            "methods": [
-                "__construct",
-                "handle"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\OriginMatchingService": {
-            "kind": "class",
-            "file": "src/Services/OriginMatchingService.php",
-            "methods": [
-                "matches"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Services\\PublicFormTokenService": {
-            "kind": "class",
-            "file": "src/Services/PublicFormTokenService.php",
-            "methods": [
-                "__construct",
-                "issue",
-                "validate",
-                "issuedAt",
-                "validateForHandle",
-                "hasSigningKey"
-            ],
-            "properties": [],
-            "constants": [
-                "HEADER"
-            ]
-        },
-        "Nvl\\Forms\\Support\\AllowedOriginExpression": {
-            "kind": "class",
-            "file": "src/Support/AllowedOriginExpression.php",
-            "methods": [
-                "parse",
-                "normalize",
-                "isValid",
-                "toCspSource"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Support\\CustomSubmissionClaim": {
-            "kind": "class",
-            "file": "src/Support/CustomSubmissionClaim.php",
-            "methods": [
-                "__construct"
+                "fieldRules",
+                "submit"
             ],
             "properties": [],
             "constants": []
@@ -915,9 +812,9 @@
             "file": "src/Support/FormErrorMapperRegistry.php",
             "methods": [
                 "__construct",
-                "register",
                 "has",
-                "map"
+                "map",
+                "register"
             ],
             "properties": [],
             "constants": []
@@ -926,11 +823,11 @@
             "kind": "class",
             "file": "src/Support/FormHandlerRegistry.php",
             "methods": [
-                "register",
-                "get",
-                "forget",
+                "all",
                 "clear",
-                "all"
+                "forget",
+                "get",
+                "register"
             ],
             "properties": [],
             "constants": []
@@ -940,141 +837,13 @@
             "file": "src/Support/FormRenderDataRegistry.php",
             "methods": [
                 "__construct",
-                "register",
-                "has",
                 "getData",
-                "getTranslations"
-            ],
-            "properties": [],
-            "constants": []
-        },
-        "Nvl\\Forms\\Support\\FormsConfiguration": {
-            "kind": "class",
-            "file": "src/Support/FormsConfiguration.php",
-            "methods": [
-                "string",
-                "positiveInteger"
+                "getTranslations",
+                "has",
+                "register"
             ],
             "properties": [],
             "constants": []
         }
-    },
-    "models": {
-        "Nvl\\Forms\\Models\\AllowedOrigin": {
-            "read": [
-                "id"
-            ],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Forms\\Models\\Form": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Forms\\Models\\FormAnalytic": {
-            "read": [
-                "id"
-            ],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Forms\\Models\\FormEntry": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Forms\\Models\\FormRateLimit": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Forms\\Models\\FormSubmissionReceipt": {
-            "read": [
-                "id"
-            ],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Forms\\Models\\FormTranslation": {
-            "read": [
-                "id"
-            ],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        }
-    },
-    "capability_relations": {},
-    "tables": {
-        "allowed_origins": "nvl_forms_allowed_origins",
-        "analytics": "nvl_forms_analytics",
-        "entries": "nvl_forms_entries",
-        "forms": "nvl_forms_forms",
-        "i18n": "nvl_forms_i18n",
-        "rate_limits": "nvl_forms_rate_limits",
-        "submission_receipts": "nvl_forms_submission_receipts"
     }
 }

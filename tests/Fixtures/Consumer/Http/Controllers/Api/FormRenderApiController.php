@@ -26,7 +26,6 @@ use Nvl\Forms\Tests\Fixtures\Consumer\Services\PublicFormSubmissionResponseMappe
 use Nvl\Forms\Tests\Fixtures\Consumer\Services\RequestOriginResolver;
 use Nvl\Support\Contracts\RespondableException;
 use Nvl\Support\Exceptions\BusinessException;
-use Nvl\Support\Http\PackageExceptionPayload;
 use Nvl\Support\Ownership\Services\OwnerSiteContext;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -35,7 +34,7 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
  */
 final class FormRenderApiController extends Controller
 {
-    public function __construct(private readonly Application $application, private readonly PackageExceptionPayload $payload) {}
+    public function __construct(private readonly Application $application, private readonly HandleFormSubmissionErrorAction $errors) {}
 
     /**
      * Show form structure for iframe rendering.
@@ -65,7 +64,7 @@ final class FormRenderApiController extends Controller
         } catch (Exception $e) {
             report($e);
 
-            return response()->json(['error' => trans('nvl-forms::forms/messages.api.form_load_error'), 'message' => $e instanceof RespondableException ? $this->payload->for($e)['message'] : ($this->application->environment('local') ? $e->getMessage() : trans('nvl-forms::forms/messages.api.form_load_error_detail'))], 500);
+            return response()->json(['error' => trans('nvl-forms::forms/messages.api.form_load_error'), 'message' => $e instanceof RespondableException ? $this->errors->execute($e) : ($this->application->environment('local') ? $e->getMessage() : trans('nvl-forms::forms/messages.api.form_load_error_detail'))], 500);
         }
     }
 
@@ -100,7 +99,7 @@ final class FormRenderApiController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'error' => trans('nvl-forms::forms/messages.api.validation_failed'), 'message' => trans('nvl-forms::forms/messages.api.validation_failed_detail'), 'errors' => $e->errors()], 422);
         } catch (BusinessException $e) {
-            $safeMessage = $this->payload->for($e)['message'];
+            $safeMessage = $this->errors->execute($e);
             $form = $getForm->get($formIdentifier);
             $mappedErrors = $responseMapper->businessErrors($form, $e);
             if (! array_key_exists('error', $mappedErrors) || count($mappedErrors) > 1) {
@@ -160,7 +159,7 @@ final class FormRenderApiController extends Controller
         } catch (Exception $e) {
             report($e);
 
-            return response()->json(['error' => trans('nvl-forms::forms/messages.api.schema_load_error'), 'message' => $e instanceof RespondableException ? $this->payload->for($e)['message'] : ($this->application->environment('local') ? $e->getMessage() : trans('nvl-forms::forms/messages.api.error'))], 500);
+            return response()->json(['error' => trans('nvl-forms::forms/messages.api.schema_load_error'), 'message' => $e instanceof RespondableException ? $this->errors->execute($e) : ($this->application->environment('local') ? $e->getMessage() : trans('nvl-forms::forms/messages.api.error'))], 500);
         }
     }
 }

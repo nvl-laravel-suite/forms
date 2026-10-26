@@ -6,7 +6,6 @@ namespace Nvl\Forms\Ownership;
 
 use Illuminate\Database\Eloquent\Model;
 use Nvl\Support\Exceptions\BusinessException;
-use Nvl\Support\Ownership\Compatibility\LegacyOwnershipSupport;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
@@ -30,7 +29,7 @@ final class FormsOwnership
     /** Construct the failure contract of the selected ownership authority. */
     public static function violation(string $message): BusinessException
     {
-        return self::declared() ? new OwnershipViolation($message) : app(LegacyOwnershipSupport::class)->violation($message);
+        return new OwnershipViolation($message);
     }
 
     /** Capture identity for durable content; this is data, never an admission capability.
@@ -47,16 +46,16 @@ final class FormsOwnership
         return ['mode' => $snapshot->mode->value, 'owner' => $snapshot->owner?->toArray()];
     }
 
-    /** Determine whether native or legacy ownership enforcement applies. */
+    /** Determine whether native ownership enforcement applies. */
     public static function active(): bool
     {
-        return self::declared() || app(LegacyOwnershipSupport::class)->enabled();
+        return self::declared();
     }
 
     /** Resolve the exact canonical model to its declared ownership resource. */
     public static function resource(Model $model): string
     {
-        return self::declared() ? app(OwnershipResourceRegistry::class)->forModel($model)->key : app(LegacyOwnershipSupport::class)->resource($model);
+        return app(OwnershipResourceRegistry::class)->forModel($model)->key;
     }
 
     /** Capture scalar admission; untouched graphs preserve disabled installation behavior. */

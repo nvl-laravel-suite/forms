@@ -6,9 +6,9 @@ namespace Nvl\Forms\Tests\Fixtures\Consumer\Presentation;
 
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Translation\Translator;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Support\Contracts\RespondableException;
-use Nvl\Support\Http\PackageExceptionPayload;
 
 /**
  * Handles form submission error messages and formatting.
@@ -19,7 +19,7 @@ use Nvl\Support\Http\PackageExceptionPayload;
  */
 final readonly class HandleFormSubmissionErrorAction
 {
-    public function __construct(private Application $application, private PackageExceptionPayload $payload) {}
+    public function __construct(private Application $application, private Translator $translator) {}
 
     /**
      * Execute error message handling.
@@ -33,7 +33,9 @@ final readonly class HandleFormSubmissionErrorAction
             return (string) trans('nvl-forms::responsecode.submission_rejected');
         }
         if ($exception instanceof RespondableException) {
-            return $this->payload->for($exception)['message'];
+            $message = $this->translator->get($exception->translationKey() ?? 'nvl-core::responsecode.operation_failed', $exception->translationParameters());
+
+            return is_string($message) ? $message : 'The operation could not be completed.';
         }
 
         return match (true) {
