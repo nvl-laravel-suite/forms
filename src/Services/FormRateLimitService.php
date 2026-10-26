@@ -7,15 +7,13 @@ namespace Nvl\Forms\Services;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Nvl\Forms\Actions\Form\RecordFormAnalyticAction;
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Enums\FormAnalyticEventType;
-use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Results\FormRateLimitAttemptResult;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Handles form rate limiting: per-IP submission tracking, blocking, and unblocking.
@@ -27,19 +25,19 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
  * a deliberate service-owned exception because correctness depends on serialising
  * increments for the `(form_id, ip_address)` rate-limit row.
  *
- * @property RecordFormAnalyticAction $recordFormAnalytic
+ * @property FormAnalytics $recordFormAnalytic
  * @property FormRateLimitStatisticsService $statistics
  */
 final class FormRateLimitService implements FormRateLimiter
 {
     /**
-     * @param  RecordFormAnalyticAction  $recordFormAnalytic  Records analytics events on rate-limit violations
+     * @param  FormAnalytics  $recordFormAnalytic  Records analytics events on rate-limit violations
      * @param  FormRateLimitStatisticsService  $statistics  Provides cleanup and aggregate queries
      */
     public function __construct(
-        private readonly RecordFormAnalyticAction $recordFormAnalytic,
+        private readonly FormAnalytics $recordFormAnalytic,
         private readonly FormRateLimitStatisticsService $statistics,
-        private readonly TenantBoundary $boundary,
+        private readonly OwnershipBoundary $boundary,
     ) {}
 
     /**
@@ -341,15 +339,7 @@ final class FormRateLimitService implements FormRateLimiter
             return $this->boundary->attributes('forms.rates');
         }
 
-        if (! array_key_exists('tenant_id', $form->getAttributes())) {
-            return [];
-        }
-        $tenantId = $form->getRawOriginal('tenant_id');
-        if ($tenantId !== null && ! is_string($tenantId)) {
-            throw new FormException('Legacy Form ownership requires its native UUID identity.');
-        }
-
-        return ['tenant_id' => $tenantId];
+        return [];
     }
 
     /**
@@ -415,7 +405,7 @@ final class FormRateLimitService implements FormRateLimiter
             'violation_count' => $violationCount,
         ])->save();
 
-        $this->recordFormAnalytic->execute(
+        $this->recordFormAnalytic->record(
             form: $form,
             eventType: FormAnalyticEventType::RATE_LIMITED,
             origin: $origin,

@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Exception;
 use Illuminate\Support\Str;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Manages form handle generation and uniqueness validation.
@@ -18,7 +18,7 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 final class FormHandleService
 {
     /** Create the tenant-qualified handle service. */
-    public function __construct(private readonly TenantBoundary $boundary) {}
+    public function __construct(private readonly OwnershipBoundary $boundary) {}
 
     /**
      * Generate a handle from the given name, falling back to 'form' for empty input.

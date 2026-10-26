@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Stubs;
 
-use Illuminate\Http\Request;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
@@ -18,7 +17,7 @@ final class FormsTestExecuteCallback
     /**
      * Record one executable form-entry callback invocation.
      */
-    public function execute(Form $form, FormEntry $entry, Request $request): void
+    public function execute(Form $form, FormEntry $entry, array $context): void
     {
         self::$calls++;
     }

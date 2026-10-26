@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Stateless service for evaluating spam signals in form submissions.
@@ -22,7 +22,7 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 final class FormSpamDetectionService implements FormSpamDetector
 {
     /** Create the tenant-aware detector. */
-    public function __construct(private readonly TenantBoundary $boundary) {}
+    public function __construct(private readonly OwnershipBoundary $boundary) {}
 
     /** @var array<int, string> Spam keywords to detect in text fields */
     private const SPAM_KEYWORDS = [

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Support\AllowedOriginExpression;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Manages allowed origin normalization, creation, and synchronization for forms.
@@ -20,7 +20,7 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 final class FormAllowedOriginService
 {
     /** Create the tenant-aware origin service. */
-    public function __construct(private readonly TenantBoundary $boundary) {}
+    public function __construct(private readonly OwnershipBoundary $boundary) {}
 
     /**
      * Normalize an array of raw origin values into clean, unique strings.
@@ -57,7 +57,6 @@ final class FormAllowedOriginService
 
         foreach ($normalized as $origin) {
             $form->allowedOrigins()->create([
-                ...$this->childOwnership($form),
                 'origin' => $origin,
                 'is_active' => true,
             ]);
@@ -105,7 +104,6 @@ final class FormAllowedOriginService
             }
 
             $form->allowedOrigins()->create([
-                ...$this->childOwnership($form),
                 'origin' => $origin,
                 'is_active' => true,
             ]);
@@ -117,13 +115,5 @@ final class FormAllowedOriginService
                 $existing->update(['is_active' => false]);
             }
         }
-    }
-
-    /** @return array{tenant_id?:mixed} */
-    private function childOwnership(Form $form): array
-    {
-        return array_key_exists('tenant_id', $form->getAttributes())
-            ? ['tenant_id' => $form->getRawOriginal('tenant_id')]
-            : [];
     }
 }

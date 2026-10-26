@@ -12,9 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormRateLimitFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
-use Nvl\Forms\Traits\FormRateLimitFilters;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
 
@@ -24,7 +23,6 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * Audit events are intentionally omitted because counters update on every request.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $form_id
  * @property string $ip_address
  * @property int $submission_count
@@ -41,11 +39,9 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  */
 class FormRateLimit extends Model implements Ownable
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.rates';
-
-    use FormRateLimitFilters;
+    public const string OWNERSHIP_RESOURCE = 'forms.rates';
 
     /** @use HasFactory<FormRateLimitFactory> */
     use HasFactory;
@@ -61,7 +57,6 @@ class FormRateLimit extends Model implements Ownable
      */
     protected $fillable = [
         'form_id',
-        'tenant_id',
         'ip_address',
         'submission_count',
         'window_start',

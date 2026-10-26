@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Contracts;
 
-use Illuminate\Http\Request;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
@@ -25,7 +24,7 @@ interface EntrySubmissionCallback
      *
      * @param  Form  $form  Form model instance
      * @param  FormEntry  $entry  Persisted entry model instance
-     * @param  Request  $request  HTTP request instance
+     * @param  array<string,mixed>  $context  HTTP request instance
      */
-    public function after(Form $form, FormEntry $entry, Request $request): void;
+    public function after(Form $form, FormEntry $entry, array $context): void;
 }

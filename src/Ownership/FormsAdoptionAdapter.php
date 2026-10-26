@@ -48,17 +48,11 @@ final readonly class FormsAdoptionAdapter implements OwnershipAdoptionAdapter
         foreach ($this->resources() as $key) {
             $model = new ($this->resources->get($key)->model);
             $schema = $model->getConnection()->getSchemaBuilder();
-            foreach (['tenant_id', 'ownership_key'] as $column) {
-                if ($schema->hasColumn($model->getTable(), $column)) {
-                    $schema->table($model->getTable(), static fn (Blueprint $table) => ($column === 'tenant_id' ? $table->uuid($column) : $table->string($column, 191))->nullable()->change());
-                }
-            }
             $this->schema->prepare($key);
             $identities = $key === 'forms.forms' ? [['handle']] : [];
             foreach ($schema->getIndexes($model->getTable()) as $index) {
                 $columns = $index['columns'];
-                $withoutTenant = array_values(array_diff($columns, ['tenant_id']));
-                if ($index['unique'] && in_array($withoutTenant, $identities, true)) {
+                if ($index['unique'] && in_array($columns, $identities, true)) {
                     $schema->table($model->getTable(), static fn (Blueprint $table) => $table->dropUnique($index['name']));
                 }
             }
@@ -69,7 +63,7 @@ final readonly class FormsAdoptionAdapter implements OwnershipAdoptionAdapter
         $this->restoreNativeParents();
     }
 
-    /** Restore the concrete native FK when a legacy adapter replaced it with a tenant composite.
+    /** Ensure concrete native parent constraints exist.
      * @param  list<array{string,string}>  $extraEdges
      */
     private function restoreNativeParents(array $extraEdges = []): void

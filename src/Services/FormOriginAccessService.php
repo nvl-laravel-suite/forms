@@ -6,7 +6,7 @@ namespace Nvl\Forms\Services;
 
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Resolves host/origin access checks for restricted public forms.
@@ -18,7 +18,7 @@ final class FormOriginAccessService
      */
     public function __construct(
         private readonly OriginMatchingService $originMatcher,
-        private readonly TenantBoundary $boundary,
+        private readonly OwnershipBoundary $boundary,
     ) {}
 
     /**

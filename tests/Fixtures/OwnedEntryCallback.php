@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Nvl\Forms\Tests\Fixtures;
 
 use Nvl\Forms\Contracts\OwnershipEntrySubmissionCallback;
-use Nvl\Forms\Data\OwnershipFormSubmissionCallbackContext;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 
@@ -14,8 +13,8 @@ final class OwnedEntryCallback implements OwnershipEntrySubmissionCallback
 {
     public static array $calls = [];
 
-    public function after(Form $form, FormEntry $entry, OwnershipFormSubmissionCallbackContext $context): void
+    public function after(Form $form, FormEntry $entry, array $context): void
     {
-        self::$calls[] = [$context->owner->key, $context->site, $entry->id];
+        self::$calls[] = [$context['owner']->key, $context['site'], $entry->id];
     }
 }

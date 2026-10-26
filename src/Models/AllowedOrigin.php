@@ -12,9 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\AllowedOriginFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
-use Nvl\Forms\Traits\AllowedOriginFilters;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
 
@@ -22,7 +21,6 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * AllowedOrigin model representing CORS-allowed origins for forms.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $form_id
  * @property string $origin
  * @property bool $is_active
@@ -40,11 +38,9 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  */
 class AllowedOrigin extends Model implements Ownable
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.origins';
-
-    use AllowedOriginFilters;
+    public const string OWNERSHIP_RESOURCE = 'forms.origins';
 
     /** @use HasFactory<AllowedOriginFactory> */
     use HasFactory;
@@ -60,7 +56,6 @@ class AllowedOrigin extends Model implements Ownable
      */
     protected $fillable = [
         'form_id',
-        'tenant_id',
         'origin',
         'is_active',
         'description',

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormTranslationFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
@@ -19,7 +19,6 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * Stores locale-specific public copy and arbitrary form content.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $form_id
  * @property string $locale
  * @property string|null $name
@@ -35,9 +34,9 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  */
 final class FormTranslation extends Model implements Ownable
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.translations';
+    public const string OWNERSHIP_RESOURCE = 'forms.translations';
 
     /** @use HasFactory<FormTranslationFactory> */
     use HasFactory;
@@ -51,7 +50,6 @@ final class FormTranslation extends Model implements Ownable
     /** @var list<string> */
     protected $fillable = [
         'form_id',
-        'tenant_id',
         'locale',
         'name',
         'description',

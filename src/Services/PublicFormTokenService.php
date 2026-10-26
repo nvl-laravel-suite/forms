@@ -10,12 +10,10 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Ownership\FormsOwnership;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\Services\OwnerSiteContext;
-use Nvl\Support\Tenancy\Contracts\TenantContext;
-use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Throwable;
 
 /**
@@ -29,8 +27,7 @@ final class PublicFormTokenService
 
     /** Create the versioned tenant-bound public token service. */
     public function __construct(
-        private readonly TenantContext $context,
-        private readonly TenantBoundary $boundary,
+        private readonly OwnershipBoundary $boundary,
         private readonly OwnershipContext $ownership,
     ) {}
 
@@ -49,14 +46,12 @@ final class PublicFormTokenService
         }
 
         $this->boundary->assertRecord($form, 'forms.forms');
-        $snapshot = $this->context->snapshot();
         $ownerSite = FormsOwnership::declared() ? OwnerSiteContext::require() : null;
         if ($ownerSite !== null && $site !== $ownerSite->site) {
             throw new OwnershipViolation('Public token site differs from the admitted site.');
         }
         $payload = [
             'v' => $ownerSite === null ? 2 : 3,
-            'tenant_id' => $snapshot->tenantId?->value,
             'site' => $site,
             'form_id' => (string) $form->id,
             'iat' => CarbonImmutable::now()->getTimestamp(),
@@ -65,7 +60,6 @@ final class PublicFormTokenService
         ];
 
         if ($ownerSite !== null) {
-            unset($payload['tenant_id']);
             $payload['owner'] = $ownerSite->owner->toArray();
             $payload['origin'] = $ownerSite->canonicalOrigin;
             $payload['generations'] = $this->ownership->snapshot()->generations;
@@ -225,7 +219,6 @@ final class PublicFormTokenService
         $expiresAt = $decoded['exp'] ?? null;
         $nonce = $decoded['nonce'] ?? null;
         $version = $decoded['v'] ?? null;
-        $tenantId = $decoded['tenant_id'] ?? null;
         $site = $decoded['site'] ?? null;
 
         if (! is_string($formId)
@@ -247,26 +240,12 @@ final class PublicFormTokenService
                 'generations' => $decoded['generations'], 'form_id' => $formId, 'iat' => $issuedAt, 'exp' => $expiresAt, 'nonce' => $nonce,
             ];
         }
-        $mode = $this->context->snapshot()->mode;
-        if ($version !== 2) {
-            if ($expiresAt <= 0 || CarbonImmutable::now()->getTimestamp() > $expiresAt) {
-                return null;
-            }
-
-            return $mode === TenantContextMode::Disabled ? [
-                'form_id' => $formId,
-                'iat' => $issuedAt,
-                'exp' => $expiresAt,
-                'nonce' => $nonce,
-            ] : null;
-        }
-        if (($tenantId !== null && ! is_string($tenantId)) || ! is_string($site) || $site === '') {
+        if ($version !== 2 || ! is_string($site) || $site === '' || $issuedAt > CarbonImmutable::now()->getTimestamp()) {
             return null;
         }
 
         $payload = [
             'v' => 2,
-            'tenant_id' => $tenantId,
             'site' => $site,
             'form_id' => $formId,
             'iat' => $issuedAt,
@@ -297,14 +276,8 @@ final class PublicFormTokenService
                 && ($payload['origin'] ?? null) === $admitted->canonicalOrigin
                 && ($payload['generations'] ?? null) === $this->ownership->snapshot()->generations;
         }
-        $snapshot = $this->context->snapshot();
-        if ($snapshot->mode === TenantContextMode::Disabled) {
-            return ! isset($payload['v']) || $payload['v'] === 2;
-        }
 
-        return $snapshot->mode === TenantContextMode::Tenant
-            && ($payload['tenant_id'] ?? null) === $snapshot->tenantId?->value
-            && ($payload['site'] ?? null) === $site;
+        return ($payload['v'] ?? null) === 2 && ($payload['site'] ?? null) === $site;
     }
 
     /** Revalidate exact persisted Form identity before signed timing or form facts are trusted. */

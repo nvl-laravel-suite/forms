@@ -8,13 +8,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
-use Nvl\Data\Providers\DataServiceProvider;
-use Nvl\Filterable\Providers\FilterableServiceProvider;
 use Nvl\Forms\Providers\FormsServiceProvider;
+use Nvl\Forms\Tests\Fixtures\Consumer\RouteServiceProvider;
 use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Spatie\LaravelData\LaravelDataServiceProvider;
 
 /**
  * Boots Forms and its runtime dependencies in an isolated Laravel application.
@@ -28,20 +28,12 @@ abstract class FormsTestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
-        return [
-            LocaleServiceProvider::class,
-            DataServiceProvider::class,
-            FilterableServiceProvider::class,
-            SupportServiceProvider::class,
-            TranslatableServiceProvider::class,
-            FormsServiceProvider::class,
-        ];
+        return [LocaleServiceProvider::class, LaravelDataServiceProvider::class, SupportServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class, RouteServiceProvider::class];
     }
 
     protected function setUp(): void
     {
         parent::setUp();
-
         Gate::define('manage-forms', static fn ($user): bool => $user !== null);
     }
 

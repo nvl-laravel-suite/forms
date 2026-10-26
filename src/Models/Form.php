@@ -13,14 +13,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
-use Nvl\Forms\Data\FormOptions;
 use Nvl\Forms\Database\Factories\FormFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
-use Nvl\Forms\Traits\FormFilters;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Translatable\Contracts\TranslatableModel;
@@ -32,7 +31,6 @@ use Nvl\Translatable\Translatable;
  * Form model representing user-created forms with dynamic fields.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $handle
  * @property int $revision
  * @property FormStatus $status
@@ -53,7 +51,7 @@ use Nvl\Translatable\Translatable;
  * @property int $rate_limit_per_hour
  * @property bool $require_csrf
  * @property array<string, mixed>|null $cors_settings
- * @property FormOptions|null $options
+ * @property array<string,mixed>|null $options
  * @property Carbon|null $deleted_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -67,11 +65,9 @@ use Nvl\Translatable\Translatable;
  */
 class Form extends Model implements Ownable, TranslatableModel
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.forms';
-
-    use FormFilters;
+    public const string OWNERSHIP_RESOURCE = 'forms.forms';
 
     /** @use HasFactory<FormFactory> */
     use HasFactory;
@@ -104,7 +100,6 @@ class Form extends Model implements Ownable, TranslatableModel
      */
     protected $fillable = [
         'handle',
-        'tenant_id',
         'revision',
         'status',
         'resolvement',
@@ -150,7 +145,7 @@ class Form extends Model implements Ownable, TranslatableModel
             'rate_limit_per_hour' => 'integer',
             'require_csrf' => 'boolean',
             'cors_settings' => 'array',
-            'options' => FormOptions::class,
+            'options' => 'array',
             'last_used_at' => 'datetime',
             'first_used_at' => 'datetime',
             'available_from' => 'datetime',
@@ -198,7 +193,7 @@ class Form extends Model implements Ownable, TranslatableModel
                 'content',
             ],
             mutationPolicy: TranslationMutationPolicy::OwningServiceOnly,
-            ownershipResource: 'forms.forms',
+            ownershipResource: FormsOwnership::declared() ? 'forms.forms' : null,
         );
     }
 

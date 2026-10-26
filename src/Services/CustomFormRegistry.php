@@ -7,7 +7,6 @@ namespace Nvl\Forms\Services;
 use Closure;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\CustomFormHandler;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
@@ -55,14 +54,14 @@ final readonly class CustomFormRegistry
             if ($obj instanceof CustomFormHandler) {
                 return $obj;
             }
-            if (is_callable([$obj, 'execute'])) {
-                return new ActionBackedHandler(
+            if (is_callable([$obj, 'handle'])) {
+                return new MethodFormHandler(
                     $obj,
-                    'execute',
+                    'handle',
                 );
             }
             if (is_callable([$obj, '__invoke'])) {
-                return new ActionBackedHandler(
+                return new MethodFormHandler(
                     $obj,
                     '__invoke',
                 );
@@ -80,8 +79,8 @@ final readonly class CustomFormRegistry
                  * @param  array<string, mixed>  $data
                  * @return array<string, mixed>
                  */
-                static function (Form $form, array $data, Request $request) use ($callback): array {
-                    $result = $callback($form, $data, $request);
+                static function (Form $form, array $data, array $context) use ($callback): array {
+                    $result = $callback($form, $data, $context);
                     if (! is_array($result)) {
                         return [];
                     }

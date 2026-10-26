@@ -5,13 +5,7 @@
             "common": [
                 "authorization.gate",
                 "migrations.enabled",
-                "models.form",
-                "routes.management.enabled",
-                "routes.management.middleware",
-                "routes.middleware",
-                "routes.prefix",
-                "routes.public.enabled",
-                "routes.public.middleware"
+                "models.form"
             ],
             "advanced": [
                 "public.token_ttl_minutes",

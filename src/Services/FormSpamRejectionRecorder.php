@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
-use Nvl\Forms\Actions\Form\RecordFormAnalyticAction;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\Form;
 
@@ -15,7 +14,7 @@ final readonly class FormSpamRejectionRecorder
 {
     public function __construct(
         private readonly FormCounterWriter $counters,
-        private RecordFormAnalyticAction $recordFormAnalytic,
+        private FormAnalytics $recordFormAnalytic,
     ) {}
 
     /**
@@ -45,7 +44,7 @@ final readonly class FormSpamRejectionRecorder
     ): Form {
         $this->counters->increment($form, 'spam_count');
 
-        $this->recordFormAnalytic->execute(
+        $this->recordFormAnalytic->record(
             form: $form,
             eventType: FormAnalyticEventType::SPAM_BLOCKED,
             origin: $origin,

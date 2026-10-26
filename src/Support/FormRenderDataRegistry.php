@@ -6,7 +6,6 @@ namespace Nvl\Forms\Support;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\FormRenderDataProvider;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
@@ -72,12 +71,12 @@ final class FormRenderDataRegistry
      * Get additional render data for a form.
      *
      * @param  Form  $form  Form being rendered
-     * @param  Request  $request  Current request
+     * @param  array<string,mixed>  $context  Current request
      * @return array<string, mixed> Additional data to merge into page props
      *
      * @throws BindingResolutionException
      */
-    public function getData(Form $form, Request $request): array
+    public function getData(Form $form, array $context): array
     {
         if (FormsOwnership::declared()) {
             $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
@@ -90,7 +89,7 @@ final class FormRenderDataRegistry
 
         $provider = $this->resolveProvider($handle);
 
-        return $provider?->getData($form, $request) ?? [];
+        return $provider?->getData($form, $context) ?? [];
     }
 
     /**

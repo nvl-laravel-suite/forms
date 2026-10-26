@@ -20,6 +20,7 @@ final class FormSubmissionRejectionException extends FormException
     public function __construct(
         string $message,
         private readonly int $statusCode,
+        private readonly int $retryAfterSeconds = 0,
     ) {
         parent::__construct($message);
     }
@@ -30,5 +31,10 @@ final class FormSubmissionRejectionException extends FormException
     public function statusCode(): int
     {
         return $this->statusCode;
+    }
+
+    public function retryAfterSeconds(): int
+    {
+        return $this->retryAfterSeconds;
     }
 }

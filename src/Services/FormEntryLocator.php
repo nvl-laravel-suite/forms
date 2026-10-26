@@ -7,13 +7,13 @@ namespace Nvl\Forms\Services;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /** Reloads a submitted entry beneath its canonical tenant-owned Form. */
 final readonly class FormEntryLocator
 {
     /** Create the tenant-scoped locator. */
-    public function __construct(private TenantBoundary $boundary) {}
+    public function __construct(private OwnershipBoundary $boundary) {}
 
     /** Return the exact child or deny ownership mismatch without disclosure. */
     public function forForm(Form $form, string $entryId): FormEntry

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Stubs;
 
-use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\EntrySubmissionCallback;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
@@ -19,7 +18,7 @@ final class FormsTestContractCallback implements EntrySubmissionCallback
     /**
      * Record one completed form-entry callback invocation.
      */
-    public function after(Form $form, FormEntry $entry, Request $request): void
+    public function after(Form $form, FormEntry $entry, array $context): void
     {
         self::$calls++;
     }

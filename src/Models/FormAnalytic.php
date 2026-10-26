@@ -14,9 +14,8 @@ use Nvl\Forms\Builders\FormAnalyticBuilder;
 use Nvl\Forms\Database\Factories\FormAnalyticFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormAnalyticEventType;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
-use Nvl\Forms\Traits\FormAnalyticFilters;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
 
@@ -27,7 +26,6 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * high-volume operational telemetry, not operator-facing history.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $form_id
  * @property FormAnalyticEventType $event_type
  * @property string|null $origin
@@ -45,11 +43,9 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  */
 class FormAnalytic extends Model implements Ownable
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.analytics';
-
-    use FormAnalyticFilters;
+    public const string OWNERSHIP_RESOURCE = 'forms.analytics';
 
     /** @use HasFactory<FormAnalyticFactory> */
     use HasFactory;
@@ -65,7 +61,6 @@ class FormAnalytic extends Model implements Ownable
      */
     protected $fillable = [
         'form_id',
-        'tenant_id',
         'event_type',
         'origin',
         'ip_address',

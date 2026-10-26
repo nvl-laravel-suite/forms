@@ -8,16 +8,9 @@ use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
-use Nvl\Support\Tenancy\Contracts\TenantContext;
-use Nvl\Support\Tenancy\Contracts\TenantDirectory;
-use Nvl\Support\Tenancy\Contracts\TenantParentResolver;
-use Nvl\Support\Tenancy\Enums\TenantContextMode;
-use Nvl\Support\Tenancy\Enums\TenantResourceKind;
-use Nvl\Support\Tenancy\Enums\TenantStatus;
-use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
-use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
-use Nvl\Support\Tenancy\ValueObjects\TenantId;
+use Nvl\Forms\Ownership\FormsOwnership;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 
 /**
  * Checks fixture identities against native persistence and tenant admission.
@@ -47,10 +40,10 @@ final class FactoryGuard
         if ($parent->getConnection() !== $child->getConnection()) {
             throw new InvalidArgumentException('Factory parents and children require the same effective connection.');
         }
-        if (config('nvl-tenancy.enabled') === true) {
+        if (FormsOwnership::declared()) {
             $container = Container::getInstance();
-            $resource = $container->make(TenantResourceRegistry::class)->forModel($parent);
-            $container->make(TenantBoundary::class)->assertRecord($parent, $resource->key);
+            $resource = $container->make(OwnershipResourceRegistry::class)->forModel($parent);
+            $container->make(OwnershipBoundary::class)->assertRecord($parent, $resource->key);
         }
     }
 
@@ -76,27 +69,14 @@ final class FactoryGuard
             throw new InvalidArgumentException('Factory owners require their native morph identity.');
         }
 
-        if (config('nvl-tenancy.enabled') === true) {
-            $container = Container::getInstance();
-            $registry = $container->make(TenantResourceRegistry::class);
-            $resource = $registry->forModel($child);
-            if ($resource->kind === TenantResourceKind::Inherited && $resource->parentResource === null) {
-                $resolver = $container->make($registry->parentResolver($resource->key));
-                if (! $resolver instanceof TenantParentResolver
-                    || ($resolver->types()[$type] ?? null) !== $owner::class) {
-                    throw new TenantBoundaryViolation('Factory owners require the native tenant parent allowlist.');
-                }
-            }
-        }
-
         return $owner;
     }
 
     /** Apply admitted root ownership without activating or adopting Tenancy. */
     public static function root(Model $model, string $resource): void
     {
-        if (config('nvl-tenancy.enabled') === true) {
-            $model->forceFill(Container::getInstance()->make(TenantBoundary::class)->attributes($resource));
+        if (FormsOwnership::declared()) {
+            $model->forceFill(Container::getInstance()->make(OwnershipBoundary::class)->attributes($resource));
         }
     }
 
@@ -104,27 +84,7 @@ final class FactoryGuard
     public static function inherit(Model $model, Model $parent, bool $withOwnershipKey = false): void
     {
         self::parent($parent, $model);
-        if (config('nvl-tenancy.enabled') !== true) {
-            return;
-        }
-        $attributes = [];
-        if (array_key_exists('tenant_id', $parent->getAttributes())) {
-            $attributes['tenant_id'] = $parent->getRawOriginal('tenant_id');
-        }
-        if ($withOwnershipKey && array_key_exists('ownership_key', $parent->getAttributes())) {
-            $attributes['ownership_key'] = $parent->getRawOriginal('ownership_key');
-        }
-        $model->forceFill($attributes);
-    }
 
-    /** Require an active catalog recipient and explicit platform context. */
-    public static function recipient(TenantId $recipient): void
-    {
-        $container = Container::getInstance();
-        if ($container->make(TenantContext::class)->snapshot()->mode !== TenantContextMode::Platform
-            || $container->make(TenantDirectory::class)->find($recipient)->status !== TenantStatus::Active) {
-            throw new TenantBoundaryViolation('Catalog fixtures require platform context and an active recipient.');
-        }
     }
 
     private function __construct() {}

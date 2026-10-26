@@ -8,14 +8,14 @@ use Closure;
 use Illuminate\Contracts\Foundation\MaintenanceMode;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Schema\Blueprint;
-use Nvl\Data\Providers\DataServiceProvider;
-use Nvl\Filterable\Providers\FilterableServiceProvider;
-use Nvl\Forms\Actions\Form\CreateFormAction;
-use Nvl\Forms\Data\Mutations\MutateFormPayload;
+use Illuminate\Support\Facades\Gate;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Providers\FormsServiceProvider;
+use Nvl\Forms\Services\FormLifecycle;
 use Nvl\Forms\Tests\Fixtures\Actor;
 use Nvl\Forms\Tests\Fixtures\Company;
+use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\MutateFormPayload;
+use Nvl\Forms\Tests\Fixtures\Consumer\RouteServiceProvider;
 use Nvl\Forms\Tests\Fixtures\OwnershipForm;
 use Nvl\Forms\Tests\RuntimeOwnershipTestCase as RuntimeTestCase;
 use Nvl\Ownership\Contracts\OwnershipAdoptionAccess;
@@ -26,6 +26,7 @@ use Nvl\Ownership\ValueObjects\OwnershipMapping;
 use Nvl\Ownership\ValueObjects\OwnershipOperation;
 use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
+use Spatie\LaravelData\LaravelDataServiceProvider;
 
 /** Boots standalone Forms with native host ownership and real reviewed activation. */
 abstract class OwnershipTestCase extends RuntimeTestCase
@@ -40,7 +41,7 @@ abstract class OwnershipTestCase extends RuntimeTestCase
 
     protected function getPackageProviders($app): array
     {
-        return [LocaleServiceProvider::class, ...parent::getPackageProviders($app), DataServiceProvider::class, FilterableServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class];
+        return [LocaleServiceProvider::class, ...parent::getPackageProviders($app), LaravelDataServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class, RouteServiceProvider::class];
     }
 
     /** Install an explicitly selected consumer-native pivot before protocol preparation. */
@@ -54,14 +55,7 @@ abstract class OwnershipTestCase extends RuntimeTestCase
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
-        $app['config']->set([
-            'app.key' => 'a-valid-test-only-signing-key-ownership',
-            'app.locale' => 'en', 'cache.default' => 'array',
-            'nvl-forms.models.form' => $this->formClass(),
-            'nvl-forms.migrations.enabled' => false,
-            'nvl-forms.routes.public.enabled' => true,
-            'nvl-translatable.locales' => ['en', 'bg'],
-        ]);
+        $app['config']->set(['app.key' => 'a-valid-test-only-signing-key-ownership', 'app.locale' => 'en', 'cache.default' => 'array', 'nvl-forms.models.form' => $this->formClass(), 'nvl-forms.migrations.enabled' => false, 'nvl-forms.routes.public.enabled' => true, 'nvl-translatable.locales' => ['en', 'bg']]);
     }
 
     protected function setUp(): void
@@ -69,6 +63,8 @@ abstract class OwnershipTestCase extends RuntimeTestCase
         $this->originalMorphMap = Relation::morphMap();
         parent::setUp();
         $this->allowOwners();
+        config(['nvl-forms.authorization.gate' => 'manage-forms']);
+        Gate::define('manage-forms', static fn ($actor): bool => $actor !== null);
         $migrations = array_values(array_filter(glob(__DIR__.'/../database/migrations/*.php') ?: [], static fn (string $path): bool => basename($path) !== '2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php'));
         $migrations[] = __DIR__.'/../database/migrations/current/2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php';
         foreach ($migrations as $path) {
@@ -130,11 +126,6 @@ abstract class OwnershipTestCase extends RuntimeTestCase
 
     protected function createOwnedForm(string $handle = 'contact'): Form
     {
-        return app(CreateFormAction::class)->execute(MutateFormPayload::from([
-            'handle' => $handle, 'status' => 'active', 'type' => 'iframe', 'resolvement' => 'entries',
-            'translations' => ['en' => ['name' => 'Contact']],
-            'enableHoneypot' => false, 'enableRateLimiting' => false, 'restrictPublicAccess' => false,
-            'requireCsrf' => false,
-        ]));
+        return app(FormLifecycle::class)->create(formNativeInput(MutateFormPayload::from(['handle' => $handle, 'status' => 'active', 'type' => 'iframe', 'resolvement' => 'entries', 'translations' => ['en' => ['name' => 'Contact']], 'enableHoneypot' => false, 'enableRateLimiting' => false, 'restrictPublicAccess' => false, 'requireCsrf' => false])), actor: formActor());
     }
 }

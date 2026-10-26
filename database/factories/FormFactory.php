@@ -112,7 +112,6 @@ final class FormFactory extends Factory
 
                     FormTranslation::query()->create([
                         'form_id' => $form->getKey(),
-                        ...(config('nvl-tenancy.enabled') === true ? ['tenant_id' => $form->getRawOriginal('tenant_id')] : []),
                         'locale' => $translationLocale,
                         'name' => is_string($payload['name'] ?? null)
                             ? $payload['name']

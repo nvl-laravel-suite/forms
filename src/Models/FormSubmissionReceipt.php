@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Nvl\Forms\Database\Factories\FormSubmissionReceiptFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\FormSubmissionReceiptState;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
@@ -21,7 +21,6 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * Durable idempotency and registration claim for custom form handlers.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $form_id
  * @property string|null $idempotency_key
  * @property string $payload_digest
@@ -38,9 +37,24 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  */
 final class FormSubmissionReceipt extends Model implements Ownable
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.receipts';
+    private bool $bookkeepingWarning = false;
+
+    /** Record a non-durable diagnostic without changing the completed handler result. @internal */
+    public function withBookkeepingWarning(bool $warning): self
+    {
+        $this->bookkeepingWarning = $warning;
+
+        return $this;
+    }
+
+    public function hasBookkeepingWarning(): bool
+    {
+        return $this->bookkeepingWarning;
+    }
+
+    public const string OWNERSHIP_RESOURCE = 'forms.receipts';
 
     /** @use HasFactory<FormSubmissionReceiptFactory> */
     use HasFactory;
@@ -54,7 +68,6 @@ final class FormSubmissionReceipt extends Model implements Ownable
      */
     protected $fillable = [
         'form_id',
-        'tenant_id',
         'idempotency_key',
         'payload_digest',
         'registration_fingerprint',

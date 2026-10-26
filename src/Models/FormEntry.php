@@ -14,9 +14,8 @@ use LogicException;
 use Nvl\Forms\Builders\FormEntryBuilder;
 use Nvl\Forms\Database\Factories\FormEntryFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Models\Concerns\GuardsTenantOwnership;
+use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
-use Nvl\Forms\Traits\FormEntryFilters;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
 
@@ -24,7 +23,6 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * FormEntry model representing a submission to a form.
  *
  * @property string $id
- * @property string|null $tenant_id
  * @property string $form_id
  * @property string|null $subject
  * @property string|null $email
@@ -54,11 +52,9 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  */
 class FormEntry extends Model implements Ownable
 {
-    use GuardsTenantOwnership;
+    use HasFormOwnership;
 
-    public const string TENANT_RESOURCE = 'forms.entries';
-
-    use FormEntryFilters;
+    public const string OWNERSHIP_RESOURCE = 'forms.entries';
 
     /** @use HasFactory<FormEntryFactory> */
     use HasFactory;
@@ -88,7 +84,6 @@ class FormEntry extends Model implements Ownable
      */
     protected $fillable = [
         'form_id',
-        'tenant_id',
         'subject',
         'email',
         'first_name',

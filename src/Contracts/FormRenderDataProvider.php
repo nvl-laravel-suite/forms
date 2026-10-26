@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Contracts;
 
-use Illuminate\Http\Request;
 use Nvl\Forms\Models\Form;
 
 /**
@@ -21,10 +20,10 @@ interface FormRenderDataProvider
      * Get additional data to include in the form render payload.
      *
      * @param  Form  $form  The form being rendered
-     * @param  Request  $request  Current HTTP request
+     * @param  array<string,mixed>  $context  Current HTTP request
      * @return array<string, mixed> Additional data to merge into page props
      */
-    public function getData(Form $form, Request $request): array;
+    public function getData(Form $form, array $context): array;
 
     /**
      * Get additional translations to include for the form.

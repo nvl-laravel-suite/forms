@@ -7,7 +7,7 @@ namespace Nvl\Forms\Services;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Support\FormsConfiguration;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
  * Read-only service for rate-limit statistics and maintenance operations.
@@ -15,7 +15,7 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
 final class FormRateLimitStatisticsService
 {
     /** Create the ownership-scoped statistics service. */
-    public function __construct(private readonly TenantBoundary $boundary) {}
+    public function __construct(private readonly OwnershipBoundary $boundary) {}
 
     /**
      * Clean up expired rate limit records.

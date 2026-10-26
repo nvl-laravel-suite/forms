@@ -24,24 +24,13 @@ abstract class RuntimeOwnershipTestCase extends TestCase
     /** @return list<class-string> */
     protected function getPackageProviders($app): array
     {
-        return [
-            SupportServiceProvider::class,
-            ...(class_exists(OwnershipServiceProvider::class) ? [OwnershipServiceProvider::class] : []),
-        ];
+        return [SupportServiceProvider::class, ...class_exists(OwnershipServiceProvider::class) ? [OwnershipServiceProvider::class] : []];
     }
 
     /** Configure explicitly owned native models without Tenancy or Auth providers. */
     protected function defineEnvironment($app): void
     {
-        $app['config']->set([
-            'database.default' => 'sqlite',
-            'database.connections.sqlite.database' => ':memory:',
-            'database.connections.sqlite.url' => null,
-            'nvl-core.owners' => [Company::class, Actor::class],
-            'nvl-ownership.enabled' => true,
-            'nvl-ownership.migrations.enabled' => false,
-            'nvl-tenancy.enabled' => false,
-        ]);
+        $app['config']->set(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null, 'nvl-core.owners' => [Company::class, Actor::class], 'nvl-ownership.enabled' => true, 'nvl-ownership.migrations.enabled' => false, 'nvl-tenancy.enabled' => false]);
         if (getenv('NVL_OWNERSHIP_TEST_DRIVER') === 'pgsql') {
             $primary = getenv('NVL_OWNERSHIP_TEST_DATABASE');
             $remote = getenv('NVL_OWNERSHIP_TEST_REMOTE_DATABASE');

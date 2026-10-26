@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Nvl\Forms\Console\Commands;
 
 use Illuminate\Console\Command;
-use Nvl\Forms\Data\FormsDoctorCheckData;
 use Nvl\Forms\Services\FormsDoctor;
 
 /**
@@ -28,7 +27,7 @@ final class FormsDoctorCommand extends Command
                 'package' => 'nvl/forms',
                 'healthy' => ! $this->hasFailures($checks),
                 'checks' => array_map(
-                    static fn (FormsDoctorCheckData $check): array => $check->toArray(),
+                    static fn (array $check): array => $check,
                     $checks,
                 ),
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
@@ -36,11 +35,11 @@ final class FormsDoctorCommand extends Command
             $this->table(
                 ['Check', 'Severity', 'Result', 'Message'],
                 array_map(
-                    static fn (FormsDoctorCheckData $check): array => [
-                        $check->key,
-                        $check->severity,
-                        $check->passed ? 'PASS' : 'FAIL',
-                        $check->message,
+                    static fn (array $check): array => [
+                        $check['key'],
+                        $check['severity'],
+                        $check['passed'] ? 'PASS' : 'FAIL',
+                        $check['message'],
                     ],
                     $checks,
                 ),
@@ -51,14 +50,14 @@ final class FormsDoctorCommand extends Command
     }
 
     /**
-     * @param  list<FormsDoctorCheckData>  $checks
+     * @param  list<array>  $checks
      */
     private function hasFailures(array $checks): bool
     {
         $strict = (bool) $this->option('strict');
 
         foreach ($checks as $check) {
-            if (! $check->passed && ($check->severity === 'error' || $strict)) {
+            if (! $check['passed'] && ($check['severity'] === 'error' || $strict)) {
                 return true;
             }
         }

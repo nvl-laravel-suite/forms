@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
-use Nvl\Forms\Data\FormCorsSettings;
 use Nvl\Forms\Enums\CorsPolicy;
 use Nvl\Forms\Models\Form;
 
@@ -17,7 +16,8 @@ final class FormCorsPolicyResolver
         private readonly FormOriginAccessService $originAccess,
     ) {}
 
-    public function resolve(Form $form, ?string $originHost): FormCorsSettings
+    /** @return array<string,mixed> */
+    public function resolve(Form $form, ?string $originHost): array
     {
         $formSettings = $this->normalize($form->cors_settings);
         $policyValue = $formSettings['policy'] ?? null;
@@ -45,14 +45,14 @@ final class FormCorsPolicyResolver
         )
             ?? $policy;
 
-        return new FormCorsSettings(
-            policy: $resolvedPolicy,
-            allowCredentials: (bool) ($settings['allowCredentials'] ?? true),
-            allowWildcards: (bool) ($settings['allowWildcards'] ?? false),
-            maxAge: max(0, min(86400, $this->integer($settings['maxAge'] ?? null, 600))),
-            allowedMethods: $this->methods($settings['allowedMethods'] ?? []),
-            allowedHeaders: $this->headers($settings['allowedHeaders'] ?? []),
-        );
+        return [
+            'policy' => $resolvedPolicy->value,
+            'allowCredentials' => (bool) ($settings['allowCredentials'] ?? true),
+            'allowWildcards' => (bool) ($settings['allowWildcards'] ?? false),
+            'maxAge' => max(0, min(86400, $this->integer($settings['maxAge'] ?? null, 600))),
+            'allowedMethods' => $this->methods($settings['allowedMethods'] ?? []),
+            'allowedHeaders' => $this->headers($settings['allowedHeaders'] ?? []),
+        ];
     }
 
     /**
@@ -62,10 +62,6 @@ final class FormCorsPolicyResolver
      */
     private function normalize(mixed $settings): array
     {
-        if ($settings instanceof FormCorsSettings) {
-            $settings = $settings->toArray();
-        }
-
         if (! is_array($settings)) {
             return [];
         }

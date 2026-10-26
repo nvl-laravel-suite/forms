@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace Nvl\Forms\Services;
 
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Http\Request;
 use Nvl\Forms\Contracts\EntrySubmissionCallback;
 use Nvl\Forms\Contracts\OwnershipEntrySubmissionCallback;
-use Nvl\Forms\Contracts\TenantEntrySubmissionCallback;
-use Nvl\Forms\Data\FormSubmissionCallbackContext;
-use Nvl\Forms\Data\OwnershipFormSubmissionCallbackContext;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
@@ -39,7 +35,8 @@ final class EntryCallbackRegistry
     }
 
     /** Resolve callbacks only inside the freshly admitted committed owner/site context. @internal */
-    public function dispatchOwnership(Form $form, FormEntry $entry, OwnershipFormSubmissionCallbackContext $context): void
+    /** @param array<string,mixed> $context */
+    public function dispatchOwnership(Form $form, FormEntry $entry, array $context): void
     {
         $this->container->make(OwnershipBoundary::class)->assertRecord($form, 'forms.forms');
         $this->container->make(OwnershipBoundary::class)->assertRecord($entry, 'forms.entries');
@@ -59,9 +56,6 @@ final class EntryCallbackRegistry
      * @var array<string, list<EntrySubmissionCallback|callable|string>>
      */
     private array $callbacks = [];
-
-    /** @var array<string, list<class-string<TenantEntrySubmissionCallback>>> */
-    private array $tenantCallbacks = [];
 
     /**
      * Create the registry with a container dependency.
@@ -108,52 +102,20 @@ final class EntryCallbackRegistry
      *
      * @param  Form  $form  Form model instance
      * @param  FormEntry  $entry  Persisted entry model instance
-     * @param  Request  $request  HTTP request instance
+     * @param  array<string,mixed>  $context  HTTP request instance
      *
      * @internal
      */
-    public function dispatch(Form $form, FormEntry $entry, Request $request): void
+    public function dispatch(Form $form, FormEntry $entry, array $context): void
     {
         $callbacks = $this->callbacks[$form->handle] ?? [];
 
         foreach ($callbacks as $cb) {
             try {
-                $this->invoke($cb, $form, $entry, $request);
+                $this->invoke($cb, $form, $entry, $context);
             } catch (Throwable $throwable) {
                 report($throwable);
             }
-        }
-    }
-
-    /** Register a class-resolved callback without retaining tenant-scoped objects. */
-    public function registerTenant(string $handle, string $callbackClass): void
-    {
-        $handle = trim($handle);
-        if ($handle === '' || ! is_a($callbackClass, TenantEntrySubmissionCallback::class, true)) {
-            throw new FormException('Tenant entry callbacks must be named classes implementing the tenant callback contract.');
-        }
-
-        $callbacks = $this->tenantCallbacks[$handle] ?? [];
-        if (in_array($callbackClass, $callbacks, true)) {
-            throw new FormException("The tenant entry callback is already registered for [{$handle}].");
-        }
-        $callbacks[] = $callbackClass;
-        $this->tenantCallbacks[$handle] = $callbacks;
-    }
-
-    /**
-     * Resolve every callback freshly after tenant context is restored.
-     *
-     * @internal
-     */
-    public function dispatchTenant(Form $form, FormEntry $entry, FormSubmissionCallbackContext $context): void
-    {
-        foreach ($this->tenantCallbacks[$form->handle] ?? [] as $callbackClass) {
-            $callback = $this->container->make($callbackClass);
-            if (! $callback instanceof TenantEntrySubmissionCallback) {
-                throw new FormException('A registered tenant entry callback resolved to an invalid implementation.');
-            }
-            $callback->after($form, $entry, $context);
         }
     }
 
@@ -169,7 +131,7 @@ final class EntryCallbackRegistry
             return;
         }
 
-        unset($this->callbacks[$normalized], $this->tenantCallbacks[$normalized], $this->ownershipCallbacks[$normalized]);
+        unset($this->callbacks[$normalized], $this->ownershipCallbacks[$normalized]);
     }
 
     /**
@@ -178,14 +140,13 @@ final class EntryCallbackRegistry
     public function clear(): void
     {
         $this->callbacks = [];
-        $this->tenantCallbacks = [];
         $this->ownershipCallbacks = [];
     }
 
     /** Report every callback registration lacking native immutable ownership facts. @internal */
     public function hasNonOwnershipCallbacks(): bool
     {
-        return $this->callbacks !== [] || $this->tenantCallbacks !== [];
+        return $this->callbacks !== [];
     }
 
     /** Report legacy Request-dependent registrations for tenancy diagnostics. */
@@ -200,12 +161,12 @@ final class EntryCallbackRegistry
      * @param  EntrySubmissionCallback|callable|string  $cb  Callback entry
      * @param  Form  $form  Form model instance
      * @param  FormEntry  $entry  Entry model instance
-     * @param  Request  $request  HTTP request instance
+     * @param  array<string,mixed>  $context  HTTP request instance
      */
-    private function invoke(EntrySubmissionCallback|callable|string $cb, Form $form, FormEntry $entry, Request $request): void
+    private function invoke(EntrySubmissionCallback|callable|string $cb, Form $form, FormEntry $entry, array $context): void
     {
         if ($cb instanceof EntrySubmissionCallback) {
-            $cb->after($form, $entry, $request);
+            $cb->after($form, $entry, $context);
 
             return;
         }
@@ -217,14 +178,14 @@ final class EntryCallbackRegistry
             }
 
             if ($obj instanceof EntrySubmissionCallback) {
-                $obj->after($form, $entry, $request);
+                $obj->after($form, $entry, $context);
 
                 return;
             }
             // Try common method names
             foreach (['handle', 'execute', '__invoke'] as $method) {
                 if (is_callable([$obj, $method])) {
-                    $obj->{$method}($form, $entry, $request);
+                    $obj->{$method}($form, $entry, $context);
 
                     return;
                 }
@@ -234,7 +195,7 @@ final class EntryCallbackRegistry
         }
 
         if (is_callable($cb)) {
-            $cb($form, $entry, $request);
+            $cb($form, $entry, $context);
         }
     }
 

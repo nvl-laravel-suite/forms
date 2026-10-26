@@ -11,11 +11,8 @@ use Nvl\Forms\Contracts\FormEntryDeletionPolicy;
 use Nvl\Forms\Contracts\FormEntryPrivacyPolicy;
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Contracts\FormSpamDetector;
-use Nvl\Forms\Data\FormsDoctorCheckData;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Ownership\FormsOwnership;
-use Nvl\Support\Tenancy\Contracts\TenantContext;
-use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Throwable;
 
 /**
@@ -27,24 +24,23 @@ final readonly class FormsDoctor
         private Container $container,
         private PublicFormTokenService $publicTokens,
         private EntryCallbackRegistry $entryCallbacks,
-        private TenantContext $tenantContext,
     ) {}
 
     /**
-     * @return list<FormsDoctorCheckData>
+     * @return list<array{key:string,severity:string,passed:bool,message:string}>
      */
     public function inspect(): array
     {
         return [
             ...$this->schemaChecks(),
             ...$this->bindingChecks(),
-            ...$this->routeChecks(),
+            $this->check('authorization.management', is_string(config('nvl-forms.authorization.gate')) && Gate::has(config('nvl-forms.authorization.gate')), 'Management requires a configured host authorization gate.'),
             ...$this->securityChecks(),
         ];
     }
 
     /**
-     * @return list<FormsDoctorCheckData>
+     * @return list<array{key:string,severity:string,passed:bool,message:string}>
      */
     private function schemaChecks(): array
     {
@@ -165,7 +161,7 @@ final readonly class FormsDoctor
     }
 
     /**
-     * @return list<FormsDoctorCheckData>
+     * @return list<array{key:string,severity:string,passed:bool,message:string}>
      */
     private function bindingChecks(): array
     {
@@ -176,7 +172,7 @@ final readonly class FormsDoctor
             'spam_detector' => FormSpamDetector::class,
         ];
 
-        return array_map(function (string $key, string $contract): FormsDoctorCheckData {
+        return array_map(function (string $key, string $contract): array {
             $bound = $this->container->bound($contract);
 
             return $this->check(
@@ -190,65 +186,11 @@ final readonly class FormsDoctor
     }
 
     /**
-     * @return list<FormsDoctorCheckData>
-     */
-    private function routeChecks(): array
-    {
-        $managementEnabled = (bool) config('nvl-forms.routes.management.enabled', false);
-        $managementMiddleware = $this->middleware('management');
-        $gate = config('nvl-forms.authorization.gate');
-        $gateReady = is_string($gate) && $gate !== '' && Gate::has($gate);
-        $hasAuthentication = collect($managementMiddleware)->contains(
-            static fn (string $middleware): bool => preg_match('/(?:^|\\\\|:)auth(?:$|:)/i', $middleware) === 1
-                || str_contains(strtolower($middleware), 'sanctum')
-                || str_contains(strtolower($middleware), 'passport'),
-        );
-
-        $publicEnabled = (bool) config('nvl-forms.routes.public.enabled', false);
-        $publicMiddleware = $this->middleware('public');
-        $hasThrottle = collect($publicMiddleware)->contains(
-            static fn (string $middleware): bool => str_starts_with($middleware, 'throttle:'),
-        );
-
-        return [
-            $this->check(
-                'routes.management.authentication',
-                ! $managementEnabled || $hasAuthentication,
-                ! $managementEnabled
-                    ? 'Management routes are disabled.'
-                    : ($hasAuthentication
-                        ? 'Management routes have explicit authentication middleware.'
-                        : 'Management routes require explicit authentication middleware.'),
-            ),
-            $this->check(
-                'authorization.management',
-                ! $managementEnabled || $gateReady,
-                ! $managementEnabled
-                    ? 'Management routes are disabled.'
-                    : ($gateReady
-                        ? "Management gate [{$gate}] is registered."
-                        : 'Management routes require a configured and registered authorization gate.'),
-            ),
-            $this->check(
-                'routes.public.throttle',
-                ! $publicEnabled || $hasThrottle,
-                ! $publicEnabled
-                    ? 'Public routes are disabled.'
-                    : ($hasThrottle
-                        ? 'Public routes have explicit throttle middleware.'
-                        : 'Public routes require explicit throttle middleware.'),
-            ),
-        ];
-    }
-
-    /**
-     * @return list<FormsDoctorCheckData>
+     * @return list<array{key:string,severity:string,passed:bool,message:string}>
      */
     private function securityChecks(): array
     {
         $hasApplicationKey = $this->publicTokens->hasSigningKey();
-        $legacyCallbacksAllowed = $this->tenantContext->snapshot()->mode === TenantContextMode::Disabled
-            || ! $this->entryCallbacks->hasLegacyCallbacks();
 
         return [
             $this->check(
@@ -262,13 +204,6 @@ final readonly class FormsDoctor
                 $hasApplicationKey
                     ? 'Application key is available for signing public form tokens.'
                     : 'A nonempty, correctly encoded APP_KEY is required to sign public form tokens.',
-            ),
-            $this->check(
-                'security.tenant_callbacks',
-                $legacyCallbacksAllowed,
-                $legacyCallbacksAllowed
-                    ? 'Tenant callback registrations are context-independent.'
-                    : 'Tenant mode rejects legacy Request-dependent entry callbacks.',
             ),
         ];
     }
@@ -354,24 +289,9 @@ final readonly class FormsDoctor
         return $actual === $expected;
     }
 
-    /**
-     * @return list<string>
-     */
-    private function middleware(string $surface): array
+    /** @return array{key:string,severity:string,passed:bool,message:string} */
+    private function check(string $key, bool $passed, string $message): array
     {
-        return array_values(array_filter(
-            (array) config("nvl-forms.routes.{$surface}.middleware", []),
-            static fn (mixed $item): bool => is_string($item) && $item !== '',
-        ));
-    }
-
-    private function check(string $key, bool $passed, string $message): FormsDoctorCheckData
-    {
-        return new FormsDoctorCheckData(
-            key: $key,
-            severity: 'error',
-            passed: $passed,
-            message: $message,
-        );
+        return ['key' => $key, 'severity' => 'error', 'passed' => $passed, 'message' => $message];
     }
 }

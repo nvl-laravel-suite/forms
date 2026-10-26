@@ -10,7 +10,7 @@ use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Support\CustomSubmissionClaim;
-use Nvl\Support\Ownership\Contracts\OwnershipBoundary as TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Throwable;
 
 /**
@@ -20,7 +20,7 @@ final class CustomSubmissionReceiptService
 {
     public function __construct(
         private readonly FormRegistrationFingerprint $registrationFingerprint,
-        private readonly TenantBoundary $boundary,
+        private readonly OwnershipBoundary $boundary,
     ) {}
 
     /**
@@ -33,7 +33,7 @@ final class CustomSubmissionReceiptService
         array $payload,
         ?string $sessionId,
         ?string $idempotencyKey,
-    ): ?CustomSubmissionClaim {
+    ): CustomSubmissionClaim {
         $this->boundary->assertRecord($form, 'forms.forms');
         $email = $payload['email'] ?? null;
         $fingerprint = $this->registrationFingerprint->resolve(
@@ -41,10 +41,6 @@ final class CustomSubmissionReceiptService
             is_string($email) ? $email : null,
             $sessionId,
         );
-
-        if ($idempotencyKey === null && $fingerprint === null) {
-            return null;
-        }
 
         $payloadDigest = $this->payloadDigest($payload);
 
@@ -76,7 +72,6 @@ final class CustomSubmissionReceiptService
 
                 $receipt = FormSubmissionReceipt::query()->create([
                     'form_id' => $form->getKey(),
-                    ...$this->childOwnership($form),
                     'idempotency_key' => $idempotencyKey,
                     'payload_digest' => $payloadDigest,
                     'registration_fingerprint' => $fingerprint,
@@ -210,13 +205,5 @@ final class CustomSubmissionReceiptService
             message: (string) trans('nvl-forms::forms/messages.error.registration_already_exists'),
             statusCode: 409,
         );
-    }
-
-    /** @return array{tenant_id?:mixed} */
-    private function childOwnership(Form $form): array
-    {
-        return array_key_exists('tenant_id', $form->getAttributes())
-            ? ['tenant_id' => $form->getRawOriginal('tenant_id')]
-            : [];
     }
 }
