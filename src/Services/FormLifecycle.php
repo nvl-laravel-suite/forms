@@ -171,10 +171,8 @@ final class FormLifecycle
     public function duplicate(Form|string $form, ?string $newName = null, ?Authenticatable $actor = null): Form
     {
         FormManagement::authorize($actor);
-        $originalForm = $form instanceof Form ? $form->load(['allowedOrigins', 'translations']) : FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($form);
-        if (FormsOwnership::declared()) {
-            $originalForm = FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($originalForm->identifier());
-        }
+        $formId = $form instanceof Form ? $form->identifier() : $form;
+        $originalForm = FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($formId);
         /** @var Form $newForm */
         $newForm = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($originalForm, $newName, $actor) {
             $newForm = $originalForm->replicate();

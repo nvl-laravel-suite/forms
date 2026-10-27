@@ -12,6 +12,8 @@ Resolve these concrete services through Laravel's container:
 - `FormEntries` owns `get`, `paginate`, `update`, `delete`, `redact`, `anonymize`, `flag`, `markSpam`, `markLegitimate` and `export`. Supply the authorized actor; export returns its generated file path for consumer delivery.
 - `FormAnalytics` retains submission/view/origin/rate bookkeeping. Existing spam, rate-limit and extension ports remain injectable.
 
+Bind `FormRateLimiter` and `FormSpamDetector` before Forms registration to replace the native security adapters. Conditional defaults preserve those bindings and retain request/job scoped lifetimes.
+
 Management defaults to denial. Configure `nvl-forms.authorization.gate` and pass an authorized native `Authenticatable`; services never resolve an ambient authenticated user.
 
 ## Public submissions

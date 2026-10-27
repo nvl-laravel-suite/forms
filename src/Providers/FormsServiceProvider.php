@@ -114,10 +114,10 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
         $this->app->singletonIf(EntryCallbackRegistry::class, fn (Container $app): EntryCallbackRegistry => new EntryCallbackRegistry($app));
         $this->app->singletonIf(FormRenderDataRegistry::class, fn (Container $app): FormRenderDataRegistry => new FormRenderDataRegistry($app));
         $this->app->singletonIf(FormErrorMapperRegistry::class, fn (Container $app): FormErrorMapperRegistry => new FormErrorMapperRegistry($app));
-        $this->app->scoped(FormRateLimiter::class, FormRateLimitService::class);
+        $this->app->scopedIf(FormRateLimiter::class, FormRateLimitService::class);
         $this->app->singletonIf(FormEntryDeletionPolicy::class, AllowFormEntryDeletion::class);
         $this->app->singletonIf(FormEntryPrivacyPolicy::class, AllowFormEntryPrivacyOperations::class);
-        $this->app->scoped(FormSpamDetector::class, FormSpamDetectionService::class);
+        $this->app->scopedIf(FormSpamDetector::class, FormSpamDetectionService::class);
     }
 
     /**

@@ -19,3 +19,24 @@ test('duplicate form action clones the form with reset counters', function (): v
     Event::assertDispatched(FormChanged::class);
     $this->assertDatabaseHas(FormsTables::AllowedOrigins, ['form_id' => $duplicate->id, 'origin' => $origin->origin, 'usage_count' => 0]);
 });
+
+test('duplicate form reads persisted security settings instead of dirty caller attributes', function (): void {
+    $form = Form::factory()->create(['enable_rate_limiting' => true]);
+    $form->enable_rate_limiting = false;
+
+    $duplicate = app(FormLifecycle::class)->duplicate($form, actor: formActor());
+
+    expect($duplicate->enable_rate_limiting)->toBeTrue()
+        ->and($form->fresh()->enable_rate_limiting)->toBeTrue();
+});
+
+test('duplicate form resolves its configured storage instead of caller connection overrides', function (): void {
+    $form = Form::factory()->create();
+    $expectedConnection = $form->getConnection()->getName();
+    $form->setConnection('unregistered-caller-connection');
+
+    $duplicate = app(FormLifecycle::class)->duplicate($form, actor: formActor());
+
+    expect($duplicate->getConnection()->getName())->toBe($expectedConnection)
+        ->and($duplicate->exists)->toBeTrue();
+});

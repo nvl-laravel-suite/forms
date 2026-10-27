@@ -11,4 +11,6 @@ Inspect the returned model: FormEntry for ordinary submission, durable FormSubmi
 
 Native owned hosts admit a verified canonical origin through PublicOwnerSiteRunner before lookup. Derive child authority from the canonical Form, never request owner fields. Preserve parent constraints, owner/site/generation token binding and fresh named extensions.
 
+Select the Form subclass at nvl-forms.models.form before providers boot. Bind consumer FormRateLimiter/FormSpamDetector adapters before package registration; native scopedIf defaults preserve those extension bindings and request/job lifetimes.
+
 Run affected Pest tests, package maximum analysis and scoped Pint. Consumer HTTP and DTO examples remain active under tests/Fixtures/Consumer.
