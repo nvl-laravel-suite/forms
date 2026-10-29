@@ -59,8 +59,13 @@ final class FormSubmissions
      */
     public function submit(Form|string $formIdentifier, array $fields, array $protection): FormEntry|FormSubmissionReceipt
     {
-        Validator::make($fields, self::fieldRules())->validate();
-        $data = array_intersect_key($fields, self::fieldRules());
+        $rules = self::fieldRules();
+        $allowed = array_filter(array_keys($rules), static fn (string $field): bool => ! str_contains($field, '.'));
+        if (array_diff(array_keys($fields), $allowed) !== []) {
+            throw ValidationException::withMessages(['fields' => 'Unknown or protected submission fields are not accepted.']);
+        }
+        Validator::make($fields, $rules)->validate();
+        $data = $fields;
         $context = $this->protection($protection);
         if (FormsOwnership::declared()) {
             OwnerSiteContext::require();

@@ -71,6 +71,13 @@ final class FormReader
     public function details(Form|string $form, bool $recordView = true, ?string $origin = null, ?string $ipAddress = null, ?string $userAgent = null, ?string $sessionId = null, ?Authenticatable $actor = null): Form
     {
         FormManagement::authorize($actor);
+
+        return $this->detailsForForm($form, $recordView, $origin, $ipAddress, $userAgent, $sessionId);
+    }
+
+    /** Load management detail after the complete operation has admitted its actor. */
+    private function detailsForForm(Form|string $form, bool $recordView, ?string $origin = null, ?string $ipAddress = null, ?string $userAgent = null, ?string $sessionId = null): Form
+    {
         $formId = $form instanceof Form ? $form->identifier() : $form;
         $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
         if ($recordView) {
@@ -193,8 +200,8 @@ final class FormReader
     public function analytics(Form|string $form, int $analyticsDays = 30, ?Authenticatable $actor = null): array
     {
         FormManagement::authorize($actor);
-        $formModel = $this->details($form, false, actor: $actor);
-        $summary = $this->summary($formModel, $analyticsDays, $actor);
+        $formModel = $this->detailsForForm($form, false);
+        $summary = $this->summaryForForm($formModel, $analyticsDays);
         /** @var array<int, array<string, mixed>> $recent */
         $recent = $formModel->entries->take(5)->map(static fn (FormEntry $entry): array => $entry->toArray())->values()->all();
 
@@ -213,6 +220,17 @@ final class FormReader
         FormManagement::authorize($actor);
         $formId = $form instanceof Form ? $form->identifier() : $form;
         $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+
+        return $this->summaryForForm($formModel, $days);
+    }
+
+    /**
+     * Aggregate canonical management data after admitting the operation's actor.
+     *
+     * @return array{total_views:int,total_submissions:int,spam_blocked:int,conversion_rate:float,top_origins:array<string,int>}
+     */
+    private function summaryForForm(Form $formModel, int $days): array
+    {
         $startDate = now()->subDays($days);
         $totalViews = $formModel->analytics()->where('event_type', FormAnalyticEventType::VIEW)->where('created_at', '>=', $startDate)->count();
         $totalSubmissions = $formModel->analytics()->where('event_type', FormAnalyticEventType::SUBMISSION)->where('created_at', '>=', $startDate)->count();

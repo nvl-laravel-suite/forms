@@ -24,10 +24,11 @@ test('search projections keep a constant query count as forms grow', function ()
         $form = Form::factory()->create(['name' => "Query Form {$index}"]);
         $form->entries()->create(['subject' => "Entry {$index}", 'submitted_from' => 'example.com']);
     };
-    $measure = static function (): array {
+    $actor = formActor();
+    $measure = static function () use ($actor): array {
         DB::flushQueryLog();
         DB::enableQueryLog();
-        $result = app(FormReader::class)->search(['with' => ['entries'], 'limit' => 30], actor: formActor());
+        $result = app(FormReader::class)->search(['with' => ['entries'], 'limit' => 30], actor: $actor);
         $queryCount = count(DB::getQueryLog());
         foreach ($result['forms'] as $form) {
             $form->entries->count();

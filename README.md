@@ -2,6 +2,8 @@
 
 Forms provides native Laravel services for localized definitions, protected submissions, durable custom receipts, entry privacy, analytics and optional native ownership. Requires PHP 8.4 and Laravel 13.
 
+Management services and policies reload canonical Eloquent actors before host authorization. Caller-modified attributes and loaded relations cannot supply privileges; non-Eloquent providers retain their own identity and freshness contract.
+
 ## Native workflows
 
 Resolve these concrete services through Laravel's container:
@@ -18,7 +20,7 @@ Management defaults to denial. Configure `nvl-forms.authorization.gate` and pass
 
 ## Public submissions
 
-`fields` accepts subject, firstName, lastName, email, phone, address, body and bounded submissionData. `protection` requires a canonical HTTP origin and ipAddress; optional keys are userAgent, sessionId, native session, csrfToken, publicToken, idempotencyKey, publicSite, native actor and locale. Unknown protection keys are rejected. The consumer extracts these values from its transport.
+`fields` accepts subject, firstName, lastName, email, phone, address, body and bounded submissionData. Unknown or protected root fields are rejected. `protection` requires a canonical HTTP origin and ipAddress; optional keys are userAgent, sessionId, native session, csrfToken, publicToken, idempotencyKey, publicSite, native actor and locale. Unknown protection keys are rejected. The consumer extracts these values from its transport.
 
 The service preserves availability, allowed-origin checks, signed public-token expiry and form/site binding, session CSRF, rate consumption, honeypot, server-verified timing, spam accounting, registration uniqueness and payload-bound idempotency. Never pass client-selected owner authority or trusted timing. CORS/header/HTTP throttle/redirect/rendering behavior belongs to the consumer; active examples live under `tests/Fixtures/Consumer`.
 

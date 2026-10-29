@@ -28,7 +28,7 @@ function formNativeInput(mixed $input): array
 
 function formActor(): TestFormsUser
 {
-    return (new TestFormsUser)->forceFill(['id' => 1, 'name' => 'Forms manager']);
+    return TestFormsUser::query()->firstOrCreate(['email' => 'forms-manager@example.test'], ['name' => 'Forms manager', 'password' => 'unused-test-password']);
 }
 
 /** Retained unit scenarios for private security stages; complete submission is covered independently. */

@@ -58,7 +58,7 @@ final class FormLifecycle
      */
     public function create(array $data, ?Authenticatable $actor = null): Form
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $this->validateMutationKeys($data);
         Validator::make($data, $this->mutationRules(false))->validate();
         $data = array_intersect_key($data, $this->mutationRules(false));
@@ -126,7 +126,7 @@ final class FormLifecycle
      */
     public function update(Form|string $form, array $data, ?Authenticatable $actor = null): Form
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $this->validateMutationKeys($data);
         Validator::make($data, $this->mutationRules(true))->validate();
         $data = array_intersect_key($data, $this->mutationRules(true));
@@ -182,7 +182,7 @@ final class FormLifecycle
      */
     public function duplicate(Form|string $form, ?string $newName = null, ?Authenticatable $actor = null): Form
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $formId = $form instanceof Form ? $form->identifier() : $form;
         $originalForm = FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($formId);
         /** @var Form $newForm */
@@ -263,7 +263,7 @@ final class FormLifecycle
      */
     public function delete(Form|string $form, ?Authenticatable $actor = null): bool
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         // Resolve model if ID provided
         $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
         $deleted = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $actor) {

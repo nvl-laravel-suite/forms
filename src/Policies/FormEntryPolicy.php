@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Policies;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Contracts\Auth\Authenticatable as User;
-use Illuminate\Support\Facades\Gate;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Services\FormManagement;
 
 /**
  * Authorization policy for form entry management.
@@ -83,16 +84,12 @@ final class FormEntryPolicy
      */
     private function isAuthoritative(?User $user): bool
     {
-        if (! $user instanceof User) {
+        try {
+            FormManagement::authorize($user);
+        } catch (AuthorizationException) {
             return false;
         }
 
-        $gate = config('nvl-forms.authorization.gate');
-
-        if (! is_string($gate) || $gate === '') {
-            return false;
-        }
-
-        return Gate::forUser($user)->allows($gate);
+        return true;
     }
 }

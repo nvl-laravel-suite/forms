@@ -126,6 +126,6 @@ abstract class OwnershipTestCase extends RuntimeTestCase
 
     protected function createOwnedForm(string $handle = 'contact'): Form
     {
-        return app(FormLifecycle::class)->create(formNativeInput(MutateFormPayload::from(['handle' => $handle, 'status' => 'active', 'type' => 'iframe', 'resolvement' => 'entries', 'translations' => ['en' => ['name' => 'Contact']], 'enableHoneypot' => false, 'enableRateLimiting' => false, 'restrictPublicAccess' => false, 'requireCsrf' => false])), actor: formActor());
+        return app(FormLifecycle::class)->create(formNativeInput(MutateFormPayload::from(['handle' => $handle, 'status' => 'active', 'type' => 'iframe', 'resolvement' => 'entries', 'translations' => ['en' => ['name' => 'Contact']], 'enableHoneypot' => false, 'enableRateLimiting' => false, 'restrictPublicAccess' => false, 'requireCsrf' => false])), actor: Actor::firstOrFail());
     }
 }

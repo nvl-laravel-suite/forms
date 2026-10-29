@@ -6,7 +6,9 @@ namespace Nvl\Forms\Services;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Nvl\Forms\Policies\FormPolicy;
+use Illuminate\Support\Facades\Gate;
+use Nvl\Support\Auth\CanonicalActorResolver;
+use Nvl\Support\Ownership\Services\OwnerSiteContext;
 
 /**
  * Authorizes management through the explicitly supplied host principal.
@@ -15,10 +17,17 @@ use Nvl\Forms\Policies\FormPolicy;
  */
 final class FormManagement
 {
-    public static function authorize(?Authenticatable $actor): void
+    public static function authorize(?Authenticatable $actor): Authenticatable
     {
-        if (! app(FormPolicy::class)->viewAny($actor)) {
+        if ($actor === null || OwnerSiteContext::current() !== null) {
             throw new AuthorizationException('Forms management requires an authorized actor.');
         }
+        $actor = app(CanonicalActorResolver::class)->resolve($actor);
+        $gate = config('nvl-forms.authorization.gate');
+        if (! is_string($gate) || $gate === '' || Gate::forUser($actor)->denies($gate)) {
+            throw new AuthorizationException('Forms management requires an authorized actor.');
+        }
+
+        return $actor;
     }
 }

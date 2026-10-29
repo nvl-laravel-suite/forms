@@ -46,7 +46,7 @@ final class FormEntries
      */
     public function delete(FormEntry|string $formEntry, ?Authenticatable $actor = null): bool
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $entryId = $formEntry instanceof FormEntry ? $formEntry->id : $formEntry;
         /** @var array{deleted: bool, form: Form, entry: FormEntry, was_spam: bool} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entryId, $actor) {
@@ -99,7 +99,7 @@ final class FormEntries
      */
     public function redact(FormEntry|string $entry, array $fields, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $unknown = array_values(array_diff($fields, self::REDACTABLE));
         if ($fields === [] || $unknown !== []) {
             throw new InvalidArgumentException('Redaction fields must use the documented allowlist.');
@@ -121,7 +121,7 @@ final class FormEntries
 
     public function anonymize(FormEntry|string $entry, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $updated = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): FormEntry {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
             $model = FormEntry::query()->with('form')->lockForUpdate()->findOrFail($entryId);
@@ -147,7 +147,7 @@ final class FormEntries
      */
     public function flag(FormEntry|string $entry, string $key, mixed $value, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         /** @var array{entry: FormEntry, form: Form} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $key, $value, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
@@ -175,7 +175,7 @@ final class FormEntries
      */
     public function markSpam(FormEntry|string $entry, ?string $reason = null, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         /** @var array{entry: FormEntry, form: Form} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $reason, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
@@ -210,7 +210,7 @@ final class FormEntries
      */
     public function markLegitimate(FormEntry|string $entry, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         /** @var array{entry: FormEntry, form: Form, was_spam: bool} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): array {
             $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
@@ -247,7 +247,7 @@ final class FormEntries
      */
     public function export(Form|string $form, array $options = [], ?Authenticatable $actor = null): string
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
         $this->ownership->assertRecord($form, 'forms.forms');
         $this->exportFormEntriesValidateExportPermissions($form, $actor);
@@ -259,7 +259,7 @@ final class FormEntries
         if ($entries->isEmpty()) {
             throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.no_export_data', ['items' => (string) trans('nvl-forms::entries/general.entities.plural')]));
         }
-        $rawActorId = $actor?->getAuthIdentifier();
+        $rawActorId = $actor->getAuthIdentifier();
         $actorId = is_string($rawActorId) || is_int($rawActorId) ? $rawActorId : null;
         $exportId = Str::ulid()->toString();
         $progressKey = $this->ownership->key('forms.forms', 'nvl:forms:export-progress:'.($actorId !== null ? (string) $actorId : 'guest').':'.$form->id.':'.$exportId);
@@ -370,7 +370,7 @@ final class FormEntries
      */
     public function get(FormEntry|string $formEntry, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         // Resolve model if ID provided
         $formEntry = FormEntry::query()->findOrFail($formEntry instanceof FormEntry ? $formEntry->identifier() : $formEntry);
 
@@ -391,7 +391,7 @@ final class FormEntries
      */
     public function paginate(Form|string|null $form = null, bool $paginate = true, ?int $perPage = null, array $filters = [], ?Authenticatable $actor = null): LengthAwarePaginator|Collection
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $query = FormEntry::query()->select($this->listFormEntriesGetSelectColumns())->with($this->listFormEntriesGetEagerLoadRelations());
         // Filter by specific form if provided
         if ($form !== null) {
@@ -449,7 +449,7 @@ final class FormEntries
     /** @param array<string,mixed> $attributes */
     public function update(FormEntry|string $entry, array $attributes, ?Authenticatable $actor = null): FormEntry
     {
-        FormManagement::authorize($actor);
+        $actor = FormManagement::authorize($actor);
         $allowed = ['subject', 'email', 'firstName', 'lastName', 'phone', 'address', 'body', 'submissionData'];
         if (array_diff(array_keys($attributes), $allowed) !== []) {
             throw new InvalidArgumentException('Entry updates accept only documented content fields.');
