@@ -96,3 +96,5 @@ Publish the package's normal configuration and migrations through Laravel. Confi
 `FormChanged` and `FormEntryChanged` snapshot scalar identifiers and bounded operation facts after the source commit. Personal entry content and export paths are excluded. See `resources/event-catalog.json` and `docs/events.md`.
 
 Run package Pest tests with its `phpunit.xml.dist`. Consumer HTTP/DTO fixtures remain active. `tests/Historical` preserves retired bridge, automatic old-schema conversion and generated Action-interface metadata tests outside active discovery; native Ownership, committed callback, privacy, submission and lifecycle tests remain active.
+
+Shared [service contracts, model extensions and composition](https://github.com/nvl-laravel-suite/laravel-suite/blob/main/docs/consumer-api.md) apply alongside the package-specific rules above.

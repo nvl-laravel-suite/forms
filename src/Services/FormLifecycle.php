@@ -28,7 +28,13 @@ use Nvl\Translatable\Services\TranslationPayloadValidator;
 use Throwable;
 
 /**
- * Native Forms workflow family.
+ * Creates, patches, duplicates and deletes forms with native authorization and revisions.
+ *
+ * @phpstan-type FormCopy array{name?:?string,description?:?string,submitButtonLabel?:?string,successTitle?:?string,successMessage?:?string,...}
+ * @phpstan-type FormCors array{policy?:CorsPolicy|string,allowCredentials?:bool,allowWildcards?:bool,maxAge?:int,allowedMethods?:list<string>,allowedHeaders?:list<string>}
+ * @phpstan-type FormOptions array{showHeader?:bool,showLogo?:bool,submitButtonLabel?:?string,successRedirectUrl?:?string,theme?:?string,maxWidth?:?string,backgroundColor?:?string,accentColor?:?string,showPoweredBy?:bool,compactLayout?:bool,...}
+ * @phpstan-type FormCreate array{handle?:?string,translations:array<string,FormCopy|null>,translation_mode?:TranslationSyncMode|string,resolvement:Resolvement|string,type:FormType|string,status?:FormStatus|string,restrictPublicAccess?:bool,allowMultipleRegistrations?:bool,dateRestricted?:bool,availableFrom?:?string,availableUntil?:?string,enableHoneypot?:bool,enableRateLimiting?:bool,rateLimitPerHour?:?int,requireCsrf?:bool,corsSettings?:FormCors|null,options?:FormOptions|null,allowedOrigins?:array<array-key,string>|null}
+ * @phpstan-type FormUpdate array{expected_revision:int,handle?:?string,translations?:array<string,FormCopy|null>,translation_mode?:TranslationSyncMode|string,resolvement?:Resolvement|string,type?:FormType|string,status?:FormStatus|string,restrictPublicAccess?:bool,allowMultipleRegistrations?:bool,dateRestricted?:bool,availableFrom?:?string,availableUntil?:?string,enableHoneypot?:bool,enableRateLimiting?:bool,rateLimitPerHour?:?int,requireCsrf?:bool,corsSettings?:FormCors|null,options?:FormOptions|null,allowedOrigins?:array<array-key,string>|null}
  *
  * @api
  */
@@ -39,10 +45,11 @@ final class FormLifecycle
     /**
      * Execute the form creation within a database transaction.
      *
+     * Requires an explicitly authorized actor. Validates input before persistence.
      * Generates a unique handle if not provided, persists the form,
      * creates any allowed origins, and returns the fresh model.
      *
-     * @param  array<string, mixed>  $data  Validated form mutation data
+     * @param  FormCreate  $data  Native input; unknown and protected keys are rejected
      * @param  Authenticatable|null  $actor  Authenticated actor performing the operation
      * @return Form The created form instance with allowedOrigins loaded
      *
@@ -99,16 +106,21 @@ final class FormLifecycle
     }
 
     /**
-     * Execute the form update within a database transaction.
+     * Patch a form on its configured connection with a required expected_revision.
+     *
+     * Nullable attributes accept explicit null. Translation patching retains omitted
+     * locales; translation_mode=replace removes omitted locales. Returns fresh state.
      *
      * Validates handle uniqueness if changed, updates form attributes,
      * syncs allowed origins, and returns the refreshed model.
      *
      * @param  Form|string  $form  Form instance or identifier
-     * @param  array<string, mixed>  $data  Updated form mutation data
+     * @param  FormUpdate  $data  Omitted fields remain unchanged; allowedOrigins null clears the list
      * @param  Authenticatable|null  $actor  Authenticated actor performing the update
      * @return Form Updated form instance with allowedOrigins loaded
      *
+     * @throws ValidationException When the payload is invalid
+     * @throws FormException When the expected revision is stale
      * @throws Exception When handle is not unique
      * @throws Throwable When transaction fails
      */

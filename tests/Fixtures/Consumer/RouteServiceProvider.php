@@ -50,7 +50,6 @@ final class RouteServiceProvider extends ServiceProvider
             RateLimiter::for($name, $limiter);
         };
         $names->reserve('forms', 'limiter', 'nvl.forms.public', $exists, $install);
-        $names->register('forms', 'limiter', 'forms-public', 'nvl.forms.public', $exists, $install);
     }
 
     /**

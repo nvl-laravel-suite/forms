@@ -64,7 +64,7 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
 
         $this->publishes([
             __DIR__.'/../../resources/boost/skills' => base_path('.agents/skills'),
-        ], 'forms-skills');
+        ], 'nvl-forms-skills');
         $migrations = array_values(array_filter(
             glob(__DIR__.'/../../database/migrations/*.php') ?: [],
             static fn (string $path): bool => basename($path) !== '2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php',
@@ -74,7 +74,7 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
         foreach ($migrations as $path) {
             $publishedMigrations[$path] = database_path('migrations/'.basename($path));
         }
-        $this->publishesMigrations($publishedMigrations, 'forms-migrations');
+        $this->publishesMigrations($publishedMigrations, 'nvl-forms-migrations');
 
         if ($this->app->runningInConsole()) {
             $this->registerCommands();
@@ -161,7 +161,7 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
 
         $this->publishes([
             $langPath => lang_path('vendor/nvl-'.$this->nameLower),
-        ], 'forms-translations');
+        ], 'nvl-forms-translations');
     }
 
     /**
@@ -171,7 +171,7 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
     {
         $this->publishes([
             __DIR__.'/../../config/nvl-forms.php' => config_path('nvl-forms.php'),
-        ], 'forms-config');
+        ], 'nvl-forms-config');
     }
 
     /**
