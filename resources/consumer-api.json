@@ -835,6 +835,16 @@
             "properties": [],
             "constants": []
         },
+        "Nvl\\Forms\\Services\\FormRetention": {
+            "kind": "class",
+            "file": "src/Services/FormRetention.php",
+            "methods": [
+                "__construct",
+                "prune"
+            ],
+            "properties": [],
+            "constants": []
+        },
         "Nvl\\Forms\\Services\\FormSubmissions": {
             "kind": "class",
             "file": "src/Services/FormSubmissions.php",

@@ -8,8 +8,10 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Nvl\Forms\Contracts\FormEntryPrivacyPolicy;
+use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Policies\FormEntryPolicy;
 use Nvl\Forms\Policies\FormPolicy;
 use Nvl\Forms\Services\FormEntries;
@@ -36,6 +38,34 @@ test('native submissions persist once and reject untrusted protection claims', f
     expect($service->submit($form, ['email' => 'native@example.com', 'body' => 'A normal enquiry.'], $protection)->id)->toBe($entry->id);
     expect(FormEntry::query()->count())->toBe(1);
     expect(fn () => $service->submit($form, [], [...$protection, 'trustedFormLoadTime' => 1]))->toThrow(ValidationException::class);
+});
+
+test('entry rejection retains rate limit blocking state', function (): void {
+    $form = Form::factory()->create(['require_csrf' => false, 'enable_honeypot' => false, 'enable_rate_limiting' => true, 'rate_limit_per_hour' => 1, 'restrict_public_access' => false]);
+    $service = app(FormSubmissions::class);
+    $protection = ['origin' => 'https://example.com', 'ipAddress' => '192.0.2.70'];
+    FormRateLimit::factory()->create([
+        'form_id' => $form->id, 'ip_address' => '192.0.2.70', 'submission_count' => 1,
+        'window_start' => now(), 'last_submission_at' => now(), 'is_blocked' => false,
+        'blocked_until' => null, 'violation_count' => 0,
+    ]);
+
+    expect(fn () => $service->submit($form, ['body' => 'Excess enquiry.'], $protection))
+        ->toThrow(FormSubmissionRejectionException::class);
+    $limit = FormRateLimit::query()->where('form_id', $form->id)->sole();
+    expect($limit->is_blocked)->toBeTrue()
+        ->and($limit->violation_count)->toBe(1)
+        ->and(FormEntry::query()->where('form_id', $form->id)->count())->toBe(0);
+});
+
+test('entry honeypot returns the native submission rejection type', function (): void {
+    config(['nvl-forms.security.spam_protection.honeypot.field_names' => ['website']]);
+    $form = Form::factory()->create(['require_csrf' => false, 'enable_honeypot' => true, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
+
+    expect(fn () => app(FormSubmissions::class)->submit($form, ['submissionData' => ['website' => 'spam']], [
+        'origin' => 'https://example.com', 'ipAddress' => '192.0.2.71',
+    ]))->toThrow(FormSubmissionRejectionException::class);
+    expect(FormEntry::query()->where('form_id', $form->id)->count())->toBe(0);
 });
 
 test('native submissions reject unknown and protected root fields before persistence', function (string $field): void {

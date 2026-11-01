@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Nvl\Forms\Models;
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +16,7 @@ use LogicException;
 use Nvl\Forms\Builders\FormEntryBuilder;
 use Nvl\Forms\Database\Factories\FormEntryFactory;
 use Nvl\Forms\Definitions\Tables\FormsTables;
+use Nvl\Forms\Exceptions\FormRetentionPredicateChanged;
 use Nvl\Forms\Models\Concerns\HasFormOwnership;
 use Nvl\Forms\Services\FormModelRegistry;
 use Nvl\Support\Config\PackageStorage;
@@ -44,8 +47,8 @@ use Nvl\Support\Ownership\Contracts\Ownable;
  * @property string|null $registration_fingerprint
  * @property Carbon|null $redacted_at
  * @property Carbon|null $anonymized_at
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read Form $form
  *
  * @api
@@ -62,6 +65,50 @@ class FormEntry extends Model implements Ownable
     use HasUuids;
 
     private bool $idempotentReplay = false;
+
+    private ?CarbonImmutable $retentionCutoff = null;
+
+    /** @var (Closure(): void)|null */
+    private ?Closure $retentionAuthorization = null;
+
+    /**
+     * @internal Preserve Eloquent hooks while fencing the actual DELETE by source, authority and age.
+     *
+     * @param  Closure(): void  $authorize
+     *
+     * @throws FormRetentionPredicateChanged When the final DELETE no longer satisfies the cutoff.
+     */
+    public function deleteBefore(CarbonImmutable $cutoff, Closure $authorize): ?bool
+    {
+        $this->retentionCutoff = $cutoff;
+        $this->retentionAuthorization = $authorize;
+        try {
+            return $this->delete();
+        } finally {
+            $this->retentionCutoff = null;
+            $this->retentionAuthorization = null;
+        }
+    }
+
+    /** Preserve ordinary deletes; a renewed entry must not emit a deleted event. */
+    protected function performDeleteOnModel(): void
+    {
+        if ($this->retentionCutoff === null) {
+            parent::performDeleteOnModel();
+
+            return;
+        }
+        if ($this->retentionAuthorization === null) {
+            throw new LogicException('Conditional Form retention requires current authorization.');
+        }
+        ($this->retentionAuthorization)();
+        $deleted = $this->newModelQuery()->where($this->getKeyName(), $this->getKeyForSaveQuery())
+            ->where($this->qualifyColumn('created_at'), '<', $this->retentionCutoff)->delete();
+        if ($deleted !== 1) {
+            throw new FormRetentionPredicateChanged('The Form entry no longer satisfies the fixed retention cutoff.');
+        }
+        $this->exists = false;
+    }
 
     /** Return this persisted entry's required UUID identifier. */
     public function identifier(): string

@@ -31,7 +31,7 @@ abstract class RuntimeOwnershipTestCase extends TestCase
     protected function defineEnvironment($app): void
     {
         $app['config']->set(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null, 'nvl-core.owners' => [Company::class, Actor::class], 'nvl-ownership.enabled' => true, 'nvl-ownership.migrations.enabled' => false, 'nvl-tenancy.enabled' => false]);
-        if (getenv('NVL_OWNERSHIP_TEST_DRIVER') === 'pgsql') {
+        if (in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
             $primary = getenv('NVL_OWNERSHIP_TEST_DATABASE');
             $remote = getenv('NVL_OWNERSHIP_TEST_REMOTE_DATABASE');
             foreach ([$primary, $remote] as $database) {
@@ -39,7 +39,14 @@ abstract class RuntimeOwnershipTestCase extends TestCase
                     throw new \RuntimeException('Persistence tests require explicitly dedicated nvl_own_test_ databases.');
                 }
             }
-            $connection = ['driver' => 'pgsql', 'host' => '/tmp', 'port' => '5432', 'database' => $primary, 'username' => get_current_user(), 'password' => '', 'charset' => 'utf8', 'prefix' => '', 'search_path' => 'public', 'sslmode' => 'prefer'];
+            $driver = (string) getenv('NVL_OWNERSHIP_TEST_DRIVER');
+            $host = getenv('NVL_OWNERSHIP_TEST_HOST') ?: ($driver === 'pgsql' ? '/tmp' : '127.0.0.1');
+            $port = getenv('NVL_OWNERSHIP_TEST_PORT') ?: ($driver === 'pgsql' ? '5432' : '3306');
+            if (! in_array($host, ['127.0.0.1', 'localhost', '::1', ...($driver === 'pgsql' ? ['/tmp'] : [])], true) || ! ctype_digit($port)) {
+                throw new \RuntimeException('Native ownership fixtures require a loopback service and explicit numeric port.');
+            }
+            $connection = ['driver' => $driver, 'url' => null, 'host' => $host, 'port' => $port, 'database' => $primary, 'username' => getenv('NVL_OWNERSHIP_TEST_USERNAME') ?: ($driver === 'pgsql' ? get_current_user() : 'root'), 'password' => getenv('NVL_OWNERSHIP_TEST_PASSWORD') ?: '', 'prefix' => '', 'timezone' => $driver === 'pgsql' ? 'UTC' : '+00:00'];
+            $connection += $driver === 'pgsql' ? ['charset' => 'utf8', 'search_path' => 'public', 'sslmode' => 'prefer'] : ['charset' => 'utf8mb4', 'collation' => 'utf8mb4_bin', 'strict' => true, 'engine' => 'InnoDB'];
             $app['config']->set('database.connections.sqlite', $connection);
             $app['config']->set('database.connections.ownership_remote', [...$connection, 'database' => $remote]);
         }
@@ -49,7 +56,8 @@ abstract class RuntimeOwnershipTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (getenv('NVL_OWNERSHIP_TEST_DRIVER') === 'pgsql') {
+        if (in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
+            $this->assertSame(getenv('NVL_OWNERSHIP_TEST_DRIVER'), DB::connection()->getDriverName());
             foreach (['sqlite', 'ownership_remote'] as $connection) {
                 DB::connection($connection)->getSchemaBuilder()->dropAllTables();
             }

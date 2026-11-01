@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Services\FormEntries;
 use Nvl\Forms\Services\FormReader;
+use Nvl\Forms\Services\FormRetention;
 use Nvl\Forms\Tests\Fixtures\Actor;
 use Nvl\Forms\Tests\Fixtures\OwnershipForm;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
@@ -31,7 +32,7 @@ it('enforces inherited native scope for raw submission writes', function (): voi
     $entry = new FormEntry;
     expect(fn () => $entry->getConnection()->table($entry->getTable())->insert(['id' => (string) Str::uuid(), 'form_id' => $b->id, 'owner_scope_key' => $a->getRawOriginal('owner_scope_key'), 'submitted_from' => 'https://example.test']))->toThrow(QueryException::class);
 });
-it('partitions export artifacts progress and cleanup before any foreign Form effect', function (): void {
+it('partitions export artifacts and progress without implicit retention or foreign Form effects', function (): void {
     Storage::fake('local');
     config(['nvl-forms.authorization.gate' => 'authoritative-group']);
     Gate::define('authoritative-group', static fn (): bool => true);
@@ -51,10 +52,33 @@ it('partitions export artifacts progress and cleanup before any foreign Form eff
         expect(fn () => app(FormEntries::class)->export($forms[8], [], Actor::firstOrFail()))->toThrow(OwnershipViolation::class);
         expect(file_exists($paths[8]))->toBeTrue()->and(file_exists($paths[7]))->toBeTrue();
         $path = app(FormEntries::class)->export($forms[7], [], Actor::firstOrFail());
-        expect(file_exists($paths[7]))->toBeFalse()->and(file_exists($paths[8]))->toBeTrue();
+        expect(file_exists($paths[7]))->toBeTrue()->and(file_exists($paths[8]))->toBeTrue();
         $exportId = explode('_', basename($path), 2)[0];
         $identity = 'nvl:forms:export-progress:1:'.$forms[7]->id.':'.$exportId;
         $key = app(OwnershipBoundary::class)->key('forms.forms', $identity);
         expect(Cache::get($key))->toBe(['status' => 'completed', 'progress' => 100]);
+    });
+});
+
+it('limits explicit retention to the admitted Form owner and denies foreign preloaded Forms', function (): void {
+    config(['nvl-forms.retention.enabled' => true, 'nvl-forms.retention.authorization_ability' => 'retain-form-data', 'nvl-forms.retention.entries_days' => 30]);
+    Gate::define('retain-form-data', static fn (): bool => true);
+    $forms = [];
+    foreach ([7, 8] as $id) {
+        $forms[$id] = $this->owned($id, function () use ($id): OwnershipForm {
+            $form = $this->createOwnedForm();
+            FormEntry::factory()->for($form, 'form')->create(['email' => 'retention-'.$id.'@example.test', 'created_at' => now()->subDays(60)]);
+
+            return $form;
+        });
+    }
+    $this->owned(7, function () use ($forms): void {
+        $actor = Actor::firstOrFail();
+        expect(fn () => app(FormRetention::class)->prune($forms[8], $actor))->toThrow(OwnershipViolation::class);
+        expect(app(FormRetention::class)->prune($forms[7], $actor)['entries'])->toBe(1)
+            ->and(FormEntry::query()->count())->toBe(0);
+    });
+    $this->owned(8, function (): void {
+        expect(FormEntry::query()->count())->toBe(1);
     });
 });

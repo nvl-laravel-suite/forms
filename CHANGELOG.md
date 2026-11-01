@@ -5,6 +5,12 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Align NVL peers and consumer contracts on the coordinated 7.x line. Review [UPGRADING.md](UPGRADING.md) for adoption and application-owned integration requirements.
+- Stream native entry exports from bounded private cell snapshots with current authority/source checks and explicit local-filesystem budgets.
+- Add disabled-by-default, explicitly authorized per-Form retention with no inferred deletion ages; preserve entry legal holds and isolate verified export files.
+
 ## [6.0.1] - 2026-10-21
 
 ### Changed

@@ -218,7 +218,7 @@ final class FormSubmissions
     {
         $payloadDigest = $this->payloadDigest($data);
         try {
-            /** @var array{entry?: FormEntry, form: Form, is_spam: bool, rejection?: string, duplicate?: bool} $result */
+            /** @var array{entry?: FormEntry, form: Form, is_spam: bool, rejection?: string, rejection_exception?: FormSubmissionRejectionException, duplicate?: bool} $result */
             $result = (new FormEntry)->getConnection()->transaction(function () use ($data, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $trustedFormLoadTime, $payloadDigest, $actor) {
                 $formId = $data['formId'];
                 if ($formId === '') {
@@ -240,7 +240,11 @@ final class FormSubmissions
                     $this->throwDuplicateRegistration();
                 }
                 $this->validateHost($form, $submittedFrom);
-                $this->checkRateLimit($form, $ipAddress, $submittedFrom, $userAgent, $sessionId);
+                try {
+                    $this->checkRateLimit($form, $ipAddress, $submittedFrom, $userAgent, $sessionId);
+                } catch (FormSubmissionRejectionException $exception) {
+                    return ['form' => $form, 'is_spam' => false, 'rejection_exception' => $exception];
+                }
                 $submissionData = $data['submissionData'] ?? [];
                 if ($this->spamDetection->checkHoneypot($form, $submissionData)) {
                     $this->spamRejectionRecorder->record(form: $form, reason: 'honeypot', score: 100, flags: ['honeypot' => true], channel: 'entries', origin: $submittedFrom, ipAddress: $ipAddress, userAgent: $userAgent, sessionId: $sessionId);
@@ -276,8 +280,11 @@ final class FormSubmissions
             }
             throw $exception;
         }
+        if (isset($result['rejection_exception'])) {
+            throw $result['rejection_exception'];
+        }
         if (($result['rejection'] ?? null) === 'bot_detected') {
-            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.bot_detected'));
+            throw new FormSubmissionRejectionException((string) trans('nvl-forms::forms/shared.messages.error.bot_detected'), 422);
         }
         $entry = $result['entry'] ?? null;
         if (! $entry instanceof FormEntry) {

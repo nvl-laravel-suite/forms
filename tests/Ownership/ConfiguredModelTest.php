@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormLifecycle;
+use Nvl\Forms\Tests\Fixtures\Actor;
 use Nvl\Forms\Tests\Fixtures\OwnershipForm;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 
@@ -18,7 +19,7 @@ it('creates ordinary host test factories and duplicates through the same primary
         $fixture = OwnershipForm::factory()->create(['handle' => 'factory-contact']);
         expect($fixture)->toBeInstanceOf(OwnershipForm::class)->and($fixture->fresh()->company_id)->toBe(7);
         $form = $this->createOwnedForm();
-        $copy = app(FormLifecycle::class)->duplicate($form, actor: formActor());
+        $copy = app(FormLifecycle::class)->duplicate($form, actor: Actor::firstOrFail());
         expect($copy)->toBeInstanceOf(OwnershipForm::class)->and($copy->fresh()->company_id)->toBe(7)->and($copy->id)->not->toBe($form->id)->and($copy->submissions_count)->toBe(0);
     });
 });

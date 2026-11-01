@@ -25,6 +25,25 @@ return [
         'max_items' => 250,
     ],
 
+    'exports' => [
+        'disk' => 'local',
+        'maximum_rows' => 10000,
+        'maximum_dynamic_fields' => 250,
+        'maximum_bytes' => 67108864,
+        'chunk_size' => 200,
+    ],
+
+    'retention' => [
+        'enabled' => false,
+        'authorization_ability' => null,
+        'entries_days' => null,
+        'analytics_days' => null,
+        'rates_days' => null,
+        'exports_hours' => null,
+        'maximum_records' => 1000,
+        'batch_size' => 200,
+    ],
+
     'security' => [
         'rate_limit' => [
             'max_attempts' => 10,

@@ -12,6 +12,7 @@ parameters:
         - src
         - database/factories
         - database/seeders
+        - tests/FormsRetentionTestCase.php
 
     level: max
 

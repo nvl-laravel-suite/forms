@@ -9,22 +9,49 @@ use JsonException;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use PDO;
+use Throwable;
+use WeakMap;
 
 /**
  * Handles CSV generation, data sanitization, and dynamic field extraction for form entry exports.
  *
- * Provides the core export logic extracted from the action layer so that
- * ExportFormEntriesAction remains a thin orchestrator.
+ * Keeps the public collection formatter and bounded native export snapshots together.
  *
  * @api
  */
 final class FormEntryExportService
 {
+    /** @var WeakMap<PDO, string>|null Transient SQLite databases need distinct lifetime namespaces. */
+    private static ?WeakMap $memorySources = null;
+
     private const string DEFAULT_ACTOR_SEGMENT = 'guest';
 
     private const string DEFAULT_FORM_SEGMENT = 'form';
 
     private const string FORMULA_PREFIX_CHARACTERS = '=+-@';
+
+    /** @internal Keep file retention isolated by actual configured source, Form and owner. */
+    public function directory(Form $form, OwnershipBoundary $ownership): string
+    {
+        $source = $form->getConnection();
+        $memory = null;
+        if ($source->getDriverName() === 'sqlite' && $source->getDatabaseName() === ':memory:') {
+            self::$memorySources ??= new WeakMap;
+            $pdo = $source->getPdo();
+            $memory = self::$memorySources[$pdo] ??= bin2hex(random_bytes(16));
+        }
+        $identity = 'exports/forms:'.hash('sha256', serialize([
+            $source->getName(), $source->getDriverName(), $source->getDatabaseName(),
+            $source->getConfig('host'), $source->getConfig('port'), $source->getConfig('unix_socket'),
+            $source->getConfig('search_path'), $source->getConfig('schema'), $source->getTablePrefix(),
+            $form->getTable(), $memory,
+        ]));
+        $partition = $ownership->key('forms.forms', $identity);
+
+        return 'exports/forms/'.hash('sha256', $partition).'/'.$form->id;
+    }
 
     /**
      * Generate CSV content from a collection of form entries.
@@ -55,6 +82,123 @@ final class FormEntryExportService
         }
 
         return $csv;
+    }
+
+    /**
+     * Capture immutable sanitized cells while discovering a bounded dynamic header.
+     *
+     * @internal
+     *
+     * @param  iterable<FormEntry>  $entries
+     * @param  array<string, mixed>  $options
+     * @return array{stream: resource, rows: int, fields: list<string>}
+     */
+    public function snapshot(iterable $entries, array $options, int $maximumRows, int $maximumFields, int $maximumBytes): array
+    {
+        $stream = tmpfile();
+        if ($stream === false) {
+            throw new FormException('Unable to open the private form entry export snapshot.');
+        }
+        $rows = 0;
+        $bytes = 0;
+        $fields = [];
+        try {
+            foreach ($entries as $entry) {
+                if (++$rows > $maximumRows) {
+                    throw new FormException('The form entry export exceeds its configured row budget.');
+                }
+                $dynamic = [];
+                if (($options['include_submission_data'] ?? true) && is_array($entry->submission_data)) {
+                    foreach ($entry->submission_data as $name => $value) {
+                        $name = (string) $name;
+                        if ($name === '') {
+                            continue;
+                        }
+                        $fields['field:'.$name] = $name;
+                        if (count($fields) > $maximumFields) {
+                            throw new FormException('The form entry export exceeds its configured dynamic-column budget.');
+                        }
+                        $dynamic[$name] = $this->sanitizeForExport($value);
+                    }
+                }
+                $line = json_encode(['base' => $this->buildEntryRow($entry, [], false, (bool) ($options['include_sensitive_data'] ?? false)), 'dynamic' => $dynamic], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n";
+                $bytes += strlen($line);
+                if ($bytes > $maximumBytes) {
+                    throw new FormException('The form entry export snapshot exceeds its configured byte budget.');
+                }
+                if (fwrite($stream, $line) !== strlen($line)) {
+                    throw new FormException('Unable to write the private form entry export snapshot.');
+                }
+            }
+            $fields = array_values($fields);
+            sort($fields, SORT_STRING);
+            rewind($stream);
+
+            return ['stream' => $stream, 'rows' => $rows, 'fields' => $fields];
+        } catch (Throwable $exception) {
+            fclose($stream);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Encode only the captured cells, without reopening mutable entry storage.
+     *
+     * @internal
+     *
+     * @param  array{stream: resource, rows: int, fields: list<string>}  $snapshot
+     * @param  resource  $destination
+     * @param  array<string, mixed>  $options
+     */
+    public function writeSnapshot(array $snapshot, mixed $destination, array $options, int $maximumBytes): int
+    {
+        $bytes = $this->writeBoundedLine($destination, $this->buildHeaders((bool) ($options['include_sensitive_data'] ?? false), $snapshot['fields']), 0, $maximumBytes);
+        $rows = 0;
+        while (($line = fgets($snapshot['stream'])) !== false) {
+            $record = json_decode($line, true, 8, JSON_THROW_ON_ERROR);
+            if (! is_array($record) || ! is_array($record['base'] ?? null) || ! array_is_list($record['base']) || ! is_array($record['dynamic'] ?? null)) {
+                throw new FormException('The private form entry export snapshot is invalid.');
+            }
+            $row = [];
+            foreach ($record['base'] as $value) {
+                if (! is_string($value)) {
+                    throw new FormException('The private form entry export snapshot contains an invalid cell.');
+                }
+                $row[] = $value;
+            }
+            foreach ($snapshot['fields'] as $field) {
+                $value = $record['dynamic'][$field] ?? '';
+                if (! is_string($value)) {
+                    throw new FormException('The private form entry export snapshot contains an invalid dynamic cell.');
+                }
+                $row[] = $value;
+            }
+            $bytes = $this->writeBoundedLine($destination, $row, $bytes, $maximumBytes);
+            $rows++;
+        }
+        if (! feof($snapshot['stream']) || $rows !== $snapshot['rows']) {
+            throw new FormException('Unable to read the complete private form entry export snapshot.');
+        }
+        rewind($destination);
+
+        return $bytes;
+    }
+
+    /**
+     * @param  resource  $stream
+     * @param  list<string>  $row
+     */
+    private function writeBoundedLine(mixed $stream, array $row, int $bytes, int $maximumBytes): int
+    {
+        $written = fputcsv($stream, $row, ',', '"', '');
+        if ($written === false) {
+            throw new FormException('Unable to write the form entry CSV export.');
+        }
+        if ($bytes + $written > $maximumBytes) {
+            throw new FormException('The form entry CSV export exceeds its configured byte budget.');
+        }
+
+        return $bytes + $written;
     }
 
     /**
@@ -147,7 +291,7 @@ final class FormEntryExportService
      *
      * @param  bool  $includeSensitiveData  Whether to include PII columns
      * @param  array<int, string>  $dynamicFields  Dynamic submission_data field names
-     * @return array<int, string> Header row
+     * @return list<string> Header row
      */
     private function buildHeaders(bool $includeSensitiveData, array $dynamicFields): array
     {
@@ -189,7 +333,7 @@ final class FormEntryExportService
             $this->sanitizeForExport($entry->first_name ?? ''),
             $this->sanitizeForExport($entry->last_name ?? ''),
             $this->sanitizeForExport($entry->submitted_from ?? ''),
-            $entry->created_at->format('Y-m-d H:i:s'),
+            $entry->created_at?->format('Y-m-d H:i:s') ?? '',
         ];
 
         if ($includeSensitiveData) {

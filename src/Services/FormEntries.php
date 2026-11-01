@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
+use Carbon\CarbonImmutable;
+use Closure;
 use Exception;
+use Generator;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Filesystem\LocalFilesystemAdapter;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -20,10 +26,12 @@ use Nvl\Forms\Events\FormChanged;
 use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Exceptions\FormOwnershipException;
+use Nvl\Forms\Exceptions\FormRetentionPredicateChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use PDO;
 use Throwable;
 
 /**
@@ -46,16 +54,67 @@ final class FormEntries
      */
     public function delete(FormEntry|string $formEntry, ?Authenticatable $actor = null): bool
     {
+        return $this->deleteEntry($formEntry, $actor);
+    }
+
+    /**
+     * @internal Reuse native deletion policy, counters and events with a fixed retention predicate.
+     *
+     * @param  Closure(): void  $authorize
+     */
+    public function deleteForRetention(FormEntry|string $formEntry, CarbonImmutable $cutoff, Authenticatable $actor, Closure $authorize): bool
+    {
+        return $this->deleteEntry($formEntry, $actor, $cutoff, $authorize);
+    }
+
+    /** @param (Closure(): void)|null $authorize */
+    private function deleteEntry(FormEntry|string $formEntry, ?Authenticatable $actor, ?CarbonImmutable $cutoff = null, ?Closure $authorize = null): bool
+    {
         $actor = FormManagement::authorize($actor);
         $entryId = $formEntry instanceof FormEntry ? $formEntry->id : $formEntry;
-        /** @var array{deleted: bool, form: Form, entry: FormEntry, was_spam: bool} $result */
-        $result = (new FormEntry)->getConnection()->transaction(function () use ($entryId, $actor) {
+        $connection = (new FormEntry)->getConnection();
+        $operation = function () use ($entryId, $actor, $cutoff, $authorize, $connection): array {
+            if ($authorize !== null) {
+                $authorize();
+            }
             $formEntry = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($formEntry->form_id);
             $formEntry->setRelation('form', $form);
             $this->deleteFormEntryValidateCanDelete($formEntry, $actor);
+            if ($authorize !== null) {
+                $authorize();
+            }
             $wasSpam = $formEntry->is_spam;
-            $deleted = $formEntry->delete();
+            if ($cutoff === null) {
+                $deleted = $formEntry->delete();
+            } else {
+                if ($authorize === null) {
+                    throw new FormException('Conditional Form retention requires current authorization.');
+                }
+                $table = $formEntry->getTable();
+                $identifier = $formEntry->identifier();
+                $assertEntrySource = static function () use ($formEntry, $connection, $table, $identifier): void {
+                    if ($formEntry->getConnection() !== $connection || $formEntry->getTable() !== $table
+                        || $formEntry->identifier() !== $identifier || $formEntry->getRawOriginal($formEntry->getKeyName()) !== $identifier) {
+                        throw new FormException('The selected Form retention entry source changed.');
+                    }
+                };
+                try {
+                    $deleted = $formEntry->deleteBefore($cutoff, static function () use ($authorize, $assertEntrySource): void {
+                        $assertEntrySource();
+                        $authorize();
+                        $assertEntrySource();
+                    });
+                } catch (FormRetentionPredicateChanged) {
+                    return ['deleted' => false, 'form' => $form, 'entry' => $formEntry, 'was_spam' => $wasSpam];
+                }
+            }
+            if ($authorize !== null) {
+                $authorize();
+            }
+            if ($cutoff !== null && $deleted === null) {
+                return ['deleted' => false, 'form' => $form, 'entry' => $formEntry, 'was_spam' => $wasSpam];
+            }
             if ($deleted !== true) {
                 throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.delete_failed', ['item' => (string) trans('nvl-forms::entries/general.entities.singular')]));
             }
@@ -71,7 +130,12 @@ final class FormEntries
             $this->domainEvents->dispatch(FormEntryChanged::for(form: $form, entry: $formEntry, operation: 'deleted', actor: $actor, context: ['was_spam' => $wasSpam]), $form->getConnection());
 
             return ['deleted' => $deleted, 'form' => $freshForm, 'entry' => $formEntry, 'was_spam' => $wasSpam];
-        });
+        };
+        if ($cutoff !== null && $connection->transactionLevel() === 0) {
+            throw new FormException('Conditional Form retention requires its owned record transaction.');
+        }
+        /** @var array{deleted: bool, form: Form, entry: FormEntry, was_spam: bool} $result */
+        $result = $cutoff === null ? $connection->transaction($operation) : $operation();
 
         return $result['deleted'];
     }
@@ -235,8 +299,8 @@ final class FormEntries
     /**
      * Execute the form entries export with permission checking and progress tracking.
      *
-     * Validates permissions, cleans up old exports, fetches matching entries,
-     * delegates CSV generation to the export service, saves the file, and logs activity.
+     * Snapshots matching cells within configured budgets, then streams that exact
+     * snapshot to a private local artifact after checking current authority again.
      *
      * @param  Form|string  $form  Form instance or identifier
      * @param  array<string, mixed>  $options  Export options (date_from, date_to, limit, has_contact_info, include_submission_data, include_sensitive_data)
@@ -248,36 +312,83 @@ final class FormEntries
     public function export(Form|string $form, array $options = [], ?Authenticatable $actor = null): string
     {
         $actor = FormManagement::authorize($actor);
-        $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
-        $this->ownership->assertRecord($form, 'forms.forms');
-        $this->exportFormEntriesValidateExportPermissions($form, $actor);
-        $identity = 'exports/forms:'.($form->getConnection()->getName() ?? 'default');
-        $partition = $this->ownership->key('forms.forms', $identity);
-        $exportDirectory = $partition === $identity ? 'exports/forms' : 'exports/forms/'.hash('sha256', $partition);
-        $this->exportFormEntriesCleanupOldExportFiles($exportDirectory);
-        $entries = $this->exportFormEntriesGetEntriesToExport($form, $options);
-        if ($entries->isEmpty()) {
-            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.no_export_data', ['items' => (string) trans('nvl-forms::entries/general.entities.plural')]));
+        if ($form instanceof Form) {
+            $this->ownership->assertRecord($form, 'forms.forms');
         }
+        $form = FormModelRegistry::query()->useWritePdo()->findOrFail($form instanceof Form ? $form->id : $form);
+        $this->ownership->assertRecord($form, 'forms.forms');
+        $source = $form->getConnection();
+        $pdo = $source->getPdo();
+        $this->exportFormEntriesValidateExportPermissions($form, $actor);
+        $this->assertExportSource($form, $source, $pdo);
+        $configuration = $this->exportConfiguration();
+        $options = $this->exportOptions($options, $configuration['maximum_rows']);
+        $driver = config('filesystems.disks.'.$configuration['disk'].'.driver');
+        if ($driver !== null && $driver !== 'local') {
+            throw new FormException('Form entry exports require a local filesystem disk that returns an absolute path.');
+        }
+        $disk = Storage::disk($configuration['disk']);
+        if (! $disk instanceof LocalFilesystemAdapter) {
+            throw new FormException('Form entry exports require a local filesystem disk that returns an absolute path.');
+        }
+        $exportDirectory = $this->exportService->directory($form, $this->ownership);
+        $this->assertExportSource($form, $source, $pdo);
         $rawActorId = $actor->getAuthIdentifier();
         $actorId = is_string($rawActorId) || is_int($rawActorId) ? $rawActorId : null;
         $exportId = Str::ulid()->toString();
         $progressKey = $this->ownership->key('forms.forms', 'nvl:forms:export-progress:'.($actorId !== null ? (string) $actorId : 'guest').':'.$form->id.':'.$exportId);
-        Cache::put($progressKey, ['status' => 'started', 'progress' => 0, 'total' => $entries->count(), 'started_at' => now()->toISOString()], now()->addHours());
+        Cache::put($progressKey, ['status' => 'started', 'progress' => 0, 'total' => null, 'started_at' => now()->toISOString()], now()->addHours());
+        $snapshot = null;
+        $csv = null;
+        $partialPath = $exportDirectory.'/.'.$exportId.'.partial';
+        $path = null;
         try {
-            $csvContent = $this->exportService->generateCsvContent($form, $entries, $options);
+            $snapshot = $this->exportService->snapshot($this->exportEntries($form, $options, $configuration['chunk_size'], $configuration['maximum_rows']), $options, $configuration['maximum_rows'], $configuration['maximum_dynamic_fields'], $configuration['maximum_bytes']);
+            if ($snapshot['rows'] === 0) {
+                throw new FormException((string) trans('nvl-forms::forms/shared.messages.error.no_export_data', ['items' => (string) trans('nvl-forms::entries/general.entities.plural')]));
+            }
+            $csv = tmpfile();
+            if ($csv === false) {
+                throw new FormException('Unable to open the private form entry CSV stream.');
+            }
+            $bytes = $this->exportService->writeSnapshot($snapshot, $csv, $options, $configuration['maximum_bytes']);
             $filename = $this->exportService->generateFilename($form, $actorId);
             $path = $exportDirectory.'/'.$exportId.'_'.$filename;
-            if (! Storage::disk('local')->put($path, $csvContent)) {
+            if (! $disk->put($partialPath, $csv, ['visibility' => 'private'])) {
                 throw new FormException('Unable to store the form entry export.');
             }
+            $actor = FormManagement::authorize($actor);
+            $this->assertExportSource($form, $source, $pdo);
+            $form = FormModelRegistry::query()->useWritePdo()->findOrFail($form->id);
+            $this->assertExportSource($form, $source, $pdo);
+            $this->ownership->assertRecord($form, 'forms.forms');
+            $this->exportFormEntriesValidateExportPermissions($form, $actor);
+            $this->assertExportSource($form, $source, $pdo);
+            if (! $disk->move($partialPath, $path)) {
+                throw new FormException('Unable to publish the complete form entry export.');
+            }
             Cache::put($progressKey, ['status' => 'completed', 'progress' => 100], now()->addHours());
-            $this->domainEvents->dispatch(FormChanged::for(form: $form, operation: 'entries_exported', actor: $actor, context: ['entry_count' => $entries->count(), 'file_size' => strlen($csvContent)]), $form->getConnection());
+            $this->domainEvents->dispatch(FormChanged::for(form: $form, operation: 'entries_exported', actor: $actor, context: ['entry_count' => $snapshot['rows'], 'file_size' => $bytes]), $form->getConnection());
 
-            return Storage::disk('local')->path($path);
-        } catch (Exception $e) {
-            Cache::put($progressKey, ['status' => 'failed', 'error' => $e->getMessage()], now()->addHours());
-            throw $e;
+            return $disk->path($path);
+        } catch (Throwable $exception) {
+            $disk->delete(array_filter([$partialPath, $path], 'is_string'));
+            Cache::put($progressKey, ['status' => 'failed', 'error' => 'The form entry export failed.'], now()->addHours());
+            throw $exception;
+        } finally {
+            if (is_array($snapshot)) {
+                fclose($snapshot['stream']);
+            }
+            if (is_resource($csv)) {
+                fclose($csv);
+            }
+        }
+    }
+
+    private function assertExportSource(Form $form, Connection $source, PDO $pdo): void
+    {
+        if ($form->getConnection() !== $source || $source->getRawPdo() !== $pdo) {
+            throw new FormOwnershipException('The form entry export source changed before publication.');
         }
     }
 
@@ -288,29 +399,107 @@ final class FormEntries
      *
      * @param  Form  $form  The form to export entries from
      * @param  array<string, mixed>  $options  Export filter options
-     * @return Collection<int, FormEntry>
+     * @return Generator<int, FormEntry>
      */
-    private function exportFormEntriesGetEntriesToExport(Form $form, array $options): Collection
+    private function exportEntries(Form $form, array $options, int $chunkSize, int $maximumRows): Generator
     {
-        $query = $form->entries()->orderBy('created_at', 'desc');
+        $query = $form->entries()->getQuery()->useWritePdo();
         if (isset($options['date_from']) && is_string($options['date_from']) && $options['date_from'] !== '') {
-            $query->whereDate('created_at', '>=', $options['date_from']);
+            $query->where('created_at', '>=', $options['date_from'].' 00:00:00');
         }
         if (isset($options['date_to']) && is_string($options['date_to']) && $options['date_to'] !== '') {
-            $query->whereDate('created_at', '<=', $options['date_to']);
+            $query->where('created_at', '<=', $options['date_to'].' 23:59:59.999999');
         }
-        $limit = $options['limit'] ?? null;
-        if (is_numeric($limit) && (int) $limit > 0) {
-            $query->limit((int) $limit);
+        $limit = $maximumRows + 1;
+        if (isset($options['limit'])) {
+            $requested = filter_var($options['limit'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => $maximumRows]]);
+            if (! is_int($requested)) {
+                throw new FormException('The form entry export limit must be a positive bounded integer.');
+            }
+            $limit = $requested;
         }
         $hasContactInformation = filter_var($options['has_contact_info'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if ($hasContactInformation) {
             $query->whereRaw('(email IS NOT NULL OR phone IS NOT NULL)');
         }
-        /** @var Collection<int, FormEntry> $result */
-        $result = $query->get();
+        $count = 0;
+        foreach ([false, true] as $nullTimestamps) {
+            $phase = clone $query;
+            $nullTimestamps ? $phase->whereNull('created_at') : $phase->whereNotNull('created_at');
+            $afterTime = null;
+            $afterId = null;
+            do {
+                $batch = clone $phase;
+                if ($afterId !== null) {
+                    if ($nullTimestamps) {
+                        $batch->where('id', '<', $afterId);
+                    } else {
+                        $batch->where(static function ($cursor) use ($afterTime, $afterId): void {
+                            $cursor->where('created_at', '<', $afterTime)->orWhere(static function ($sameTime) use ($afterTime, $afterId): void {
+                                $sameTime->where('created_at', $afterTime)->where('id', '<', $afterId);
+                            });
+                        });
+                    }
+                }
+                $take = min($chunkSize, $limit - $count);
+                if (! $nullTimestamps) {
+                    $batch->orderByDesc('created_at');
+                }
+                $records = $batch->orderByDesc('id')->limit($take)->get();
+                foreach ($records as $entry) {
+                    yield $entry;
+                    $count++;
+                }
+                if ($count === $limit) {
+                    return;
+                }
+                $last = $records->last();
+                if (! $last instanceof FormEntry || $records->count() < $take) {
+                    break;
+                }
+                $afterId = $last->id;
+                if (! $nullTimestamps) {
+                    $afterTime = $last->getRawOriginal('created_at');
+                    if (! is_string($afterTime)) {
+                        throw new FormException('Form entry timestamp cursors require persisted scalar values.');
+                    }
+                }
+            } while (true);
+        }
+    }
 
-        return $result;
+    /** @return array{disk: string, maximum_rows: int, maximum_dynamic_fields: int, maximum_bytes: int, chunk_size: int} */
+    private function exportConfiguration(): array
+    {
+        $disk = config('nvl-forms.exports.disk', 'local');
+        if (! is_string($disk) || trim($disk) === '') {
+            throw new FormException('The form entry export disk must be a nonempty local disk name.');
+        }
+
+        return ['disk' => $disk, 'maximum_rows' => $this->exportBudget('maximum_rows', 10000, 1000000), 'maximum_dynamic_fields' => $this->exportBudget('maximum_dynamic_fields', 250, 10000), 'maximum_bytes' => $this->exportBudget('maximum_bytes', 67108864, 1073741824), 'chunk_size' => $this->exportBudget('chunk_size', 200, 1000)];
+    }
+
+    private function exportBudget(string $key, int $default, int $maximum): int
+    {
+        $value = config('nvl-forms.exports.'.$key, $default);
+        if (! is_int($value) || $value < 1 || $value > $maximum) {
+            throw new FormException('Form entry export budgets must be positive bounded integers.');
+        }
+
+        return $value;
+    }
+
+    /** @param array<string, mixed> $options
+     * @return array<string, mixed>
+     */
+    private function exportOptions(array $options, int $maximumRows): array
+    {
+        if (array_diff(array_keys($options), ['date_from', 'date_to', 'limit', 'has_contact_info', 'include_submission_data', 'include_sensitive_data']) !== []) {
+            throw new FormException('The form entry export contains unsupported options.');
+        }
+        Validator::make($options, ['date_from' => ['sometimes', 'nullable', 'date_format:Y-m-d'], 'date_to' => ['sometimes', 'nullable', 'date_format:Y-m-d'], 'limit' => ['sometimes', 'integer', 'min:1', 'max:'.$maximumRows], 'has_contact_info' => ['sometimes', 'boolean'], 'include_submission_data' => ['sometimes', 'boolean'], 'include_sensitive_data' => ['sometimes', 'boolean']])->validate();
+
+        return $options;
     }
 
     /**
@@ -324,30 +513,10 @@ final class FormEntries
     private function exportFormEntriesValidateExportPermissions(Form $form, ?Authenticatable $actor = null): void
     {
         if ($actor === null) {
-            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.authentication_required'));
+            throw new AuthorizationException((string) trans('nvl-forms::forms/shared.messages.error.authentication_required'));
         }
         if (Gate::forUser($actor)->denies('export', $form)) {
-            throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.permission_denied'));
-        }
-    }
-
-    /**
-     * Delete export files older than 1 hour to prevent disk accumulation.
-     */
-    private function exportFormEntriesCleanupOldExportFiles(string $exportDir): void
-    {
-        try {
-            /** @var array<int, string> $files */
-            $files = Storage::disk('local')->files($exportDir);
-            $cutoffTime = now()->subHour();
-            foreach ($files as $file) {
-                $lastModified = Storage::disk('local')->lastModified($file);
-                if ($lastModified < $cutoffTime->timestamp) {
-                    Storage::disk('local')->delete($file);
-                }
-            }
-        } catch (Exception $e) {
-            report($e);
+            throw new AuthorizationException((string) trans('nvl-forms::forms/shared.messages.error.permission_denied'));
         }
     }
 
