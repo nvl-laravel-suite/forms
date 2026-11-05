@@ -4,10 +4,18 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [7.0.1] - 2026-11-05
+
 ### Fixed
 
 - Enforce submission payload depth and item limits on the serialized JSON shape, including nested objects and `JsonSerializable` values, before submissions or entry updates can write data.
 - Validate partial availability-date updates against retained boundaries on the current form, and reject enabling a reversed stored window without advancing its revision.
+
+<!-- NVL GENERATED CHANGES START -->
+### Changed
+
+- enforce payload budgets and partial date windows
+<!-- NVL GENERATED CHANGES END -->
 
 ## [7.0.0] - 2026-11-03
 
