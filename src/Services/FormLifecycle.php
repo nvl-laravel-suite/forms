@@ -137,6 +137,13 @@ final class FormLifecycle
             if ($expectedRevision === null || $form->revision !== $expectedRevision) {
                 throw new FormException('The form was changed by another writer.', 409);
             }
+            if (array_key_exists('availableFrom', $data) || array_key_exists('availableUntil', $data) || ($data['dateRestricted'] ?? false)) {
+                $availability = [
+                    'availableFrom' => array_key_exists('availableFrom', $data) ? $data['availableFrom'] : $form->available_from,
+                    'availableUntil' => array_key_exists('availableUntil', $data) ? $data['availableUntil'] : $form->available_until,
+                ];
+                Validator::make($availability, array_intersect_key($this->mutationRules(true), $availability))->validate();
+            }
             // Validate handle uniqueness if changed
             if (is_string($data['handle'] ?? null) && $form->handle !== $data['handle']) {
                 $this->handleService->validateUniqueness($data['handle'], $form->id);

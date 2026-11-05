@@ -20,7 +20,9 @@ Management defaults to denial. Configure `nvl-forms.authorization.gate` and pass
 
 ## Public submissions
 
-`fields` accepts subject, firstName, lastName, email, phone, address, body and bounded submissionData. Unknown or protected root fields are rejected. `protection` requires a canonical HTTP origin and ipAddress; optional keys are userAgent, sessionId, native session, csrfToken, publicToken, idempotencyKey, publicSite, native actor and locale. Unknown protection keys are rejected. The consumer extracts these values from its transport.
+`fields` accepts subject, firstName, lastName, email, phone, address, body and bounded submissionData. Payload byte, depth and item limits apply to the serialized JSON representation, including nested objects and `JsonSerializable` values, on both submissions and entry updates. Unknown or protected root fields are rejected. `protection` requires a canonical HTTP origin and ipAddress; optional keys are userAgent, sessionId, native session, csrfToken, publicToken, idempotencyKey, publicSite, native actor and locale. Unknown protection keys are rejected. The consumer extracts these values from its transport.
+
+Lifecycle date patches retain omitted boundaries and validate the resulting availability window against the current form. Explicit null clears a boundary. Enabling date restrictions also validates the stored window; equal and open boundaries are supported.
 
 The service preserves availability, allowed-origin checks, signed public-token expiry and form/site binding, session CSRF, rate consumption, honeypot, server-verified timing, spam accounting, registration uniqueness and payload-bound idempotency. Never pass client-selected owner authority or trusted timing. CORS/header/HTTP throttle/redirect/rendering behavior belongs to the consumer; active examples live under `tests/Fixtures/Consumer`.
 

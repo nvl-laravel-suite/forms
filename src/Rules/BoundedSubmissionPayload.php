@@ -10,7 +10,7 @@ use JsonException;
 use Nvl\Forms\Support\FormsConfiguration;
 
 /**
- * Bounds nested public submission data by encoded size, depth, and item count.
+ * Bounds public submission data by its serialized JSON size, depth, and item count.
  */
 final class BoundedSubmissionPayload implements ValidationRule
 {
@@ -27,23 +27,30 @@ final class BoundedSubmissionPayload implements ValidationRule
         }
 
         try {
-            $bytes = strlen(json_encode($value, JSON_THROW_ON_ERROR));
+            $encoded = json_encode($value, JSON_THROW_ON_ERROR);
+            if (strlen($encoded) > FormsConfiguration::positiveInteger(
+                'nvl-forms.submission.max_payload_bytes',
+                262144,
+            )) {
+                $fail('The :attribute field is too large.');
+
+                return;
+            }
+
+            $payload = json_decode($encoded, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             $fail('The :attribute field contains invalid data.');
 
             return;
         }
 
-        if ($bytes > FormsConfiguration::positiveInteger(
-            'nvl-forms.submission.max_payload_bytes',
-            262144,
-        )) {
-            $fail('The :attribute field is too large.');
+        if (! is_array($payload)) {
+            $fail('The :attribute field contains invalid data.');
 
             return;
         }
 
-        [$depth, $items] = $this->measure($value);
+        [$depth, $items] = $this->measure($payload);
 
         if ($depth > FormsConfiguration::positiveInteger('nvl-forms.submission.max_depth', 8)) {
             $fail('The :attribute field is nested too deeply.');
