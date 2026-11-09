@@ -485,7 +485,9 @@ public function translationParameters(): array
 ```text
 class Nvl\Forms\Models\AllowedOrigin extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
 public const string OWNERSHIP_RESOURCE="forms.origins"
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function form(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Form, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Forms\Models\Form, $this>
@@ -538,7 +540,9 @@ public function allowsMultipleRegistrations(): bool
 public function analytics(): Illuminate\Database\Eloquent\Relations\HasMany
 @return HasMany<FormAnalytic, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\HasMany<Nvl\Forms\Models\FormAnalytic, $this>
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function displayDescription(?string $locale=null): ?string
 public function displayName(?string $locale=null): string
 public function entries(): Illuminate\Database\Eloquent\Relations\HasMany
@@ -696,7 +700,9 @@ resolved @property Carbon\Carbon $updated_at
 ```text
 class Nvl\Forms\Models\FormAnalytic extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
 public const string OWNERSHIP_RESOURCE="forms.analytics"
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function form(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Form, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Forms\Models\Form, $this>
@@ -740,7 +746,9 @@ resolved @property Carbon\Carbon $updated_at
 ```text
 class Nvl\Forms\Models\FormEntry extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
 public const string OWNERSHIP_RESOURCE="forms.entries"
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function form(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Form, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Forms\Models\Form, $this>
@@ -813,7 +821,9 @@ resolved @property (Carbon\Carbon | null) $updated_at
 ```text
 class Nvl\Forms\Models\FormRateLimit extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
 public const string OWNERSHIP_RESOURCE="forms.rates"
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function form(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Form, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Forms\Models\Form, $this>
@@ -861,7 +871,9 @@ resolved @property Carbon\Carbon $window_start
 ```text
 final class Nvl\Forms\Models\FormSubmissionReceipt extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
 public const string OWNERSHIP_RESOURCE="forms.receipts"
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function form(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Form, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Forms\Models\Form, $this>
@@ -901,7 +913,9 @@ resolved @property Carbon\Carbon $updated_at
 final class Nvl\Forms\Models\FormTranslation extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
 public const string OWNERSHIP_RESOURCE="forms.translations"
 public const string TABLE=\Nvl\Forms\Definitions\Tables\FormsTables::I18n
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function form(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Form, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Forms\Models\Form, $this>
