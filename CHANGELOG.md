@@ -4,9 +4,17 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [7.0.2] - 2026-11-09
+
 ### Changed
 
 - Refresh the inherited Ownership deletion API reference for ordinary models and native pivots.
+
+<!-- NVL GENERATED CHANGES START -->
+### Changed
+
+- refresh inherited ownership deletion contracts
+<!-- NVL GENERATED CHANGES END -->
 
 ## [7.0.1] - 2026-11-05
 
