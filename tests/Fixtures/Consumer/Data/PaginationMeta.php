@@ -4,18 +4,12 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\TypeScriptTransformer\Attributes\TypeScript;
-
 /**
  * Describes stable length-aware pagination metadata for public NVL payloads.
  *
  * @internal
  */
-#[TypeScript]
-final class PaginationMeta extends Data
+final class PaginationMeta
 {
     /**
      * Create pagination metadata.
@@ -23,7 +17,18 @@ final class PaginationMeta extends Data
     public function __construct(
         public readonly int $currentPage,
         public readonly int $lastPage,
-        #[MapInputName('per_page')] #[MapOutputName('per_page')] public readonly int $perPage,
+        public readonly int $perPage,
         public readonly int $total,
     ) {}
+
+    /** @return array<string, mixed> Consumer-facing response fields. */
+    public function toArray(): array
+    {
+        return [
+            'currentPage' => $this->currentPage,
+            'lastPage' => $this->lastPage,
+            'per_page' => $this->perPage,
+            'total' => $this->total,
+        ];
+    }
 }

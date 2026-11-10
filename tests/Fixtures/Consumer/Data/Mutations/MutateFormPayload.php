@@ -4,122 +4,38 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations;
 
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Nvl\Forms\Enums\CorsPolicy;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
 use Nvl\Forms\Rules\AllowedOriginExpressionRule;
-use Nvl\Forms\Tests\Fixtures\Consumer\Data\FormCorsSettings;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 use Nvl\Translatable\Enums\TranslationSyncMode;
 use Nvl\Translatable\Rules\SupportedLocaleMapRule;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Attributes\Validation\Nullable;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
-use Spatie\LaravelData\Support\Validation\ValidationContext;
 
 /**
- * Write-only mutation DTO for form create and update operations.
+ * Consumer validation rules for form create and update operations.
  *
  * @api
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class MutateFormPayload extends Data
+class MutateFormPayload
 {
-    use DataTransform;
-
-    /**
-     * @param  string|Optional|null  $handle  Form handle (slug)
-     * @param  array<string, mixed>|Optional|null  $translations  Localized form definition and nested content
-     * @param  FormStatus|Optional  $status  Form status
-     * @param  Resolvement|Optional  $resolvement  Submission resolvement strategy
-     * @param  FormType|Optional  $type  Form type (landing_page or iframe)
-     * @param  bool|Optional  $restrictPublicAccess  Public access restriction flag
-     * @param  bool|Optional  $allowMultipleRegistrations  Multiple registration flag
-     * @param  bool|Optional  $dateRestricted  Date restriction flag
-     * @param  Carbon|Optional|null  $availableFrom  Availability start
-     * @param  Carbon|Optional|null  $availableUntil  Availability end
-     * @param  bool|Optional  $enableHoneypot  Honeypot protection flag
-     * @param  bool|Optional  $enableRateLimiting  Rate limiting flag
-     * @param  int|Optional|null  $rateLimitPerHour  Submissions per hour limit
-     * @param  bool|Optional  $requireCsrf  CSRF requirement flag
-     * @param  FormCorsSettings|Optional|null  $corsSettings  CORS configuration
-     * @param  array<string, mixed>|Optional|null  $options  Rendering options
-     * @param  array<int, string>|Optional|null  $allowedOrigins  Allowed embedding origins
-     * @param  TranslationSyncMode  $translationMode  Whether omitted locales are preserved or removed
-     * @param  int|Optional  $expectedRevision  Required optimistic concurrency revision for updates
-     */
-    public function __construct(
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $handle = new Optional,
-        /** @var array<string, mixed>|Optional|null */
-        #[Nullable]
-        public readonly array|Optional|null $translations = new Optional,
-        /** @var FormStatus|Optional */
-        public readonly FormStatus|Optional $status = new Optional,
-        /** @var Resolvement|Optional */
-        public readonly Resolvement|Optional $resolvement = new Optional,
-        /** @var FormType|Optional */
-        public readonly FormType|Optional $type = new Optional,
-        /** @var bool|Optional */
-        public readonly bool|Optional $restrictPublicAccess = new Optional,
-        /** @var bool|Optional */
-        public readonly bool|Optional $allowMultipleRegistrations = new Optional,
-        /** @var bool|Optional */
-        public readonly bool|Optional $dateRestricted = new Optional,
-        /** @var Carbon|Optional|null */
-        public readonly Carbon|Optional|null $availableFrom = new Optional,
-        /** @var Carbon|Optional|null */
-        public readonly Carbon|Optional|null $availableUntil = new Optional,
-        /** @var bool|Optional */
-        public readonly bool|Optional $enableHoneypot = new Optional,
-        /** @var bool|Optional */
-        public readonly bool|Optional $enableRateLimiting = new Optional,
-        /** @var int|Optional|null */
-        public readonly int|Optional|null $rateLimitPerHour = new Optional,
-        /** @var bool|Optional */
-        public readonly bool|Optional $requireCsrf = new Optional,
-        /** @var FormCorsSettings|Optional|null */
-        #[Nullable]
-        public readonly FormCorsSettings|Optional|null $corsSettings = new Optional,
-        /** @var array<string, mixed>|Optional|null */
-        public readonly array|Optional|null $options = new Optional,
-        /** @var array<int, string>|Optional|null */
-        #[Nullable]
-        public readonly array|Optional|null $allowedOrigins = new Optional,
-        #[MapInputName('translation_mode')] #[MapOutputName('translation_mode')] public readonly TranslationSyncMode $translationMode = TranslationSyncMode::Patch,
-        #[MapInputName('expected_revision')] #[MapOutputName('expected_revision')] public readonly int|Optional $expectedRevision = new Optional
-    ) {}
-
-    /**
-     * Validation rules for form mutation payloads.
-     *
-     * @return array<string, array<int, mixed>> Validation rules
-     */
-    public static function rules(?ValidationContext $context = null): array
-    {
-        $payload = is_array($context?->fullPayload) ? $context->fullPayload : [];
-        $updating = ($payload['_operation'] ?? null) === 'update';
-        $formId = isset($payload['_formId']) && is_string($payload['_formId']) ? $payload['_formId'] : null;
-
-        return self::rulesFor($updating, $formId);
-    }
+    use TranslatedValidation;
 
     /**
      * Validate and create a transport-neutral create mutation.
      *
      * @param  array<string, mixed>  $payload  Untrusted mutation input
-     * @return self Validated mutation data
+     * @return array<string, mixed> Validated mutation fields
      */
-    public static function validateForCreate(array $payload): self
+    public static function validateForCreate(array $payload): array
     {
-        return self::validateAndCreate(array_replace($payload, ['_operation' => 'create', '_formId' => null]));
+        $rules = self::rulesForCreate();
+        Validator::make($payload, $rules, self::messages(), self::attributes())->validate();
+
+        return array_intersect_key($payload, $rules);
     }
 
     /**
@@ -127,11 +43,17 @@ class MutateFormPayload extends Data
      *
      * @param  array<string, mixed>  $payload  Untrusted mutation input
      * @param  string  $formId  Server-resolved form identifier
-     * @return self Validated mutation data
+     * @return array<string, mixed> Validated mutation fields
      */
-    public static function validateForUpdate(array $payload, string $formId): self
+    public static function validateForUpdate(array $payload, string $formId): array
     {
-        return self::validateAndCreate(array_replace($payload, ['_operation' => 'update', '_formId' => $formId]));
+        $rules = self::rulesForUpdate($formId);
+        Validator::make($payload, $rules, self::messages(), self::attributes())->validate();
+
+        $validated = array_intersect_key($payload, $rules);
+        $validated['expected_revision'] = (int) $validated['expected_revision'];
+
+        return $validated;
     }
 
     /**

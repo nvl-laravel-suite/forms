@@ -12,7 +12,6 @@ use Nvl\Forms\Tests\Fixtures\Consumer\Data\Display\FormShowSecurityState;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Display\FormShowStat;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Display\FormShowStates;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Display\FormShowStatusState;
-use Spatie\LaravelData\DataCollection;
 
 /**
  * Pure derivation service that computes display state for the forms show page.
@@ -71,9 +70,9 @@ final class FormShowStateResolver
     /**
      * Resolve show-page stat cards.
      *
-     * @return DataCollection<int, FormShowStat>
+     * @return list<FormShowStat>
      */
-    private function resolveStats(Form $form): DataCollection
+    private function resolveStats(Form $form): array
     {
         $statusLabel = $form->status->getLabel();
         $isRestricted = (bool) $form->restrict_public_access;
@@ -82,7 +81,7 @@ final class FormShowStateResolver
         /** @var array<int, FormShowStat> $items */
         $items = [new FormShowStat(icon: 'Signal', label: (string) trans('nvl-forms::forms/forms.fields.status.label'), value: $statusLabel, description: (string) trans('nvl-forms::forms/forms.fields.status.help')), new FormShowStat(icon: 'FileText', label: (string) trans('nvl-forms::forms/forms.additional_fields.submissions_count.label'), value: number_format((int) $form->submissions_count), description: (string) trans('nvl-forms::forms/forms.additional_fields.submissions_count.help')), new FormShowStat(icon: 'Eye', label: (string) trans('nvl-forms::forms/forms.additional_fields.views_count.label'), value: number_format((int) $form->views_count), description: (string) trans('nvl-forms::forms/forms.additional_fields.views_count.help')), new FormShowStat(icon: 'ShieldAlert', label: (string) trans('nvl-forms::forms/forms.additional_fields.spam_count.label'), value: number_format((int) $form->spam_count), description: (string) trans('nvl-forms::forms/forms.additional_fields.spam_count.help')), new FormShowStat(icon: $isRestricted ? 'Lock' : 'Globe', label: (string) trans('nvl-forms::forms/forms.fields.restrict_public_access.label'), value: $accessLabel, description: (string) trans('nvl-forms::forms/forms.fields.restrict_public_access.help')), new FormShowStat(icon: 'Calendar', label: (string) trans('nvl-forms::forms/forms.additional_fields.last_used_at.label'), value: $lastUsedAt, description: (string) trans('nvl-forms::forms/forms.additional_fields.last_used_at.help'))];
 
-        return new DataCollection(FormShowStat::class, $items);
+        return $items;
     }
 
     /**

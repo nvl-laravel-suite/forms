@@ -4,53 +4,14 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
- * Query DTO powering select/combobox options endpoints.
+ * Consumer validation rules powering select/combobox options endpoints.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class FormSelectOption extends Data
+class FormSelectOption
 {
-    use DataTransform;
-
-    /**
-     * Create the form select query data transfer object.
-     *
-     * @param  string|Optional|null  $q  Search term
-     * @param  bool|Optional|null  $activeOnly  Active-only filter
-     * @param  bool|Optional|null  $publicOnly  Public-only filter
-     * @param  bool|Optional|null  $withSubmissions  Submissions filter
-     * @param  string|Optional|null  $status  Status filter
-     */
-    public function __construct(
-        /**
-         * @var string|Optional|null
-         */
-        public readonly string|Optional|null $q = null,
-        /**
-         * @var bool|Optional|null
-         */
-        public readonly bool|Optional|null $activeOnly = null,
-        /**
-         * @var bool|Optional|null
-         */
-        public readonly bool|Optional|null $publicOnly = null,
-        /**
-         * @var bool|Optional|null
-         */
-        public readonly bool|Optional|null $withSubmissions = null,
-        /**
-         * @var string|Optional|null
-         */
-        public readonly string|Optional|null $status = null
-    ) {}
+    use TranslatedValidation;
 
     /**
      * Validation rules for select option filters.

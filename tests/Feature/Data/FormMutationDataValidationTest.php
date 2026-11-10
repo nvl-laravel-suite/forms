@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
@@ -17,3 +18,32 @@ test('form mutation data rejects invalid allowed origin expressions', function (
     $validator = Validator::make($payload, MutateFormPayload::rulesForCreate());
     expect($validator->fails())->toBeTrue();
 })->with(['scheme' => ['https://example.com'], 'arbitrary path' => ['example.com/path'], 'comma' => ['example.com,evil.com'], 'backslash' => ['example.com\evil'], 'root wildcard' => ['*.com'], 'invalid port' => ['example.com:0']]);
+
+test('native consumer mutation validation preserves sparse nulls nested content and enums', function (): void {
+    $payload = [
+        'expected_revision' => 2,
+        'status' => FormStatus::ACTIVE,
+        'availableUntil' => null,
+        'allowedOrigins' => null,
+        'translations' => ['en' => ['description' => null, 'fields' => ['servicePlan' => ['label' => 'Plan', 'defaultValue' => null]]]],
+        'options' => ['showLogo' => false, 'accentColor' => null, 'consumerOptions' => ['orderCode' => 'ABC123']],
+    ];
+
+    $validated = MutateFormPayload::validateForUpdate($payload + ['untrusted' => true], 'unused-server-form-id');
+
+    expect($validated)->toBe($payload)
+        ->not->toHaveKeys(['handle', 'enableHoneypot', 'translation_mode', 'untrusted']);
+});
+
+test('native consumer create validation retains localized fields and explicit false options', function (): void {
+    $payload = [
+        'translations' => ['en' => ['name' => 'Signup', 'fields' => ['email' => ['label' => 'Email']]]],
+        'resolvement' => Resolvement::ENTRIES,
+        'type' => FormType::IFRAME,
+        'restrictPublicAccess' => false,
+        'corsSettings' => ['policy' => 'strict', 'allowCredentials' => false],
+    ];
+
+    expect(MutateFormPayload::validateForCreate($payload))->toBe($payload);
+    expect(fn () => MutateFormPayload::validateForCreate(['status' => 'invalid']))->toThrow(ValidationException::class);
+});

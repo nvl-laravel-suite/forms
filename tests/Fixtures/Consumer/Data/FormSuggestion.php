@@ -5,28 +5,18 @@ declare(strict_types=1);
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 
 use Nvl\Forms\Models\Form;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
 
 /**
  * FormSuggestion: normalized DTO powering autocomplete payloads.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-final class FormSuggestion extends Data
+final class FormSuggestion
 {
-    use DataTransform;
-
     /**
      * Create the form suggestion data transfer object.
      *
      * @param  string  $id  Form identifier
      * @param  string  $label  Primary label
-     * @param  string|Optional|null  $sublabel  Secondary label
+     * @param  string|null  $sublabel  Secondary label
      */
     public function __construct(
         /**
@@ -44,9 +34,9 @@ final class FormSuggestion extends Data
         /**
          * Optional secondary label (handle or meta).
          *
-         * @var string|Optional|null
+         * @var string|null
          */
-        public readonly string|Optional|null $sublabel = null
+        public readonly ?string $sublabel = null
     ) {}
 
     /**
@@ -63,5 +53,15 @@ final class FormSuggestion extends Data
         }
 
         return new self(id: (string) $form->id, label: $form->displayName(), sublabel: $sublabel);
+    }
+
+    /** @return array<string, mixed> Consumer-facing response fields. */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'label' => $this->label,
+            'sublabel' => $this->sublabel,
+        ];
     }
 }

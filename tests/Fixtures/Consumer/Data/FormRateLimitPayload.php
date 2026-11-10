@@ -7,88 +7,82 @@ namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 use Carbon\Carbon;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Models\FormRateLimit;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Lazy;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
  * Transfer object representing form rate limit state per IP.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class FormRateLimitPayload extends Data
+class FormRateLimitPayload
 {
-    use DataTransform;
+    use TranslatedValidation;
 
     /**
      * Create the form rate limit data transfer object.
      *
-     * @param  string|Optional  $id  Rate limit identifier
-     * @param  string|Optional  $formId  Parent form identifier
-     * @param  string|Optional  $ipAddress  Request IP address
-     * @param  Carbon|Optional  $windowStart  Rate limit window start
-     * @param  Carbon|Optional  $lastSubmissionAt  Last submission timestamp
-     * @param  int|Optional  $submissionCount  Submission count in window
-     * @param  bool|Optional  $isBlocked  Blocked flag
-     * @param  Carbon|Optional|null  $blockedUntil  Blocked until timestamp
-     * @param  int|Optional  $violationCount  Violation count
-     * @param  Lazy|Optional|FormPayload|null  $form  Related form data
-     * @param  Carbon|Optional|null  $createdAt  Creation timestamp
-     * @param  Carbon|Optional|null  $updatedAt  Update timestamp
+     * @param  string  $id  Rate limit identifier
+     * @param  string  $formId  Parent form identifier
+     * @param  string  $ipAddress  Request IP address
+     * @param  Carbon  $windowStart  Rate limit window start
+     * @param  Carbon  $lastSubmissionAt  Last submission timestamp
+     * @param  int  $submissionCount  Submission count in window
+     * @param  bool  $isBlocked  Blocked flag
+     * @param  Carbon|null  $blockedUntil  Blocked until timestamp
+     * @param  int  $violationCount  Violation count
+     * @param  FormPayload|null  $form  Related form data
+     * @param  Carbon|null  $createdAt  Creation timestamp
+     * @param  Carbon|null  $updatedAt  Update timestamp
+     * @param  bool  $formLoaded  Whether the source explicitly loaded its form relation
      */
     public function __construct(
         /**
-         * @var string|Optional $id
+         * @var string $id
          */
-        public readonly string|Optional $id,
+        public readonly string $id,
         /**
-         * @var string|Optional
+         * @var string
          */
-        public readonly string|Optional $formId,
+        public readonly string $formId,
         /**
-         * @var string|Optional
+         * @var string
          */
-        public readonly string|Optional $ipAddress,
+        public readonly string $ipAddress,
         /**
-         * @var Carbon|Optional
+         * @var Carbon
          */
-        public readonly Carbon|Optional $windowStart,
+        public readonly Carbon $windowStart,
         /**
-         * @var Carbon|Optional
+         * @var Carbon
          */
-        public readonly Carbon|Optional $lastSubmissionAt,
+        public readonly Carbon $lastSubmissionAt,
         /**
-         * @var int|Optional
+         * @var int
          */
-        public readonly int|Optional $submissionCount = 0,
+        public readonly int $submissionCount = 0,
         /**
-         * @var bool|Optional
+         * @var bool
          */
-        public readonly bool|Optional $isBlocked = false,
+        public readonly bool $isBlocked = false,
         /**
-         * @var Carbon|Optional|null
+         * @var Carbon|null
          */
-        public readonly Carbon|Optional|null $blockedUntil = null,
+        public readonly ?Carbon $blockedUntil = null,
         /**
-         * @var int|Optional
+         * @var int
          */
-        public readonly int|Optional $violationCount = 0,
+        public readonly int $violationCount = 0,
         /**
-         * @var Lazy|Optional|FormPayload|null
+         * @var FormPayload|null
          */
-        public readonly Lazy|Optional|FormPayload|null $form = null,
+        public readonly ?FormPayload $form = null,
         /**
-         * @var Carbon|Optional|null
+         * @var Carbon|null
          */
-        public readonly Carbon|Optional|null $createdAt = null,
+        public readonly ?Carbon $createdAt = null,
         /**
-         * @var Carbon|Optional|null
+         * @var Carbon|null
          */
-        public readonly Carbon|Optional|null $updatedAt = null
+        public readonly ?Carbon $updatedAt = null,
+        private readonly bool $formLoaded = true,
     ) {}
 
     /**
@@ -99,7 +93,7 @@ class FormRateLimitPayload extends Data
      */
     public static function fromModel(FormRateLimit $formRateLimit): self
     {
-        return new self(id: $formRateLimit->id, formId: $formRateLimit->form_id, ipAddress: $formRateLimit->ip_address, windowStart: $formRateLimit->window_start, lastSubmissionAt: $formRateLimit->last_submission_at, submissionCount: $formRateLimit->submission_count ?? 0, isBlocked: $formRateLimit->is_blocked ?? false, blockedUntil: $formRateLimit->blocked_until, violationCount: $formRateLimit->violation_count ?? 0, form: Lazy::whenLoaded('form', $formRateLimit, fn () => FormPayload::from($formRateLimit->form)), createdAt: $formRateLimit->created_at, updatedAt: $formRateLimit->updated_at);
+        return new self(id: $formRateLimit->id, formId: $formRateLimit->form_id, ipAddress: $formRateLimit->ip_address, windowStart: $formRateLimit->window_start, lastSubmissionAt: $formRateLimit->last_submission_at, submissionCount: $formRateLimit->submission_count ?? 0, isBlocked: $formRateLimit->is_blocked ?? false, blockedUntil: $formRateLimit->blocked_until, violationCount: $formRateLimit->violation_count ?? 0, form: $formRateLimit->relationLoaded('form') && $formRateLimit->form !== null ? FormPayload::fromModel($formRateLimit->form) : null, createdAt: $formRateLimit->created_at, updatedAt: $formRateLimit->updated_at, formLoaded: $formRateLimit->relationLoaded('form'));
     }
 
     /**
@@ -140,5 +134,24 @@ class FormRateLimitPayload extends Data
     public static function attributes(): array
     {
         return self::translatedAttributes('nvl-forms::forms');
+    }
+
+    /** @return array<string, mixed> Consumer-facing response fields. */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'formId' => $this->formId,
+            'ipAddress' => $this->ipAddress,
+            'windowStart' => $this->windowStart->format(DATE_ATOM),
+            'lastSubmissionAt' => $this->lastSubmissionAt->format(DATE_ATOM),
+            'submissionCount' => $this->submissionCount,
+            'isBlocked' => $this->isBlocked,
+            'blockedUntil' => $this->blockedUntil?->format(DATE_ATOM),
+            'violationCount' => $this->violationCount,
+            ...($this->formLoaded ? ['form' => $this->form?->toArray()] : []),
+            'createdAt' => $this->createdAt?->format(DATE_ATOM),
+            'updatedAt' => $this->updatedAt?->format(DATE_ATOM),
+        ];
     }
 }

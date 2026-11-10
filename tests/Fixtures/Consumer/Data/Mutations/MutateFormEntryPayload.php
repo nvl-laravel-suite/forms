@@ -5,77 +5,14 @@ declare(strict_types=1);
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations;
 
 use Nvl\Forms\Definitions\Tables\FormsTables;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Attributes\Validation\Nullable;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
- * Write-only mutation DTO for form entry creation from submission pipelines.
+ * Consumer validation rules for form entry creation from submission pipelines.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class MutateFormEntryPayload extends Data
+class MutateFormEntryPayload
 {
-    use DataTransform;
-
-    /**
-     * @param  string|Optional  $formId  Parent form identifier
-     * @param  string|Optional|null  $subject  Entry subject
-     * @param  string|Optional|null  $email  Contact email
-     * @param  string|Optional|null  $firstName  Contact first name
-     * @param  string|Optional|null  $lastName  Contact last name
-     * @param  string|Optional|null  $phone  Contact phone
-     * @param  string|Optional|null  $address  Contact address
-     * @param  string|Optional|null  $body  Entry body
-     * @param  array<string, mixed>|Optional|null  $submissionData  Raw submission payload
-     * @param  string|Optional  $submittedFrom  Submission origin
-     * @param  string|Optional|null  $ipAddress  Request IP address
-     * @param  string|Optional|null  $userAgent  Request user agent
-     * @param  string|Optional|null  $sessionId  Session identifier
-     * @param  bool|Optional  $isSpam  Spam flag
-     * @param  int|Optional|null  $spamScore  Spam score from zero to one hundred
-     * @param  array<string, mixed>|Optional|null  $securityFlags  Security flags
-     */
-    public function __construct(
-        /** @var string|Optional */
-        public readonly string|Optional $formId,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $subject = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $email = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $firstName = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $lastName = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $phone = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $address = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $body = null,
-        /** @var array<string, mixed>|Optional|null */
-        #[Nullable]
-        public readonly array|Optional|null $submissionData = null,
-        /** @var string|Optional */
-        public readonly string|Optional $submittedFrom = '',
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $ipAddress = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $userAgent = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $sessionId = null,
-        /** @var bool|Optional */
-        public readonly bool|Optional $isSpam = false,
-        /** @var int|Optional|null */
-        public readonly int|Optional|null $spamScore = null,
-        /** @var array<string, mixed>|Optional|null */
-        #[Nullable]
-        public readonly array|Optional|null $securityFlags = null
-    ) {}
+    use TranslatedValidation;
 
     /**
      * Validation rules for form entry mutation payloads.

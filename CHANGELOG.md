@@ -4,6 +4,10 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Remove the obsolete Spatie Laravel Data development dependency. Form test adapters now use native validation and projections with explicit omission, null and loaded-relation behavior.
+
 ## [7.0.2] - 2026-11-09
 
 ### Changed

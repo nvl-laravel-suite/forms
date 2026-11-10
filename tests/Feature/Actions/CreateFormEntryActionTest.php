@@ -7,12 +7,11 @@ use Nvl\Forms\Events\FormEntryChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
 use Nvl\Forms\Models\FormEntry;
-use Nvl\Forms\Tests\Fixtures\Consumer\Data\FormEntryPayload;
 
 test('create form entry action orchestrates dependencies for legitimate submission', function (): void {
     Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create(['restrict_public_access' => false, 'enable_rate_limiting' => false]);
-    $data = FormEntryPayload::from(['formId' => $form->id, 'subject' => 'Support enquiry', 'email' => 'support@example.com', 'submittedFrom' => 'landing.example.com']);
+    $data = ['formId' => $form->id, 'subject' => 'Support enquiry', 'email' => 'support@example.com', 'submittedFrom' => 'landing.example.com'];
     $entry = formSubmissionStage('createEntry', formNativeInput($data), '127.0.0.1', 'Mozilla/5.0', 'session-1234', null);
     expect($entry)->toBeInstanceOf(FormEntry::class)->and($entry->form_id)->toBe($form->id);
     Event::assertDispatched(FormEntryChanged::class);
@@ -22,7 +21,7 @@ test('create form entry action orchestrates dependencies for legitimate submissi
 test('create form entry action records honeypot rejections as spam', function (): void {
     config(['nvl-forms.security.spam_protection.honeypot.field_names' => ['website']]);
     $form = Form::factory()->create(['restrict_public_access' => false, 'enable_rate_limiting' => false, 'enable_honeypot' => true, 'spam_count' => 0]);
-    $data = FormEntryPayload::from(['formId' => $form->id, 'submittedFrom' => 'landing.example.com', 'submissionData' => ['website' => 'https://spam.example']]);
+    $data = ['formId' => $form->id, 'submittedFrom' => 'landing.example.com', 'submissionData' => ['website' => 'https://spam.example']];
     expect(fn () => formSubmissionStage('createEntry', formNativeInput($data), '127.0.0.1', 'curl/8.0', 'session-1234', null))->toThrow(Exception::class, trans('nvl-forms::forms/shared.messages.error.bot_detected'));
     expect($form->fresh()->spam_count)->toBe(1);
     $analytic = FormAnalytic::firstOrFail();

@@ -23,6 +23,12 @@ test('stored form models project into complete consumer payloads', function (): 
     $analyticPayload = FormAnalyticPayload::fromModel($analytic);
     $rateLimitPayload = FormRateLimitPayload::fromModel($rateLimit);
     expect($originPayload->id)->toBe($origin->id)->and($originPayload->corsSettings?->policy->value)->toBe('strict')->and($originPayload->usageCount)->toBe(4)->and($originPayload->defaultWrap())->toBe('allowed_origin')->and($entryPayload->id)->toBe($entry->id)->and($entryPayload->subject)->toBe('Projected entry')->and($entryPayload->securityFlags)->toBe(['reviewed' => true])->and($analyticPayload->eventType)->toBe(FormAnalyticEventType::SUBMISSION)->and($analyticPayload->metadata)->toBe(['campaign' => 'launch'])->and($analyticPayload->defaultWrap())->toBe('form_analytic')->and($rateLimitPayload->ipAddress)->toBe('192.0.2.20')->and($rateLimitPayload->submissionCount)->toBe(3)->and($rateLimitPayload->isBlocked)->toBeTrue()->and($rateLimitPayload->defaultWrap())->toBe('form_rate_limit');
+    expect($originPayload->toArray())->toMatchArray(['formId' => $form->id, 'usageCount' => 4, 'corsSettings' => ['policy' => 'strict', 'allowCredentials' => true, 'allowWildcards' => false, 'maxAge' => 300, 'allowedMethods' => ['GET', 'POST', 'OPTIONS'], 'allowedHeaders' => ['Content-Type']]])
+        ->not->toHaveKeys(['form_id', 'cors_settings'])
+        ->and($originPayload->toArray()['form']['id'])->toBe($form->id)
+        ->and($entryPayload->toArray()['securityFlags'])->toBe(['reviewed' => true])
+        ->and($analyticPayload->toArray()['eventType'])->toBe(FormAnalyticEventType::SUBMISSION->value)
+        ->and($rateLimitPayload->toArray()['blockedUntil'])->toBe($rateLimit->blocked_until->format(DATE_ATOM));
 });
 test('payload projections preserve null and default database states', function (): void {
     $form = Form::factory()->create();
@@ -31,4 +37,22 @@ test('payload projections preserve null and default database states', function (
     $analytic = FormAnalytic::query()->create(['form_id' => $form->id, 'event_type' => FormAnalyticEventType::VIEW, 'origin' => null, 'ip_address' => null, 'metadata' => null]);
     $rateLimit = FormRateLimit::query()->create(['form_id' => $form->id, 'ip_address' => '198.51.100.20', 'submission_count' => 0, 'window_start' => now(), 'last_submission_at' => now(), 'is_blocked' => false, 'blocked_until' => null, 'violation_count' => 0]);
     expect(AllowedOriginPayload::fromModel($origin)->corsSettings)->toBeNull()->and(FormEntryPayload::fromModel($entry)->isSpam)->toBeFalse()->and(FormAnalyticPayload::fromModel($analytic)->metadata)->toBeNull()->and(FormRateLimitPayload::fromModel($rateLimit)->isBlocked)->toBeFalse();
+
+    foreach ([
+        [$origin, AllowedOriginPayload::class],
+        [$entry, FormEntryPayload::class],
+        [$analytic, FormAnalyticPayload::class],
+        [$rateLimit, FormRateLimitPayload::class],
+    ] as [$model, $projection]) {
+        $model->unsetRelation('form');
+        expect($projection::fromModel($model)->toArray())->not->toHaveKey('form')
+            ->and($model->relationLoaded('form'))->toBeFalse();
+
+        $model->setRelation('form', null);
+        $loadedNull = $projection::fromModel($model)->toArray();
+        expect($loadedNull)->toHaveKey('form')->and($loadedNull['form'])->toBeNull();
+
+        $model->setRelation('form', $form);
+        expect($projection::fromModel($model)->toArray()['form'])->toMatchArray(['id' => $form->id, 'handle' => $form->handle]);
+    }
 });

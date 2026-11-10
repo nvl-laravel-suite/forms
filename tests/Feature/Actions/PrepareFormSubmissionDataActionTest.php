@@ -7,7 +7,7 @@ use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\SubmitFormPayload;
 
 test('prepare form submission data action maps validated payload', function (): void {
     $form = Form::factory()->create();
-    $data = SubmitFormPayload::from(['subject' => 'Hello', 'firstName' => 'Jamie', 'submissionData' => ['plan' => 'pro']]);
+    $data = SubmitFormPayload::validatedInput(['subject' => 'Hello', 'firstName' => 'Jamie', 'submissionData' => ['plan' => 'pro']]);
     $request = Request::create('/forms', 'POST', server: ['HTTP_ORIGIN' => 'https://landing.example.com']);
     $entryData = formSubmissionStage('prepare', $form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
     expect($entryData)->toBeArray();
@@ -15,7 +15,7 @@ test('prepare form submission data action maps validated payload', function (): 
 });
 test('prepare form submission data falls back to request headers', function (): void {
     $form = Form::factory()->create();
-    $data = SubmitFormPayload::from(['subject' => 'Header derived']);
+    $data = SubmitFormPayload::validatedInput(['subject' => 'Header derived']);
     $server = ['HTTP_ORIGIN' => 'https://origin.example.com'];
     $request = Request::create('/forms', 'POST', [], [], [], $server);
     $entryData = formSubmissionStage('prepare', $form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -23,7 +23,7 @@ test('prepare form submission data falls back to request headers', function (): 
 });
 test('prepare form submission data accepts the canonical payload', function (): void {
     $form = Form::factory()->create();
-    $data = SubmitFormPayload::from(['subject' => 'Camel payload', 'firstName' => 'Alex', 'lastName' => 'Doe', 'phone' => '+359888000111', 'submissionData' => ['orderCode' => 'ABC123']]);
+    $data = SubmitFormPayload::validatedInput(['subject' => 'Camel payload', 'firstName' => 'Alex', 'lastName' => 'Doe', 'phone' => '+359888000111', 'submissionData' => ['orderCode' => 'ABC123']]);
     $server = ['HTTP_X_FORM_ORIGIN' => 'iframe.embed.example'];
     $request = Request::create('/forms', 'POST', [], [], [], $server);
     $entryData = formSubmissionStage('prepare', $form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -32,6 +32,6 @@ test('prepare form submission data accepts the canonical payload', function (): 
 test('prepare form submission data falls back to request host when origin headers are absent', function (): void {
     $form = Form::factory()->create();
     $request = Request::create('https://forms.example.test/forms', 'POST');
-    $entryData = formSubmissionStage('prepare', $form, formNativeInput(SubmitFormPayload::from(['subject' => 'Host fallback'])), formNativeInput(formSubmissionContext($request)));
+    $entryData = formSubmissionStage('prepare', $form, formNativeInput(SubmitFormPayload::validatedInput(['subject' => 'Host fallback'])), formNativeInput(formSubmissionContext($request)));
     expect($entryData['submittedFrom'])->toBe('forms.example.test');
 });

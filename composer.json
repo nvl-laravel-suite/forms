@@ -29,8 +29,7 @@
         "nvl/ownership": "^7.0",
         "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0",
-        "spatie/laravel-data": "^4.23"
+        "pestphp/pest-plugin-laravel": "^4.0"
     },
     "suggest": {
         "nvl/activity": "Can consume the package's after-commit events in an application-owned audit integration",

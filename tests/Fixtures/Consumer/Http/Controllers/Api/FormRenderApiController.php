@@ -75,7 +75,6 @@ final class FormRenderApiController extends Controller
      * and maps them to field-level errors via the shared response mapper,
      * matching the PublicFormsController error handling contract.
      *
-     * @param  SubmitFormPayload  $data  Validated submission data
      * @param  HandlePublicFormSubmissionAction  $handleSubmission  Submission orchestration action
      * @param  HandleFormSubmissionErrorAction  $handleError  Action to handle submission errors
      * @param  GetFormForRenderAction  $getForm  Action to resolve form for error mapping
@@ -85,10 +84,10 @@ final class FormRenderApiController extends Controller
      * @param  string  $formIdentifier  Form ID or handle
      * @return JsonResponse Submission response
      */
-    public function submit(SubmitFormPayload $data, FormSubmissions $handleSubmission, HandleFormSubmissionErrorAction $handleError, FormReader $getForm, PublicFormSubmissionResponseMapper $responseMapper, RequestOriginResolver $originResolver, Request $request, string $formIdentifier): JsonResponse
+    public function submit(FormSubmissions $handleSubmission, HandleFormSubmissionErrorAction $handleError, FormReader $getForm, PublicFormSubmissionResponseMapper $responseMapper, RequestOriginResolver $originResolver, Request $request, string $formIdentifier): JsonResponse
     {
         try {
-            $submission = $handleSubmission->submit($formIdentifier, $data->toArray(), FormSubmissionContext::fromRequest($request, $originResolver)->toArray());
+            $submission = $handleSubmission->submit($formIdentifier, SubmitFormPayload::validatedInput($request->all()), FormSubmissionContext::fromRequest($request, $originResolver)->toArray());
             $warning = $responseMapper->warning($submission);
             $response = ['success' => true, 'message' => trans('nvl-forms::forms/messages.api.form_submitted'), 'data' => ['entry_id' => formSubmissionId($submission), 'form_name' => $submission->form->displayName(), 'submitted_at' => $submission->created_at->format('Y-m-d H:i:s')]];
             if ($warning !== null) {

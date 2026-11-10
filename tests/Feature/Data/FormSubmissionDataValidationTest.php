@@ -8,8 +8,8 @@ test('form submission data discards untrusted source metadata', function (): voi
     $payload = ['subject' => 'Contact', 'email' => 'user@example.com', 'submittedFrom' => 'https://example.com'];
     $validator = Validator::make($payload, SubmitFormPayload::rules(), SubmitFormPayload::messages(), SubmitFormPayload::attributes());
     expect($validator->passes())->toBeTrue();
-    $data = SubmitFormPayload::from($payload);
-    expect($data->toArray())->not->toHaveKey('submittedFrom');
+    $data = SubmitFormPayload::validatedInput($payload);
+    expect($data)->not->toHaveKey('submittedFrom');
 });
 test('form submission data validation rejects invalid email addresses', function (): void {
     $payload = ['email' => 'not-email'];
@@ -40,4 +40,12 @@ test('form submission data validation accepts null phone', function (): void {
     $payload = ['phone' => null];
     $validator = Validator::make($payload, SubmitFormPayload::rules());
     expect($validator->passes())->toBeTrue();
+});
+
+test('native public input validation preserves explicit nulls and nested user keys without defaults', function (): void {
+    $payload = ['phone' => null, 'submissionData' => ['orderCode' => 'ABC123', 'nestedFields' => ['firstName' => null]]];
+
+    expect(SubmitFormPayload::validatedInput($payload + ['submittedFrom' => 'untrusted.example', 'isSpam' => false]))
+        ->toBe($payload)
+        ->not->toHaveKeys(['subject', 'email', 'submittedFrom', 'isSpam']);
 });

@@ -12,13 +12,12 @@ use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Services\EntryCallbackRegistry;
 use Nvl\Forms\Services\FormSubmissions;
 use Nvl\Forms\Support\FormHandlerRegistry;
-use Nvl\Forms\Tests\Fixtures\Consumer\Data\FormEntryPayload;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\SubmitFormPayload;
 
 test('submission idempotency returns the original entry without duplicate events', function (): void {
     Event::fake([FormEntryChanged::class]);
     $form = Form::factory()->create(['restrict_public_access' => false, 'enable_rate_limiting' => false, 'enable_honeypot' => false]);
-    $payload = FormEntryPayload::from(['formId' => $form->id, 'subject' => 'One submission', 'submittedFrom' => 'example.test']);
+    $payload = ['formId' => $form->id, 'subject' => 'One submission', 'submittedFrom' => 'example.test'];
     $first = formSubmissionStage('createEntry', formNativeInput($payload), '127.0.0.1', 'Mozilla/5.0', null, null, 'submission-1');
     $second = formSubmissionStage('createEntry', formNativeInput($payload), '127.0.0.1', 'Mozilla/5.0', null, null, 'submission-1');
     expect($second->id)->toBe($first->id)->and(FormEntry::query()->count())->toBe(1)->and($form->fresh()->submissions_count)->toBe(1);
@@ -27,20 +26,20 @@ test('submission idempotency returns the original entry without duplicate events
 test('submission idempotency rejects reuse with a different payload', function (): void {
     $form = Form::factory()->create(['restrict_public_access' => false, 'enable_rate_limiting' => false, 'enable_honeypot' => false]);
     $action = app(FormSubmissions::class);
-    formSubmissionStage('createEntry', formNativeInput(FormEntryPayload::from(['formId' => $form->id, 'subject' => 'Original', 'submittedFrom' => 'example.test'])), '127.0.0.1', null, null, null, 'submission-2');
-    expect(fn () => formSubmissionStage('createEntry', formNativeInput(FormEntryPayload::from(['formId' => $form->id, 'subject' => 'Changed', 'submittedFrom' => 'example.test'])), '127.0.0.1', null, null, null, 'submission-2'))->toThrow(FormSubmissionRejectionException::class);
+    formSubmissionStage('createEntry', formNativeInput(['formId' => $form->id, 'subject' => 'Original', 'submittedFrom' => 'example.test']), '127.0.0.1', null, null, null, 'submission-2');
+    expect(fn () => formSubmissionStage('createEntry', formNativeInput(['formId' => $form->id, 'subject' => 'Changed', 'submittedFrom' => 'example.test']), '127.0.0.1', null, null, null, 'submission-2'))->toThrow(FormSubmissionRejectionException::class);
 });
 test('single-registration forms reject a repeated normalized email', function (): void {
     $form = Form::factory()->create(['allow_multiple_registrations' => false, 'restrict_public_access' => false, 'enable_rate_limiting' => false, 'enable_honeypot' => false]);
     $action = app(FormSubmissions::class);
-    formSubmissionStage('createEntry', formNativeInput(FormEntryPayload::from(['formId' => $form->id, 'email' => 'Person@Example.com', 'submittedFrom' => 'example.test'])), '127.0.0.1', null, null);
-    expect(fn () => formSubmissionStage('createEntry', formNativeInput(FormEntryPayload::from(['formId' => $form->id, 'email' => ' person@example.com ', 'submittedFrom' => 'example.test'])), '127.0.0.1', null, null))->toThrow(FormSubmissionRejectionException::class);
+    formSubmissionStage('createEntry', formNativeInput(['formId' => $form->id, 'email' => 'Person@Example.com', 'submittedFrom' => 'example.test']), '127.0.0.1', null, null);
+    expect(fn () => formSubmissionStage('createEntry', formNativeInput(['formId' => $form->id, 'email' => ' person@example.com ', 'submittedFrom' => 'example.test']), '127.0.0.1', null, null))->toThrow(FormSubmissionRejectionException::class);
     expect(FormEntry::query()->count())->toBe(1);
 });
 test('multiple-registration forms accept repeated email identities', function (): void {
     $form = Form::factory()->create(['allow_multiple_registrations' => true, 'restrict_public_access' => false, 'enable_rate_limiting' => false, 'enable_honeypot' => false]);
     $action = app(FormSubmissions::class);
-    $payload = FormEntryPayload::from(['formId' => $form->id, 'email' => 'repeat@example.com', 'submittedFrom' => 'example.test']);
+    $payload = ['formId' => $form->id, 'email' => 'repeat@example.com', 'submittedFrom' => 'example.test'];
     formSubmissionStage('createEntry', formNativeInput($payload), '127.0.0.1', null, null);
     formSubmissionStage('createEntry', formNativeInput($payload), '127.0.0.1', null, null);
     expect(FormEntry::query()->count())->toBe(2);
@@ -53,7 +52,7 @@ test('custom handler idempotency replays the completed receipt', function (): vo
 
         return ['entry_id' => 'downstream-123'];
     });
-    $data = SubmitFormPayload::from(['email' => 'custom@example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'custom@example.com']);
     $request = Request::create('/submit', 'POST', server: ['HTTP_IDEMPOTENCY_KEY' => 'custom-submission-1']);
     $action = app(FormSubmissions::class);
     $first = $action->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -65,8 +64,8 @@ test('custom handler idempotency rejects a changed payload', function (): void {
     app(FormHandlerRegistry::class)->register('custom-idempotency-conflict', static fn (): array => ['entry_id' => 'downstream-456']);
     $request = Request::create('/submit', 'POST', server: ['HTTP_IDEMPOTENCY_KEY' => 'custom-submission-2']);
     $action = app(FormSubmissions::class);
-    $action->submit($form, formNativeInput(SubmitFormPayload::from(['subject' => 'Original'])), formNativeInput(formSubmissionContext($request)));
-    expect(fn () => $action->submit($form, formNativeInput(SubmitFormPayload::from(['subject' => 'Changed'])), formNativeInput(formSubmissionContext($request))))->toThrow(FormSubmissionRejectionException::class);
+    $action->submit($form, formNativeInput(SubmitFormPayload::validatedInput(['subject' => 'Original'])), formNativeInput(formSubmissionContext($request)));
+    expect(fn () => $action->submit($form, formNativeInput(SubmitFormPayload::validatedInput(['subject' => 'Changed'])), formNativeInput(formSubmissionContext($request))))->toThrow(FormSubmissionRejectionException::class);
 });
 test('entry submission callbacks do not rerun on an idempotent replay', function (): void {
     $callbackCalls = 0;
@@ -76,7 +75,7 @@ test('entry submission callbacks do not rerun on an idempotent replay', function
     });
     $request = Request::create('/submit', 'POST', server: ['HTTP_IDEMPOTENCY_KEY' => 'entry-submission-1']);
     $action = app(FormSubmissions::class);
-    $data = SubmitFormPayload::from(['email' => 'callback@example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'callback@example.com']);
     $action->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
     $action->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
     expect($callbackCalls)->toBe(1);

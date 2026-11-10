@@ -20,8 +20,13 @@ function formSubmissionContext(Request $request): FormSubmissionContext
 uses(OwnershipTestCase::class)->in('Ownership');
 pest()->extend(PivotOwnershipTestCase::class)->in(__DIR__.'/OwnershipPivot');
 
-/** The consumer fixture converts its own DTOs before calling a native contract. */
-function formNativeInput(mixed $input): array
+/**
+ * The request adapter converts trusted request context; mutation fields remain native arrays.
+ *
+ * @param  array<string, mixed>|FormSubmissionContext  $input
+ * @return array<string, mixed>
+ */
+function formNativeInput(array|FormSubmissionContext $input): array
 {
     return is_array($input) ? $input : $input->toArray();
 }

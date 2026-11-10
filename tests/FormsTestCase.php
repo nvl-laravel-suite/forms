@@ -14,7 +14,6 @@ use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Spatie\LaravelData\LaravelDataServiceProvider;
 
 /**
  * Boots Forms and its runtime dependencies in an isolated Laravel application.
@@ -28,7 +27,7 @@ abstract class FormsTestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
-        return [LocaleServiceProvider::class, LaravelDataServiceProvider::class, SupportServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class, RouteServiceProvider::class];
+        return [LocaleServiceProvider::class, SupportServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class, RouteServiceProvider::class];
     }
 
     protected function setUp(): void

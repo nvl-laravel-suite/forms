@@ -7,21 +7,12 @@ namespace Nvl\Forms\Tests\Fixtures\Consumer\Data\Display;
 use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Tests\Fixtures\Consumer\Data\FormOptions;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
 
 /**
  * Public-safe localized form contract used by render consumers.
  */
-#[MapInputName(CamelCaseMapper::class)]
-#[MapOutputName(CamelCaseMapper::class)]
-final class PublicFormRenderPayload extends Data
+final class PublicFormRenderPayload
 {
-    use DataTransform;
-
     /**
      * @param  string  $id  Form identifier
      * @param  string|null  $handle  Public form handle
@@ -55,4 +46,25 @@ final class PublicFormRenderPayload extends Data
         public readonly bool $allowMultipleRegistrations,
         public readonly ?FormOptions $options
     ) {}
+
+    /** @return array<string, mixed> Consumer-facing response fields. */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'handle' => $this->handle,
+            'name' => $this->name,
+            'description' => $this->description,
+            'status' => $this->status->value,
+            'type' => $this->type->value,
+            'locale' => $this->locale,
+            'content' => $this->content,
+            'submitButtonLabel' => $this->submitButtonLabel,
+            'successTitle' => $this->successTitle,
+            'successMessage' => $this->successMessage,
+            'restrictPublicAccess' => $this->restrictPublicAccess,
+            'allowMultipleRegistrations' => $this->allowMultipleRegistrations,
+            'options' => $this->options?->toArray(),
+        ];
+    }
 }

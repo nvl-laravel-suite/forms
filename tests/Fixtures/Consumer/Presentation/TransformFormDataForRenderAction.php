@@ -29,7 +29,7 @@ final class TransformFormDataForRenderAction
         $locale = $this->contentLocale->get();
         $submitButtonLabel = $this->nullableString($form->translated('submit_button_label', $locale)) ?? ($form->options['submitButtonLabel'] ?? null);
 
-        return new PublicFormRenderPayload(id: $form->id, handle: $form->handle, name: $form->displayName($locale), description: $form->displayDescription($locale), status: $form->status, type: $form->type, locale: $locale, content: $form->localizedContent($locale), submitButtonLabel: $submitButtonLabel, successTitle: $this->nullableString($form->translated('success_title', $locale)), successMessage: $this->nullableString($form->translated('success_message', $locale)), restrictPublicAccess: $form->restrict_public_access, allowMultipleRegistrations: $form->allow_multiple_registrations, options: $form->options === null ? null : FormOptions::from($form->options));
+        return new PublicFormRenderPayload(id: $form->id, handle: $form->handle, name: $form->displayName($locale), description: $form->displayDescription($locale), status: $form->status, type: $form->type, locale: $locale, content: $form->localizedContent($locale), submitButtonLabel: $submitButtonLabel, successTitle: $this->nullableString($form->translated('success_title', $locale)), successMessage: $this->nullableString($form->translated('success_message', $locale)), restrictPublicAccess: $form->restrict_public_access, allowMultipleRegistrations: $form->allow_multiple_registrations, options: $form->options === null ? null : FormOptions::fromStored($form->options));
     }
 
     /**

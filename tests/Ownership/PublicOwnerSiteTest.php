@@ -75,7 +75,7 @@ it('delivers class-resolved callbacks only after native commit with immutable pu
         $request->headers->set('Idempotency-Key', 'same-public-key');
         $request->headers->set('Origin', 'https://a.forms.test');
         $context = formSubmissionContext($request);
-        $data = SubmitFormPayload::from(['email' => 'callback@example.test', 'body' => 'A committed submission']);
+        $data = SubmitFormPayload::validatedInput(['email' => 'callback@example.test', 'body' => 'A committed submission']);
         $connection = $form->getConnection();
         $connection->beginTransaction();
         $first = app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput($context));
@@ -124,7 +124,7 @@ it('preserves committed submission success and later callbacks after an extensio
         $request = Request::create('https://a.forms.test/submit', 'POST');
         $request->headers->set('Origin', 'https://a.forms.test');
         $request->headers->set('Idempotency-Key', 'callback-failure-proof');
-        $result = app(FormSubmissions::class)->submit($this->forms[7], formNativeInput(SubmitFormPayload::from(['email' => 'durable@example.test', 'body' => 'Committed'])), formNativeInput(formSubmissionContext($request)));
+        $result = app(FormSubmissions::class)->submit($this->forms[7], formNativeInput(SubmitFormPayload::validatedInput(['email' => 'durable@example.test', 'body' => 'Committed'])), formNativeInput(formSubmissionContext($request)));
         expect(OwnedEntryCallback::$calls)->toBe([['7', 'alpha', formSubmissionId($result)]]);
         expect(FormEntry::whereKey(formSubmissionId($result))->exists())->toBeTrue();
     });

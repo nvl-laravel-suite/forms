@@ -71,3 +71,21 @@ test('all management discovery endpoints enforce the form policy', function (): 
         $this->getJson("/nvl/api/v1/forms/{$endpoint}")->assertForbidden();
     }
 });
+
+test('management discovery validates native request arrays before querying', function (string $query, string $field): void {
+    $this->getJson('/nvl/api/v1/forms/'.$query)->assertUnprocessable()->assertJsonValidationErrors([$field]);
+})->with([
+    'suggestions' => ['suggestions?q=x', 'q'],
+    'search' => ['search?status=invalid', 'status'],
+    'select' => ['select?activeOnly=invalid', 'activeOnly'],
+]);
+
+test('native management request adapters retain validated scalar normalization', function (): void {
+    $created = $this->postJson(route('nvl.forms.management.store'), formsApiMutationPayload([
+        'corsSettings' => ['allowCredentials' => '0', 'maxAge' => '300'],
+        'options' => ['showLogo' => '0'],
+    ]))->assertCreated()->assertJsonPath('data.corsSettings.allowCredentials', false)->assertJsonPath('data.corsSettings.maxAge', 300);
+
+    $this->putJson(route('nvl.forms.management.update', $created->json('data.id')), ['expected_revision' => '1', 'handle' => 'normalized-revision'])
+        ->assertOk()->assertJsonPath('data.revision', 2)->assertJsonPath('data.handle', 'normalized-revision');
+});

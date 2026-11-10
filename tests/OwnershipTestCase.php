@@ -14,7 +14,6 @@ use Nvl\Forms\Providers\FormsServiceProvider;
 use Nvl\Forms\Services\FormLifecycle;
 use Nvl\Forms\Tests\Fixtures\Actor;
 use Nvl\Forms\Tests\Fixtures\Company;
-use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\MutateFormPayload;
 use Nvl\Forms\Tests\Fixtures\Consumer\RouteServiceProvider;
 use Nvl\Forms\Tests\Fixtures\OwnershipForm;
 use Nvl\Forms\Tests\RuntimeOwnershipTestCase as RuntimeTestCase;
@@ -26,7 +25,6 @@ use Nvl\Ownership\ValueObjects\OwnershipMapping;
 use Nvl\Ownership\ValueObjects\OwnershipOperation;
 use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
-use Spatie\LaravelData\LaravelDataServiceProvider;
 
 /** Boots standalone Forms with native host ownership and real reviewed activation. */
 abstract class OwnershipTestCase extends RuntimeTestCase
@@ -41,7 +39,7 @@ abstract class OwnershipTestCase extends RuntimeTestCase
 
     protected function getPackageProviders($app): array
     {
-        return [LocaleServiceProvider::class, ...parent::getPackageProviders($app), LaravelDataServiceProvider::class, TranslatableServiceProvider::class, FormsServiceProvider::class, RouteServiceProvider::class];
+        return [LocaleServiceProvider::class, ...parent::getPackageProviders($app), TranslatableServiceProvider::class, FormsServiceProvider::class, RouteServiceProvider::class];
     }
 
     /** Install an explicitly selected consumer-native pivot before protocol preparation. */
@@ -126,6 +124,6 @@ abstract class OwnershipTestCase extends RuntimeTestCase
 
     protected function createOwnedForm(string $handle = 'contact'): Form
     {
-        return app(FormLifecycle::class)->create(formNativeInput(MutateFormPayload::from(['handle' => $handle, 'status' => 'active', 'type' => 'iframe', 'resolvement' => 'entries', 'translations' => ['en' => ['name' => 'Contact']], 'enableHoneypot' => false, 'enableRateLimiting' => false, 'restrictPublicAccess' => false, 'requireCsrf' => false])), actor: Actor::firstOrFail());
+        return app(FormLifecycle::class)->create(formNativeInput(['handle' => $handle, 'status' => 'active', 'type' => 'iframe', 'resolvement' => 'entries', 'translations' => ['en' => ['name' => 'Contact']], 'enableHoneypot' => false, 'enableRateLimiting' => false, 'restrictPublicAccess' => false, 'requireCsrf' => false]), actor: Actor::firstOrFail());
     }
 }

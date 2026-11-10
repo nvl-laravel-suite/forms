@@ -46,7 +46,7 @@ final class FormsApiController extends Controller
             throw new FormException('Forms index expects a paginator payload.');
         }
 
-        return response()->json(['data' => ['forms' => PaginatedCollection::fromPaginator($forms, FormPayload::class)->toArray()]], 200);
+        return response()->json(['data' => ['forms' => PaginatedCollection::fromPaginator($forms)->toArray()]], 200);
     }
 
     /**
@@ -59,7 +59,7 @@ final class FormsApiController extends Controller
     public function store(Request $request, FormLifecycle $action): JsonResponse
     {
         Gate::authorize('create', Form::class);
-        $form = $action->create(MutateFormPayload::validateForCreate($this->normalizePayloadArray($request->all()))->toArray(), $request->user());
+        $form = $action->create(MutateFormPayload::validateForCreate($this->normalizePayloadArray($request->all())), $request->user());
 
         return response()->json(['data' => FormPayload::fromModel($form)->toArray(), 'code' => FormResponseCode::Created->value], 201);
     }
@@ -106,7 +106,7 @@ final class FormsApiController extends Controller
     public function update(Request $request, Form $form, FormLifecycle $action): JsonResponse
     {
         Gate::authorize('update', $form);
-        $form = $action->update($form, MutateFormPayload::validateForUpdate($this->normalizePayloadArray($request->all()), $form->id)->toArray(), $request->user());
+        $form = $action->update($form, MutateFormPayload::validateForUpdate($this->normalizePayloadArray($request->all()), $form->id), $request->user());
 
         return response()->json(['data' => FormPayload::fromModel($form)->toArray(), 'code' => FormResponseCode::Updated->value], 200);
     }
@@ -137,8 +137,8 @@ final class FormsApiController extends Controller
     public function duplicate(Request $request, Form $form, FormLifecycle $action): JsonResponse
     {
         Gate::authorize('duplicate', $form);
-        $data = DuplicateFormData::validateAndCreate($request->all());
-        $name = $data->name;
+        $data = $request->validate(DuplicateFormData::rules());
+        $name = $data['name'] ?? null;
         $duplicatedForm = $action->duplicate($form, is_string($name) && $name !== '' ? $name : null, $request->user());
 
         return response()->json(['data' => FormPayload::fromModel($duplicatedForm)->toArray(), 'code' => FormResponseCode::Duplicated->value], 201);
@@ -147,31 +147,31 @@ final class FormsApiController extends Controller
     /**
      * Get form suggestions for autocomplete/select.
      *
-     * @param  FormSuggestions  $data  Validated suggestion parameters
+     * @param  Request  $request  Incoming suggestion parameters
      * @param  GetFormSuggestionsAction  $action  Action to get form suggestions
      * @return JsonResponse Suggestions response
      */
-    public function suggestions(FormSuggestions $data, FormReader $action): JsonResponse
+    public function suggestions(Request $request, FormReader $action): JsonResponse
     {
         Gate::authorize('viewAny', Form::class);
-        $limit = max(1, min(50, is_int($data->limit) ? $data->limit : 10));
-        $forms = $action->suggestions($data->q, $limit);
-        $dtos = $forms->map(static fn (Form $form) => FormSuggestion::fromModel($form));
+        $data = $request->validate(FormSuggestions::rules(), FormSuggestions::messages(), FormSuggestions::attributes());
+        $limit = (int) ($data['limit'] ?? 10);
+        $forms = $action->suggestions($data['q'], $limit);
 
-        return response()->json(['data' => FormSuggestion::collect($dtos)->toArray()], 200);
+        return response()->json(['data' => $forms->map(static fn (Form $form): array => FormSuggestion::fromModel($form)->toArray())->all()], 200);
     }
 
     /**
      * Search forms with filters.
      *
-     * @param  FormSearchFilter  $data  Validated search parameters
+     * @param  Request  $request  Incoming search parameters
      * @param  SearchFormsAction  $action  Action to search forms
      * @return JsonResponse Search results response
      */
-    public function search(Request $request, FormSearchFilter $data, FormReader $action): JsonResponse
+    public function search(Request $request, FormReader $action): JsonResponse
     {
         Gate::authorize('viewAny', Form::class);
-        $payload = $this->normalizePayloadArray($data->toArray());
+        $payload = $request->validate(FormSearchFilter::rules(), FormSearchFilter::messages(), FormSearchFilter::attributes());
         $result = $action->search($payload, $request->user());
 
         return response()->json(['data' => ['items' => $result['forms'], 'total' => $result['total']]], 200);
@@ -180,20 +180,20 @@ final class FormsApiController extends Controller
     /**
      * Get select options for forms.
      *
-     * @param  FormSelectOption  $data  Validated select parameters
+     * @param  Request  $request  Incoming select parameters
      * @param  GetFormSelectOptionsAction  $action  Action to get form select options
      * @return JsonResponse Select options response
      */
-    public function select(FormSelectOption $data, FormReader $action): JsonResponse
+    public function select(Request $request, FormReader $action): JsonResponse
     {
         Gate::authorize('viewAny', Form::class);
-        $options = $action->options($this->normalizePayloadArray($data->toArray()));
+        $options = $action->options($request->validate(FormSelectOption::rules(), FormSelectOption::messages(), FormSelectOption::attributes()));
 
         return response()->json(['data' => $options], 200);
     }
 
     /**
-     * Normalize Data::toArray payloads to string-keyed arrays.
+     * Normalize request payloads to string-keyed arrays.
      *
      * @param  array<array-key, mixed>  $payload  Raw DTO payload
      * @return array<string, mixed> Normalized payload

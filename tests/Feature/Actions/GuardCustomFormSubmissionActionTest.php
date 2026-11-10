@@ -10,7 +10,7 @@ use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\SubmitFormPayload;
 
 test('guard custom form submission allows clean submission', function (): void {
     $form = Form::factory()->create(['enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
-    $data = SubmitFormPayload::from(['firstName' => 'Jane', 'lastName' => 'Doe', 'email' => 'jane@example.com', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['firstName' => 'Jane', 'lastName' => 'Doe', 'email' => 'jane@example.com', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.1');
     $result = formSubmissionStage('guardCustom', $form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -19,7 +19,7 @@ test('guard custom form submission allows clean submission', function (): void {
 test('guard custom form submission blocks honeypot trigger', function (): void {
     config(['nvl-forms.security.spam_protection.honeypot.field_names' => ['website']]);
     $form = Form::factory()->create(['enable_honeypot' => true, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
-    $data = SubmitFormPayload::from(['firstName' => 'Bot', 'email' => 'bot@spam.com', 'submissionData' => ['website' => 'http://spam.com'], 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['firstName' => 'Bot', 'email' => 'bot@spam.com', 'submissionData' => ['website' => 'http://spam.com'], 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.2');
     expect(fn () => formSubmissionStage('guardCustom', $form, formNativeInput($data), formNativeInput(formSubmissionContext($request))))->toThrow(FormSubmissionRejectionException::class);
@@ -29,7 +29,7 @@ test('guard custom form submission blocks honeypot trigger', function (): void {
 });
 test('guard custom form submission records spam-score rejection metadata', function (): void {
     $form = Form::factory()->create(['enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false, 'spam_count' => 0]);
-    $data = SubmitFormPayload::from(['email' => 'bot@tempmail.com', 'subject' => 'WIN BIG BITCOIN NOW', 'submissionData' => ['body' => 'Limited time offer! click here http://a.test http://b.test http://c.test!!!'], 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'bot@tempmail.com', 'subject' => 'WIN BIG BITCOIN NOW', 'submissionData' => ['body' => 'Limited time offer! click here http://a.test http://b.test http://c.test!!!'], 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.22');
     $request->headers->set('User-Agent', 'curl/8.0');
@@ -40,7 +40,7 @@ test('guard custom form submission records spam-score rejection metadata', funct
 });
 test('guard custom form submission includes normalized handler payload', function (): void {
     $form = Form::factory()->create(['enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
-    $data = SubmitFormPayload::from(['firstName' => 'Alice', 'lastName' => 'Smith', 'email' => 'alice@example.com', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['firstName' => 'Alice', 'lastName' => 'Smith', 'email' => 'alice@example.com', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.3');
     $result = formSubmissionStage('guardCustom', $form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));

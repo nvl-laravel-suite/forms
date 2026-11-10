@@ -5,43 +5,23 @@ declare(strict_types=1);
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 
 use Illuminate\Pagination\LengthAwarePaginator;
-use InvalidArgumentException;
-use Spatie\LaravelData\Data;
+use Nvl\Forms\Models\Form;
 
-/**
- * Normalizes a Laravel paginator into the stable NVL pagination envelope.
- *
- * @internal
- */
-final class PaginatedCollection extends Data
+/** The consumer's forms listing envelope, built from Laravel pagination. */
+final class PaginatedCollection
 {
-    /**
-     * Create a normalized pagination envelope.
-     *
-     * @param  list<array<string, mixed>>  $items  Transformed page items
-     */
+    /** @param list<array<string, mixed>> $items */
     public function __construct(
         public readonly array $items,
         public readonly PaginationMeta $meta,
     ) {}
 
-    /**
-     * Transform one paginator with a Spatie Data item class.
-     *
-     * @param  object  $paginator  Source length-aware paginator
-     * @param  class-string<Data>  $dataClass  Item data class
-     */
-    public static function fromPaginator(object $paginator, string $dataClass): self
+    /** @param LengthAwarePaginator<int, Form> $paginator */
+    public static function fromPaginator(LengthAwarePaginator $paginator): self
     {
-        if (! $paginator instanceof LengthAwarePaginator) {
-            throw new InvalidArgumentException('Paginated data requires a Laravel length-aware paginator.');
-        }
-
         return new self(
             items: array_values(array_map(
-                static fn (mixed $item): array => self::stringKeyed(
-                    $dataClass::from($item)->toArray(),
-                ),
+                static fn (Form $form): array => FormPayload::fromModel($form)->toArray(),
                 $paginator->items(),
             )),
             meta: new PaginationMeta(
@@ -53,22 +33,9 @@ final class PaginatedCollection extends Data
         );
     }
 
-    /**
-     * Normalize a Data payload to its documented string-keyed shape.
-     *
-     * @param  array<array-key, mixed>  $values
-     * @return array<string, mixed>
-     */
-    private static function stringKeyed(array $values): array
+    /** @return array{items: list<array<string, mixed>>, meta: array<string, mixed>} */
+    public function toArray(): array
     {
-        $normalized = [];
-
-        foreach ($values as $key => $value) {
-            if (is_string($key)) {
-                $normalized[$key] = $value;
-            }
-        }
-
-        return $normalized;
+        return ['items' => $this->items, 'meta' => $this->meta->toArray()];
     }
 }

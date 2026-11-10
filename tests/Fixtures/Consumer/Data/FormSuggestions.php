@@ -4,38 +4,14 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
- * DTO for lightweight suggestion lookups while typing form names.
+ * Consumer validation rules for suggestion lookups.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class FormSuggestions extends Data
+class FormSuggestions
 {
-    use DataTransform;
-
-    /**
-     * Create the form suggestions query data transfer object.
-     *
-     * @param  string  $q  Search query
-     * @param  int|Optional  $limit  Result limit
-     */
-    public function __construct(
-        /**
-         * @var string
-         */
-        public readonly string $q,
-        /**
-         * @var int|Optional
-         */
-        public readonly int|Optional $limit = 10
-    ) {}
+    use TranslatedValidation;
 
     /**
      * Validation rules for suggestion queries.

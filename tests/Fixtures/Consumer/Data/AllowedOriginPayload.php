@@ -11,84 +11,75 @@ use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Enums\CorsPolicy;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Rules\AllowedOriginExpressionRule;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Attributes\Validation\Nullable;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Lazy;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
-use Spatie\LaravelData\Support\Validation\ValidationContext;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
  * Transfer object for allowed origin records scoped to forms.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class AllowedOriginPayload extends Data
+class AllowedOriginPayload
 {
-    use DataTransform;
+    use TranslatedValidation;
 
     /**
      * Create the allowed origin data transfer object.
      *
-     * @param  string|Optional  $id  Allowed origin identifier
-     * @param  string|Optional  $formId  Parent form identifier
-     * @param  string|Optional  $origin  Allowed origin host
-     * @param  bool|Optional  $isActive  Active flag
-     * @param  string|Optional|null  $description  Optional description
-     * @param  FormCorsSettings|Optional|null  $corsSettings  CORS configuration overrides
-     * @param  int|Optional  $usageCount  Total usage count
-     * @param  Carbon|Optional|null  $lastUsedAt  Timestamp of last usage
-     * @param  Lazy|Optional|FormPayload|null  $form  Related form data
-     * @param  Carbon|Optional|null  $createdAt  Creation timestamp
-     * @param  Carbon|Optional|null  $updatedAt  Update timestamp
+     * @param  string  $id  Allowed origin identifier
+     * @param  string  $formId  Parent form identifier
+     * @param  string  $origin  Allowed origin host
+     * @param  bool  $isActive  Active flag
+     * @param  string|null  $description  Optional description
+     * @param  FormCorsSettings|null  $corsSettings  CORS configuration overrides
+     * @param  int  $usageCount  Total usage count
+     * @param  Carbon|null  $lastUsedAt  Timestamp of last usage
+     * @param  FormPayload|null  $form  Related form data
+     * @param  Carbon|null  $createdAt  Creation timestamp
+     * @param  Carbon|null  $updatedAt  Update timestamp
+     * @param  bool  $formLoaded  Whether the source explicitly loaded its form relation
      */
     public function __construct(
         /**
-         * @var string|Optional $id
+         * @var string $id
          */
-        public readonly string|Optional $id,
+        public readonly string $id,
         /**
-         * @var string|Optional
+         * @var string
          */
-        public readonly string|Optional $formId,
+        public readonly string $formId,
         /**
-         * @var string|Optional
+         * @var string
          */
-        public readonly string|Optional $origin,
+        public readonly string $origin,
         /**
-         * @var bool|Optional
+         * @var bool
          */
-        public readonly bool|Optional $isActive = true,
+        public readonly bool $isActive = true,
         /**
-         * @var string|Optional|null
+         * @var string|null
          */
-        public readonly string|Optional|null $description = null,
-        /** @var FormCorsSettings|Optional|null */
-        #[Nullable]
-        public readonly FormCorsSettings|Optional|null $corsSettings = null,
+        public readonly ?string $description = null,
+        /** @var FormCorsSettings|null */
+        public readonly ?FormCorsSettings $corsSettings = null,
         /**
-         * @var int|Optional
+         * @var int
          */
-        public readonly int|Optional $usageCount = 0,
+        public readonly int $usageCount = 0,
         /**
-         * @var Carbon|Optional|null
+         * @var Carbon|null
          */
-        public readonly Carbon|Optional|null $lastUsedAt = null,
+        public readonly ?Carbon $lastUsedAt = null,
         /**
-         * @var Lazy|Optional|FormPayload|null
+         * @var FormPayload|null
          */
-        public readonly Lazy|Optional|FormPayload|null $form = null,
+        public readonly ?FormPayload $form = null,
         /**
-         * @var Carbon|Optional|null
+         * @var Carbon|null
          */
-        public readonly Carbon|Optional|null $createdAt = null,
+        public readonly ?Carbon $createdAt = null,
         /**
-         * @var Carbon|Optional|null
+         * @var Carbon|null
          */
-        public readonly Carbon|Optional|null $updatedAt = null
+        public readonly ?Carbon $updatedAt = null,
+        private readonly bool $formLoaded = true,
     ) {}
 
     /**
@@ -99,21 +90,7 @@ class AllowedOriginPayload extends Data
      */
     public static function fromModel(AllowedOrigin $allowedOrigin): self
     {
-        return new self(id: $allowedOrigin->id, formId: $allowedOrigin->form_id, origin: $allowedOrigin->origin, isActive: $allowedOrigin->is_active ?? true, description: $allowedOrigin->description, corsSettings: is_array($allowedOrigin->cors_settings) ? FormCorsSettings::from($allowedOrigin->cors_settings) : null, usageCount: $allowedOrigin->usage_count ?? 0, lastUsedAt: $allowedOrigin->last_used_at, form: Lazy::whenLoaded('form', $allowedOrigin, fn () => FormPayload::from($allowedOrigin->form)), createdAt: $allowedOrigin->created_at, updatedAt: $allowedOrigin->updated_at);
-    }
-
-    /**
-     * Get validation rules for allowed origin data.
-     *
-     * @return array<string, array<int, mixed>> Validation rules
-     */
-    public static function rules(?ValidationContext $context = null): array
-    {
-        $payload = is_array($context?->fullPayload) ? $context->fullPayload : [];
-        $allowedOriginId = isset($payload['id']) && is_string($payload['id']) ? $payload['id'] : null;
-        $formId = isset($payload['formId']) && is_string($payload['formId']) ? $payload['formId'] : null;
-
-        return self::rulesFor($allowedOriginId, $formId);
+        return new self(id: $allowedOrigin->id, formId: $allowedOrigin->form_id, origin: $allowedOrigin->origin, isActive: $allowedOrigin->is_active ?? true, description: $allowedOrigin->description, corsSettings: is_array($allowedOrigin->cors_settings) ? FormCorsSettings::fromStored($allowedOrigin->cors_settings) : null, usageCount: $allowedOrigin->usage_count ?? 0, lastUsedAt: $allowedOrigin->last_used_at, form: $allowedOrigin->relationLoaded('form') && $allowedOrigin->form !== null ? FormPayload::fromModel($allowedOrigin->form) : null, createdAt: $allowedOrigin->created_at, updatedAt: $allowedOrigin->updated_at, formLoaded: $allowedOrigin->relationLoaded('form'));
     }
 
     /**
@@ -161,5 +138,23 @@ class AllowedOriginPayload extends Data
     public static function attributes(): array
     {
         return self::translatedAttributes('nvl-forms::forms');
+    }
+
+    /** @return array<string, mixed> Consumer-facing response fields. */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'formId' => $this->formId,
+            'origin' => $this->origin,
+            'isActive' => $this->isActive,
+            'description' => $this->description,
+            'corsSettings' => $this->corsSettings?->toArray(),
+            'usageCount' => $this->usageCount,
+            'lastUsedAt' => $this->lastUsedAt?->format(DATE_ATOM),
+            ...($this->formLoaded ? ['form' => $this->form?->toArray()] : []),
+            'createdAt' => $this->createdAt?->format(DATE_ATOM),
+            'updatedAt' => $this->updatedAt?->format(DATE_ATOM),
+        ];
     }
 }

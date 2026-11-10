@@ -4,55 +4,18 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations;
 
+use Illuminate\Support\Facades\Validator;
 use Nvl\Forms\Rules\BoundedSubmissionPayload;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Attributes\Validation\Nullable;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
- * Write-only mutation DTO for public form submission payloads.
+ * Consumer validation rules for public form submission payloads.
  *
  * @api
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class SubmitFormPayload extends Data
+class SubmitFormPayload
 {
-    use DataTransform;
-
-    /**
-     * @param  string|Optional|null  $subject  Submission subject
-     * @param  string|Optional|null  $firstName  Sender first name
-     * @param  string|Optional|null  $lastName  Sender last name
-     * @param  string|Optional|null  $email  Sender email
-     * @param  string|Optional|null  $phone  Sender phone
-     * @param  string|Optional|null  $address  Sender address
-     * @param  string|Optional|null  $body  Submission body
-     * @param  array<string, mixed>|Optional|null  $submissionData  Raw submission payload
-     */
-    public function __construct(
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $subject = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $firstName = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $lastName = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $email = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $phone = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $address = null,
-        /** @var string|Optional|null */
-        public readonly string|Optional|null $body = null,
-        /** @var array<string, mixed>|Optional|null */
-        #[Nullable]
-        public readonly array|Optional|null $submissionData = null
-    ) {}
+    use TranslatedValidation;
 
     /**
      * Validation rules for inbound public submissions.
@@ -82,5 +45,16 @@ class SubmitFormPayload extends Data
     public static function attributes(): array
     {
         return self::translatedAttributes('nvl-forms::entries');
+    }
+
+    /**
+     * Validate the public envelope and discard transport metadata owned by the request adapter.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public static function validatedInput(array $payload): array
+    {
+        return Validator::make($payload, self::rules(), self::messages(), self::attributes())->validate();
     }
 }

@@ -17,7 +17,7 @@ use Nvl\Forms\Tests\Fixtures\Consumer\Data\Mutations\SubmitFormPayload;
 
 test('handle public form submission creates entry for entries resolvement', function (): void {
     $form = Form::factory()->create(['resolvement' => Resolvement::ENTRIES, 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false, 'require_csrf' => false, 'submissions_count' => 0]);
-    $data = SubmitFormPayload::from(['firstName' => 'John', 'lastName' => 'Doe', 'email' => 'john@example.com', 'body' => 'Hello, this is a test submission.', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['firstName' => 'John', 'lastName' => 'Doe', 'email' => 'john@example.com', 'body' => 'Hello, this is a test submission.', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.1');
     $result = app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -26,7 +26,7 @@ test('handle public form submission creates entry for entries resolvement', func
 });
 test('handle public form submission increments counters', function (): void {
     $form = Form::factory()->create(['resolvement' => Resolvement::ENTRIES, 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false, 'require_csrf' => false, 'submissions_count' => 0, 'views_count' => 0]);
-    $data = SubmitFormPayload::from(['email' => 'counter@example.com', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'counter@example.com', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.2');
     app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -39,7 +39,7 @@ test('handle public form submission delegates to custom handler', function (): v
     $registry->register('test-custom-handle', function (Form $form, array $data, array $context): array {
         return ['entry_id' => 'custom-123', 'meta' => ['handled' => true]];
     });
-    $data = SubmitFormPayload::from(['email' => 'custom@example.com', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'custom@example.com', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.3');
     $result = app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -55,7 +55,7 @@ test('handle public form submission executes custom handler outside a forms-owne
 
         return ['entry_id' => 'custom-no-outer-transaction'];
     });
-    $data = SubmitFormPayload::from(['email' => 'custom@example.com', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'custom@example.com', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.4');
     $result = app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -70,7 +70,7 @@ test('handle public form submission preserves custom handler success when forms 
     Form::updating(static function (): never {
         throw new RuntimeException('Forms bookkeeping failed');
     });
-    $data = SubmitFormPayload::from(['email' => 'custom@example.com', 'submittedFrom' => 'https://example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'custom@example.com', 'submittedFrom' => 'https://example.com']);
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.5');
     $result = app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
@@ -78,7 +78,7 @@ test('handle public form submission preserves custom handler success when forms 
 });
 test('handle public form submission throws when custom handler not registered', function (): void {
     $form = Form::factory()->create(['resolvement' => Resolvement::CUSTOM, 'handle' => 'nonexistent-handle', 'require_csrf' => false]);
-    $data = SubmitFormPayload::from(['email' => 'test@example.com']);
+    $data = SubmitFormPayload::validatedInput(['email' => 'test@example.com']);
     $request = Request::create('/submit', 'POST');
     expect(fn () => app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request))))->toThrow(FormSubmissionRejectionException::class);
 });
@@ -90,7 +90,7 @@ test('entry callbacks wait for the surrounding transaction and disappear on roll
     });
     DB::beginTransaction();
     try {
-        $result = app(FormSubmissions::class)->submit($form, formNativeInput(SubmitFormPayload::from(['email' => 'transaction@example.com'])), formNativeInput(formSubmissionContext(Request::create('/submit', 'POST'))));
+        $result = app(FormSubmissions::class)->submit($form, formNativeInput(SubmitFormPayload::validatedInput(['email' => 'transaction@example.com'])), formNativeInput(formSubmissionContext(Request::create('/submit', 'POST'))));
         expect($observedEntries)->toBe([]);
     } catch (Throwable $exception) {
         DB::rollBack();
@@ -136,7 +136,7 @@ test('public submission honors an interface-only configured spam detector', func
 
         return ['entry_id' => 'unexpected-handler-result'];
     });
-    $submit = fn () => app(FormSubmissions::class)->submit($form, formNativeInput(SubmitFormPayload::from(['email' => 'safe@example.com', 'body' => 'Hello'])), formNativeInput(formSubmissionContext(Request::create('/submit', 'POST', server: ['HTTP_USER_AGENT' => 'Mozilla/5.0']))));
+    $submit = fn () => app(FormSubmissions::class)->submit($form, formNativeInput(SubmitFormPayload::validatedInput(['email' => 'safe@example.com', 'body' => 'Hello'])), formNativeInput(formSubmissionContext(Request::create('/submit', 'POST', server: ['HTTP_USER_AGENT' => 'Mozilla/5.0']))));
     if ($honeypot || $resolvement === Resolvement::CUSTOM) {
         expect($submit)->toThrow(Exception::class);
         expect(FormEntry::query()->count())->toBe(0);

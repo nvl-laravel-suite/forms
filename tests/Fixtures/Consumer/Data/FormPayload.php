@@ -9,12 +9,6 @@ use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Enums\FormType;
 use Nvl\Forms\Enums\Resolvement;
 use Nvl\Forms\Models\Form;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Attributes\Validation\Nullable;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
 
 /**
  * Read-only transfer object for form display and listing.
@@ -23,12 +17,8 @@ use Spatie\LaravelData\Mappers\CamelCaseMapper;
  *
  * @api
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class FormPayload extends Data
+class FormPayload
 {
-    use DataTransform;
-
     /**
      * Create the form configuration data transfer object.
      *
@@ -81,7 +71,6 @@ class FormPayload extends Data
         /**
          * @var array<string, mixed>|null
          */
-        #[Nullable]
         public readonly ?array $translations,
         /**
          * @var FormStatus
@@ -153,7 +142,6 @@ class FormPayload extends Data
          */
         public readonly bool $requireCsrf = true,
         /** @var FormCorsSettings|null */
-        #[Nullable]
         public readonly ?FormCorsSettings $corsSettings = null,
         /**
          * @var array<string, mixed>|null
@@ -162,7 +150,6 @@ class FormPayload extends Data
         /**
          * @var array<int, string>|null
          */
-        #[Nullable]
         public readonly ?array $allowedOrigins = null,
         /**
          * @var Carbon|null
@@ -189,6 +176,41 @@ class FormPayload extends Data
             $allowedOrigins = $form->allowedOrigins->where('is_active', true)->pluck('origin')->values()->all();
         }
 
-        return new self(id: $form->id, name: $form->displayName(), description: $form->displayDescription(), handle: $form->handle, translations: $form->translationPayloads(), status: $form->status ?? FormStatus::DRAFT, resolvement: $form->resolvement ?? Resolvement::ENTRIES, type: $form->type ?? FormType::LANDING_PAGE, revision: $form->revision, restrictPublicAccess: $form->restrict_public_access ?? false, allowMultipleRegistrations: $form->allowsMultipleRegistrations(), dateRestricted: $form->date_restricted ?? false, availableFrom: $form->available_from, availableUntil: $form->available_until, submissionsCount: $form->submissions_count ?? 0, viewsCount: $form->views_count ?? 0, spamCount: $form->spam_count ?? 0, lastUsedAt: $form->last_used_at, firstUsedAt: $form->first_used_at, enableHoneypot: $form->enable_honeypot ?? true, enableRateLimiting: $form->enable_rate_limiting ?? true, rateLimitPerHour: $form->rate_limit_per_hour ?? 10, requireCsrf: $form->require_csrf ?? true, corsSettings: is_array($form->cors_settings) ? FormCorsSettings::from($form->cors_settings) : null, options: $form->options, allowedOrigins: $allowedOrigins === null ? null : array_values(array_filter($allowedOrigins, static fn (mixed $origin): bool => is_string($origin))), createdAt: $form->created_at, updatedAt: $form->updated_at);
+        return new self(id: $form->id, name: $form->displayName(), description: $form->displayDescription(), handle: $form->handle, translations: $form->translationPayloads(), status: $form->status ?? FormStatus::DRAFT, resolvement: $form->resolvement ?? Resolvement::ENTRIES, type: $form->type ?? FormType::LANDING_PAGE, revision: $form->revision, restrictPublicAccess: $form->restrict_public_access ?? false, allowMultipleRegistrations: $form->allowsMultipleRegistrations(), dateRestricted: $form->date_restricted ?? false, availableFrom: $form->available_from, availableUntil: $form->available_until, submissionsCount: $form->submissions_count ?? 0, viewsCount: $form->views_count ?? 0, spamCount: $form->spam_count ?? 0, lastUsedAt: $form->last_used_at, firstUsedAt: $form->first_used_at, enableHoneypot: $form->enable_honeypot ?? true, enableRateLimiting: $form->enable_rate_limiting ?? true, rateLimitPerHour: $form->rate_limit_per_hour ?? 10, requireCsrf: $form->require_csrf ?? true, corsSettings: is_array($form->cors_settings) ? FormCorsSettings::fromStored($form->cors_settings) : null, options: $form->options, allowedOrigins: $allowedOrigins === null ? null : array_values(array_filter($allowedOrigins, static fn (mixed $origin): bool => is_string($origin))), createdAt: $form->created_at, updatedAt: $form->updated_at);
+    }
+
+    /** @return array<string, mixed> Consumer-facing response fields. */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'handle' => $this->handle,
+            'translations' => $this->translations,
+            'status' => $this->status->value,
+            'resolvement' => $this->resolvement->value,
+            'type' => $this->type->value,
+            'revision' => $this->revision,
+            'restrictPublicAccess' => $this->restrictPublicAccess,
+            'allowMultipleRegistrations' => $this->allowMultipleRegistrations,
+            'dateRestricted' => $this->dateRestricted,
+            'availableFrom' => $this->availableFrom?->format(DATE_ATOM),
+            'availableUntil' => $this->availableUntil?->format(DATE_ATOM),
+            'submissionsCount' => $this->submissionsCount,
+            'viewsCount' => $this->viewsCount,
+            'spamCount' => $this->spamCount,
+            'lastUsedAt' => $this->lastUsedAt?->format(DATE_ATOM),
+            'firstUsedAt' => $this->firstUsedAt?->format(DATE_ATOM),
+            'enableHoneypot' => $this->enableHoneypot,
+            'enableRateLimiting' => $this->enableRateLimiting,
+            'rateLimitPerHour' => $this->rateLimitPerHour,
+            'requireCsrf' => $this->requireCsrf,
+            'corsSettings' => $this->corsSettings?->toArray(),
+            'options' => $this->options,
+            'allowedOrigins' => $this->allowedOrigins,
+            'createdAt' => $this->createdAt?->format(DATE_ATOM),
+            'updatedAt' => $this->updatedAt?->format(DATE_ATOM),
+        ];
     }
 }

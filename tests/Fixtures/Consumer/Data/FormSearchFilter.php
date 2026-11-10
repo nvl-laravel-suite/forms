@@ -4,79 +4,14 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Tests\Fixtures\Consumer\Data;
 
-use Carbon\Carbon;
-use Nvl\Forms\Tests\Fixtures\Consumer\DataTransform;
-use Spatie\LaravelData\Attributes\MapInputName;
-use Spatie\LaravelData\Attributes\MapOutputName;
-use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Mappers\CamelCaseMapper;
-use Spatie\LaravelData\Optional;
+use Nvl\Forms\Tests\Fixtures\Consumer\TranslatedValidation;
 
 /**
- * Query DTO used to filter forms for admin search APIs.
+ * Consumer validation rules used to filter forms for admin search APIs.
  */
-#[MapOutputName(CamelCaseMapper::class)]
-#[MapInputName(CamelCaseMapper::class)]
-class FormSearchFilter extends Data
+class FormSearchFilter
 {
-    use DataTransform;
-
-    /**
-     * Create the form search query data transfer object.
-     *
-     * @param  string|Optional|null  $search  Search term
-     * @param  string|Optional|null  $handle  Form handle filter
-     * @param  string|Optional|null  $status  Form status filter
-     * @param  bool|Optional|null  $restrictPublicAccess  Restrict access filter
-     * @param  bool|Optional|null  $hasSubmissions  Submissions filter
-     * @param  bool|Optional|null  $recentlyUsed  Recently used filter
-     * @param  Carbon|Optional|null  $createdAfter  Created-after filter
-     * @param  Carbon|Optional|null  $createdBefore  Created-before filter
-     * @param  int|Optional  $limit  Result limit
-     * @param  array<int, string>|Optional|null  $with  Relationships to load
-     */
-    public function __construct(
-        /**
-         * @var string|Optional|null
-         */
-        public readonly string|Optional|null $search = null,
-        /**
-         * @var string|Optional|null
-         */
-        public readonly string|Optional|null $handle = null,
-        /**
-         * @var string|Optional|null
-         */
-        public readonly string|Optional|null $status = null,
-        /**
-         * @var bool|Optional|null
-         */
-        public readonly bool|Optional|null $restrictPublicAccess = null,
-        /**
-         * @var bool|Optional|null
-         */
-        public readonly bool|Optional|null $hasSubmissions = null,
-        /**
-         * @var bool|Optional|null
-         */
-        public readonly bool|Optional|null $recentlyUsed = null,
-        /**
-         * @var Carbon|Optional|null
-         */
-        public readonly Carbon|Optional|null $createdAfter = null,
-        /**
-         * @var Carbon|Optional|null
-         */
-        public readonly Carbon|Optional|null $createdBefore = null,
-        /**
-         * @var int|Optional
-         */
-        public readonly int|Optional $limit = 25,
-        /**
-         * @var array<int, string>|Optional|null
-         */
-        public readonly array|Optional|null $with = null
-    ) {}
+    use TranslatedValidation;
 
     /**
      * Validation rules for the search payload.

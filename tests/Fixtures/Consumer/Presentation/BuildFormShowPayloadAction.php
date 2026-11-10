@@ -30,7 +30,7 @@ final class BuildFormShowPayloadAction
      * Build show-page payload with DTO form data and derived display states.
      *
      * @return array{
-     *     form: FormPayload,
+     *     form: array<string, mixed>,
      *     states: array<string, mixed>
      * }
      */
@@ -39,6 +39,6 @@ final class BuildFormShowPayloadAction
         $formModel = $this->show->details($form, $recordView, $origin, $ipAddress, $userAgent, $sessionId, $actor);
         $states = $this->stateResolver->resolve($formModel);
 
-        return ['form' => FormPayload::fromModel($formModel), 'states' => ['status' => $states->status->toArray(), 'security' => $states->security->toArray(), 'links' => $states->links->toArray(), 'stats' => $states->stats->toArray()]];
+        return ['form' => FormPayload::fromModel($formModel)->toArray(), 'states' => $states->toArray()];
     }
 }
