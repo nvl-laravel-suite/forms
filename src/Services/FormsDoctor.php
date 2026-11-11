@@ -13,6 +13,7 @@ use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Ownership\FormsOwnership;
+use Nvl\Support\Config\PackageStorage;
 use Throwable;
 
 /**
@@ -76,8 +77,9 @@ final readonly class FormsDoctor
         $checks = [];
 
         try {
+            $schema = Schema::connection(PackageStorage::connection('forms'));
             foreach ($requirements as $table => $columns) {
-                $exists = Schema::hasTable($table);
+                $exists = $schema->hasTable($table);
                 $checks[] = $this->check(
                     "schema.table.{$table}",
                     $exists,
@@ -91,7 +93,7 @@ final readonly class FormsDoctor
                 }
 
                 foreach ($columns as $column) {
-                    $present = Schema::hasColumn($table, $column);
+                    $present = $schema->hasColumn($table, $column);
                     $checks[] = $this->check(
                         "schema.column.{$table}.{$column}",
                         $present,
@@ -101,7 +103,7 @@ final readonly class FormsDoctor
                     );
                 }
 
-                $indexes = Schema::getIndexes($table);
+                $indexes = $schema->getIndexes($table);
                 foreach ($this->requiredIndexes($table) as $requirement) {
                     $present = $this->hasIndex(
                         $indexes,
@@ -118,16 +120,10 @@ final readonly class FormsDoctor
                     );
                 }
 
-                $foreignKeys = Schema::getForeignKeys($table);
+                $foreignKeys = $schema->getForeignKeys($table);
                 foreach ($this->requiredForeignKeys($table) as $columns) {
                     $present = collect($foreignKeys)->contains(
-                        static fn (mixed $foreignKey): bool => is_array($foreignKey)
-                            && self::sameColumns(
-                                is_array($foreignKey['columns'] ?? null)
-                                    ? $foreignKey['columns']
-                                    : [],
-                                $columns,
-                            ),
+                        static fn (array $foreignKey): bool => self::sameColumns($foreignKey['columns'], $columns),
                     );
                     $label = implode(',', $columns);
                     $checks[] = $this->check(
@@ -140,8 +136,8 @@ final readonly class FormsDoctor
                 }
             }
 
-            if (Schema::hasColumn(FormsTables::get(FormsTables::Entries), 'spam_score')) {
-                $type = Schema::getColumnType(FormsTables::get(FormsTables::Entries), 'spam_score', true);
+            if ($schema->hasColumn(FormsTables::get(FormsTables::Entries), 'spam_score')) {
+                $type = $schema->getColumnType(FormsTables::get(FormsTables::Entries), 'spam_score', true);
                 $numeric = str_contains(strtolower($type), 'int');
                 $checks[] = $this->check(
                     'schema.type.form_entries.spam_score',

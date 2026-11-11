@@ -20,7 +20,7 @@ Management defaults to denial. Configure `nvl-forms.authorization.gate` and pass
 
 ## Public submissions
 
-`fields` accepts subject, firstName, lastName, email, phone, address, body and bounded submissionData. Payload byte, depth and item limits apply to the serialized JSON representation, including nested objects and `JsonSerializable` values, on both submissions and entry updates. Unknown or protected root fields are rejected. `protection` requires a canonical HTTP origin and ipAddress; optional keys are userAgent, sessionId, native session, csrfToken, publicToken, idempotencyKey, publicSite, native actor and locale. Unknown protection keys are rejected. The consumer extracts these values from its transport.
+`fields` accepts subject, firstName, lastName, email, phone, address, body and bounded submissionData. Payload byte, depth and item limits apply to the serialized JSON representation, including nested objects and `JsonSerializable` values, on both submissions and entry updates. Unknown or protected root fields are rejected. `protection` requires a canonical HTTP origin and ipAddress; optional keys are userAgent, sessionId, native session, csrfToken, publicToken, idempotency_key, publicSite, native actor and locale. Unknown protection keys are rejected. The consumer extracts these values from its transport. An explicit origin port is part of the matched and stored host (`embed.example.test:8443`); an allowed origin without a port admits every port. The IP address is canonicalised before rate limiting and storage. Text fields must be valid UTF-8 without NUL bytes.
 
 Lifecycle date patches retain omitted boundaries and validate the resulting availability window against the current form. Explicit null clears a boundary. Enabling date restrictions also validates the stored window; equal and open boundaries are supported.
 
@@ -113,6 +113,6 @@ The existing low-level `FormRateLimiter::cleanupExpiredRecords()` remains an exp
 
 `FormChanged` and `FormEntryChanged` snapshot scalar identifiers and bounded operation facts after the source commit. Personal entry content and export paths are excluded. See `resources/event-catalog.json` and `docs/events.md`.
 
-Run package Pest tests with its `phpunit.xml.dist`. Consumer HTTP/DTO fixtures remain active. `tests/Historical` preserves retired bridge, automatic old-schema conversion and generated Action-interface metadata tests outside active discovery; native Ownership, committed callback, privacy, submission and lifecycle tests remain active.
+Tests and `phpunit.xml.dist` are not part of the distributed package; run package Pest tests from the source repository. Consumer HTTP/DTO fixtures remain active. The source repository's `tests/Historical` preserves retired bridge, automatic old-schema conversion and generated Action-interface metadata tests outside active discovery; native Ownership, committed callback, privacy, submission and lifecycle tests remain active.
 
 Shared [service contracts, model extensions and composition](https://github.com/nvl-laravel-suite/laravel-suite/blob/main/docs/consumer-api.md) apply alongside the package-specific rules above.

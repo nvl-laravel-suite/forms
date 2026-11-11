@@ -6,6 +6,7 @@ namespace Nvl\Forms\Builders;
 
 use Illuminate\Database\Eloquent\Builder;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Support\Ownership\Traits\ScopesOwnedBuilderWrites;
 
 /**
  * Custom Eloquent builder for FormEntry query composition.
@@ -19,6 +20,8 @@ use Nvl\Forms\Models\FormEntry;
  */
 class FormEntryBuilder extends Builder
 {
+    use ScopesOwnedBuilderWrites;
+
     /**
      * Filter to entries that have a non-null email address.
      */

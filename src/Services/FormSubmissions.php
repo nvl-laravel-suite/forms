@@ -64,6 +64,11 @@ final class FormSubmissions
         if (array_diff(array_keys($fields), $allowed) !== []) {
             throw ValidationException::withMessages(['fields' => 'Unknown or protected submission fields are not accepted.']);
         }
+        foreach ($fields as $value) {
+            if (is_string($value) && (! mb_check_encoding($value, 'UTF-8') || str_contains($value, "\0"))) {
+                throw ValidationException::withMessages(['fields' => 'Submission text must be valid UTF-8 without NUL bytes.']);
+            }
+        }
         Validator::make($fields, $rules)->validate();
         $data = $fields;
         $context = $this->protection($protection);
@@ -236,14 +241,14 @@ final class FormSubmissions
                 $submittedFrom = $data['submittedFrom'];
                 $email = ($data['email'] ?? null);
                 $registrationFingerprint = $this->registrationFingerprint->resolve($form, $email, $sessionId);
-                if ($registrationFingerprint !== null && $this->boundary->query(FormEntry::query(), 'forms.entries')->where('form_id', $form->getKey())->where('registration_fingerprint', $registrationFingerprint)->exists()) {
-                    $this->throwDuplicateRegistration();
-                }
                 $this->validateHost($form, $submittedFrom);
                 try {
                     $this->checkRateLimit($form, $ipAddress, $submittedFrom, $userAgent, $sessionId);
                 } catch (FormSubmissionRejectionException $exception) {
                     return ['form' => $form, 'is_spam' => false, 'rejection_exception' => $exception];
+                }
+                if ($registrationFingerprint !== null && $this->boundary->query(FormEntry::query(), 'forms.entries')->where('form_id', $form->getKey())->where('registration_fingerprint', $registrationFingerprint)->exists()) {
+                    return ['form' => $form, 'is_spam' => false, 'rejection_exception' => $this->duplicateRegistration()];
                 }
                 $submissionData = $data['submissionData'] ?? [];
                 if ($this->spamDetection->checkHoneypot($form, $submissionData)) {
@@ -276,7 +281,7 @@ final class FormSubmissions
             $email = ($data['email'] ?? null);
             $registrationFingerprint = $this->registrationFingerprint->resolve($form, $email, $sessionId);
             if ($registrationFingerprint !== null && $this->boundary->query(FormEntry::query(), 'forms.entries')->where('form_id', $form->getKey())->where('registration_fingerprint', $registrationFingerprint)->exists()) {
-                $this->throwDuplicateRegistration();
+                throw $this->duplicateRegistration();
             }
             throw $exception;
         }
@@ -314,9 +319,9 @@ final class FormSubmissions
     /**
      * Reject a second registration without disclosing the identity source.
      */
-    private function throwDuplicateRegistration(): never
+    private function duplicateRegistration(): FormSubmissionRejectionException
     {
-        throw new FormSubmissionRejectionException(message: (string) trans('nvl-forms::forms/messages.error.registration_already_exists'), statusCode: 409);
+        return new FormSubmissionRejectionException(message: (string) trans('nvl-forms::forms/messages.error.registration_already_exists'), statusCode: 409);
     }
 
     /**
@@ -518,7 +523,10 @@ final class FormSubmissions
             return false;
         }
 
-        return hash_equals($context['session']->token(), $providedToken);
+        // A session that never generated a token returns null despite the contract's string type.
+        $sessionToken = (string) $context['session']->token();
+
+        return $sessionToken !== '' && hash_equals($sessionToken, $providedToken);
     }
 
     /**
@@ -646,6 +654,9 @@ final class FormSubmissions
         if (array_diff(array_keys($protection), $allowed) !== []) {
             throw ValidationException::withMessages(['protection' => 'Unknown submission protection metadata.']);
         }
+        if (is_string($protection['userAgent'] ?? null)) {
+            $protection['userAgent'] = mb_scrub($protection['userAgent'], 'UTF-8');
+        }
         $validated = Validator::make($protection, [
             'origin' => ['required', 'string', 'max:2048', 'url:http,https'],
             'ipAddress' => ['required', 'ip'],
@@ -659,7 +670,7 @@ final class FormSubmissions
         ])->validate();
         $strings = [];
         foreach ($validated as $key => $value) {
-            if (! is_string($key) || ($value !== null && ! is_string($value))) {
+            if (! is_string($key) || ($value !== null && (! is_string($value) || ! mb_check_encoding($value, 'UTF-8')))) {
                 throw ValidationException::withMessages(['protection' => 'Expected string metadata.']);
             }
             $strings[$key] = $value;
@@ -669,10 +680,13 @@ final class FormSubmissions
             throw ValidationException::withMessages(['protection' => 'Origin and IP address are required.']);
         }
         $parts = parse_url($validated['origin']);
-        if (! is_array($parts) || ! isset($parts['host'], $parts['scheme']) || array_diff(array_keys($parts), ['scheme', 'host', 'port']) !== [] || preg_match('/[\x00-\x20\x7f]/', $validated['origin']) === 1) {
+        if (! is_array($parts) || ! isset($parts['host'], $parts['scheme']) || strlen($parts['host']) > 253 || array_diff(array_keys($parts), ['scheme', 'host', 'port']) !== [] || preg_match('/[\x00-\x20\x7f]/', $validated['origin']) === 1) {
             throw ValidationException::withMessages(['origin' => 'A canonical HTTP origin is required.']);
         }
-        $origin = strtolower($parts['scheme']).'://'.strtolower($parts['host']).(isset($parts['port']) ? ':'.$parts['port'] : '');
+        $originHost = strtolower($parts['host']).(isset($parts['port']) ? ':'.$parts['port'] : '');
+        $origin = strtolower($parts['scheme']).'://'.$originHost;
+        $packedAddress = inet_pton($validated['ipAddress']);
+        $canonicalAddress = $packedAddress === false ? false : inet_ntop($packedAddress);
         $site = OwnerSiteContext::current();
         if ($site !== null && ($site->canonicalOrigin !== $origin || ($validated['publicSite'] ?? $site->site) !== $site->site)) {
             throw new OwnershipViolation('Submission origin differs from the admitted canonical site.');
@@ -684,8 +698,8 @@ final class FormSubmissions
         }
 
         return [
-            'origin' => $origin, 'originHost' => strtolower($parts['host']), 'requestHost' => strtolower($parts['host']),
-            'ipAddress' => $validated['ipAddress'], 'userAgent' => $validated['userAgent'] ?? null,
+            'origin' => $origin, 'originHost' => $originHost, 'requestHost' => strtolower($parts['host']),
+            'ipAddress' => $canonicalAddress === false ? $validated['ipAddress'] : $canonicalAddress, 'userAgent' => $validated['userAgent'] ?? null,
             'sessionId' => $session?->getId() ?? ($validated['sessionId'] ?? null), 'session' => $session,
             'csrfToken' => $validated['csrfToken'] ?? null, 'publicToken' => $validated['publicToken'] ?? null,
             'idempotency_key' => $validated['idempotency_key'] ?? null, 'publicSite' => $site !== null ? $site->site : ($validated['publicSite'] ?? 'default'),

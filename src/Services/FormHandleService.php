@@ -23,23 +23,10 @@ final class FormHandleService
     public function __construct(private readonly OwnershipBoundary $boundary) {}
 
     /**
-     * Generate a handle from the given name, falling back to 'form' for empty input.
-     *
-     * Does not check uniqueness — use generateUniqueHandle() for that.
-     *
-     * @param  string|null  $name  Source name to slugify
-     * @return string Generated handle slug
-     */
-    public function generateHandle(?string $name): string
-    {
-        return Str::slug(is_string($name) && $name !== '' ? $name : 'form');
-    }
-
-    /**
      * Generate a unique handle by appending a numeric suffix when collisions occur.
      *
-     * Starts with the base slug and increments a counter suffix (-1, -2, etc.)
-     * until no existing form uses the handle.
+     * Starts with the base slug, or `form` when the name has no sluggable characters,
+     * and increments a counter suffix (-1, -2, etc.) until no form uses the handle.
      *
      * @param  string  $name  Source name to slugify
      * @param  string|null  $excludeFormId  Form ID to exclude from uniqueness check (for updates)
@@ -48,6 +35,9 @@ final class FormHandleService
     public function generateUniqueHandle(string $name, ?string $excludeFormId = null): string
     {
         $baseHandle = Str::slug($name);
+        if ($baseHandle === '') {
+            $baseHandle = 'form';
+        }
         $handle = $baseHandle;
         $counter = 1;
 
@@ -79,13 +69,15 @@ final class FormHandleService
     /**
      * Check if a handle already exists in the database.
      *
+     * Soft-deleted forms keep their handle: the unique index still holds it.
+     *
      * @param  string  $handle  Handle to check
      * @param  string|null  $excludeFormId  Form ID to exclude from the check
      * @return bool True when the handle is already taken
      */
     private function handleExists(string $handle, ?string $excludeFormId = null): bool
     {
-        $query = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->where('handle', $handle);
+        $query = $this->boundary->query(FormModelRegistry::query()->withTrashed(), 'forms.forms')->where('handle', $handle);
 
         if ($excludeFormId !== null) {
             $query->where('id', '!=', $excludeFormId);

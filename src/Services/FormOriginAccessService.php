@@ -6,6 +6,7 @@ namespace Nvl\Forms\Services;
 
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 
 /**
@@ -28,8 +29,7 @@ final class FormOriginAccessService
      */
     public function isOriginAllowed(Form|string $form, string $origin): bool
     {
-        $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail(FormIdentifier::of($form, Form::class));
 
         if (! $formModel->restrict_public_access) {
             return true;
@@ -43,8 +43,7 @@ final class FormOriginAccessService
      */
     public function resolveMatchingOrigin(Form|string $form, string $origin): ?AllowedOrigin
     {
-        $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail(FormIdentifier::of($form, Form::class));
         $formModel->loadMissing('allowedOrigins');
 
         /** @var ?AllowedOrigin $matched */

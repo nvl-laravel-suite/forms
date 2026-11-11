@@ -10,6 +10,7 @@ use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
+use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Throwable;
 
@@ -30,8 +31,7 @@ final class FormAnalytics
      */
     public function record(Form|string $form, FormAnalyticEventType|string $eventType, ?string $origin = null, ?string $ipAddress = null, ?string $userAgent = null, ?string $sessionId = null, ?array $metadata = null): FormAnalytic
     {
-        $formId = $form instanceof Form ? $form->identifier() : $form;
-        $canonical = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+        $canonical = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail(FormIdentifier::of($form, Form::class));
         $event = $eventType instanceof FormAnalyticEventType ? $eventType : FormAnalyticEventType::from((string) $eventType);
 
         return FormModelRegistry::newInstance()->getConnection()->transaction(fn (): FormAnalytic => FormAnalytic::create(['form_id' => $canonical->getKey(), 'event_type' => $event, 'origin' => $origin, 'ip_address' => $ipAddress, 'user_agent' => $userAgent, 'session_id' => $sessionId, 'metadata' => $metadata]));
@@ -52,7 +52,7 @@ final class FormAnalytics
     public function submission(Form|string $form, ?string $origin, ?string $ipAddress, ?string $userAgent, ?string $sessionId): Form
     {
         return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $origin, $ipAddress, $userAgent, $sessionId) {
-            $formModel = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
+            $formModel = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail(FormIdentifier::of($form, Form::class));
             $nowFormatted = $formModel->fromDateTime(now());
             if (! is_string($nowFormatted)) {
                 throw new FormException('Forms bookkeeping requires a native timestamp.');
@@ -84,7 +84,7 @@ final class FormAnalytics
     public function view(Form|string $form, ?string $origin, ?string $ipAddress, ?string $userAgent, ?string $sessionId): Form
     {
         return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $origin, $ipAddress, $userAgent, $sessionId) {
-            $formModel = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
+            $formModel = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail(FormIdentifier::of($form, Form::class));
             $this->counters->increment($formModel, 'views_count');
             $this->record(form: $formModel, eventType: FormAnalyticEventType::VIEW, origin: $origin, ipAddress: $ipAddress, userAgent: $userAgent, sessionId: $sessionId);
             if ($origin !== null && $origin !== '' && $formModel->restrict_public_access) {
@@ -113,8 +113,7 @@ final class FormAnalytics
      */
     public function rateLimit(Form|string $form, string $ipAddress, ?string $origin = null, ?string $userAgent = null, ?string $sessionId = null): void
     {
-        $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail(FormIdentifier::of($form, Form::class));
         app(FormRateLimiter::class)->recordSubmissionAttempt($formModel, $ipAddress, $origin, $userAgent, $sessionId);
     }
 

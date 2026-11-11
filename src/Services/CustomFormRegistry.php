@@ -47,6 +47,10 @@ final readonly class CustomFormRegistry
             return $this->buildOwnedHandler($entry);
         }
 
+        if ($entry instanceof CustomFormHandler) {
+            return $entry;
+        }
+
         // Allow class-string
         if (is_string($entry)) {
             $obj = $this->container->make($entry);
@@ -73,34 +77,30 @@ final readonly class CustomFormRegistry
             return null;
         }
 
-        // Allow dev callbacks (not suitable for config:cache)
-        if (is_callable($entry)) {
-            $callback = Closure::fromCallable($entry);
+        // The remaining registration is a dev callback (not suitable for config:cache)
+        $callback = Closure::fromCallable($entry);
 
-            return new CallbackFormHandler(
-                /**
-                 * @param  array<string, mixed>  $data
-                 * @return array<string, mixed>
-                 */
-                static function (Form $form, array $data, array $context) use ($callback): array {
-                    $result = $callback($form, $data, $context);
-                    if (! is_array($result)) {
-                        return [];
-                    }
-
-                    $normalized = [];
-                    foreach ($result as $key => $value) {
-                        if (is_string($key)) {
-                            $normalized[$key] = $value;
-                        }
-                    }
-
-                    return $normalized;
+        return new CallbackFormHandler(
+            /**
+             * @param  array<string, mixed>  $data
+             * @return array<string, mixed>
+             */
+            static function (Form $form, array $data, array $context) use ($callback): array {
+                $result = $callback($form, $data, $context);
+                if (! is_array($result)) {
+                    return [];
                 }
-            );
-        }
 
-        return null;
+                $normalized = [];
+                foreach ($result as $key => $value) {
+                    if (is_string($key)) {
+                        $normalized[$key] = $value;
+                    }
+                }
+
+                return $normalized;
+            }
+        );
     }
 
     /** Validate a raw native container result before granting the custom handler contract. */

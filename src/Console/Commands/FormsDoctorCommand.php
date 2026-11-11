@@ -16,7 +16,7 @@ final class FormsDoctorCommand extends Command
         {--strict : Treat warnings as failures}
         {--format=text : Output format: text or json}';
 
-    protected $description = 'Inspect Forms schema, routes, authorization, and privacy bindings';
+    protected $description = 'Inspect Forms schema, authorization, security and privacy bindings';
 
     public function handle(FormsDoctor $doctor): int
     {

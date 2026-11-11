@@ -83,7 +83,6 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
         $this->registerPolicies();
         $this->registerTranslations();
         $this->registerConfig();
-        $this->registerRegistries();
         if ((bool) config('nvl-forms.migrations.enabled', true)) {
             $this->loadMigrationsFrom($migrations);
         }
@@ -137,17 +136,6 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
     {
         Gate::policy(FormModelRegistry::modelClass(), FormPolicy::class);
         Gate::policy(FormEntry::class, FormEntryPolicy::class);
-    }
-
-    /**
-     * Register default registry bindings for the module.
-     *
-     * Consuming modules register their own callbacks in their service providers
-     * via EntryCallbackRegistry for cleaner ownership boundaries.
-     */
-    protected function registerRegistries(): void
-    {
-        // Intentionally empty — callbacks are registered by owning modules
     }
 
     /**

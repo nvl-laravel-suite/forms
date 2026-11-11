@@ -29,6 +29,7 @@ use Nvl\Forms\Exceptions\FormOwnershipException;
 use Nvl\Forms\Exceptions\FormRetentionPredicateChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use PDO;
@@ -71,7 +72,7 @@ final class FormEntries
     private function deleteEntry(FormEntry|string $formEntry, ?Authenticatable $actor, ?CarbonImmutable $cutoff = null, ?Closure $authorize = null): bool
     {
         $actor = FormManagement::authorize($actor);
-        $entryId = $formEntry instanceof FormEntry ? $formEntry->id : $formEntry;
+        $entryId = FormIdentifier::of($formEntry, FormEntry::class);
         $connection = (new FormEntry)->getConnection();
         $operation = function () use ($entryId, $actor, $cutoff, $authorize, $connection): array {
             if ($authorize !== null) {
@@ -169,7 +170,7 @@ final class FormEntries
             throw new InvalidArgumentException('Redaction fields must use the documented allowlist.');
         }
         $updated = (new FormEntry)->getConnection()->transaction(function () use ($entry, $fields, $actor): FormEntry {
-            $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
+            $entryId = FormIdentifier::of($entry, FormEntry::class);
             $model = FormEntry::query()->with('form')->lockForUpdate()->findOrFail($entryId);
             $this->privacyPolicy->authorize('redact', $model, $actor);
             $attributes = array_fill_keys($fields, null);
@@ -187,7 +188,7 @@ final class FormEntries
     {
         $actor = FormManagement::authorize($actor);
         $updated = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): FormEntry {
-            $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
+            $entryId = FormIdentifier::of($entry, FormEntry::class);
             $model = FormEntry::query()->with('form')->lockForUpdate()->findOrFail($entryId);
             $this->privacyPolicy->authorize('anonymize', $model, $actor);
             $model->forceFill(['subject' => null, 'email' => null, 'first_name' => null, 'last_name' => null, 'phone' => null, 'address' => null, 'body' => null, 'submission_data' => null, 'ip_address' => null, 'user_agent' => null, 'session_id' => null, 'security_flags' => null, 'redacted_at' => now(), 'anonymized_at' => now()])->save();
@@ -214,7 +215,7 @@ final class FormEntries
         $actor = FormManagement::authorize($actor);
         /** @var array{entry: FormEntry, form: Form} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $key, $value, $actor): array {
-            $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
+            $entryId = FormIdentifier::of($entry, FormEntry::class);
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $entryModel->setSecurityFlag($key, $value);
             $entryModel->save();
@@ -242,7 +243,7 @@ final class FormEntries
         $actor = FormManagement::authorize($actor);
         /** @var array{entry: FormEntry, form: Form} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $reason, $actor): array {
-            $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
+            $entryId = FormIdentifier::of($entry, FormEntry::class);
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($entryModel->form_id);
             $wasSpam = $entryModel->is_spam === true;
@@ -253,6 +254,9 @@ final class FormEntries
             $entryModel->update(['is_spam' => true]);
             if (! $wasSpam) {
                 $form->increment('spam_count');
+                if ($form->submissions_count > 0) {
+                    $form->decrement('submissions_count');
+                }
             }
             $freshEntry = $entryModel->refresh();
             $freshEntry->setRelation('form', $form);
@@ -277,14 +281,17 @@ final class FormEntries
         $actor = FormManagement::authorize($actor);
         /** @var array{entry: FormEntry, form: Form, was_spam: bool} $result */
         $result = (new FormEntry)->getConnection()->transaction(function () use ($entry, $actor): array {
-            $entryId = $entry instanceof FormEntry ? $entry->id : $entry;
+            $entryId = FormIdentifier::of($entry, FormEntry::class);
             $entryModel = FormEntry::query()->lockForUpdate()->findOrFail($entryId);
             $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($entryModel->form_id);
             $wasSpam = $entryModel->is_spam === true;
             $entryModel->setSecurityFlag('marked_legitimate_at', now()->toISOString());
             $entryModel->update(['is_spam' => false]);
-            if ($wasSpam && $form->spam_count > 0) {
-                $form->decrement('spam_count');
+            if ($wasSpam) {
+                if ($form->spam_count > 0) {
+                    $form->decrement('spam_count');
+                }
+                $form->increment('submissions_count');
             }
             $freshEntry = $entryModel->refresh()->load('form');
             $form = $freshEntry->form;
@@ -315,7 +322,7 @@ final class FormEntries
         if ($form instanceof Form) {
             $this->ownership->assertRecord($form, 'forms.forms');
         }
-        $form = FormModelRegistry::query()->useWritePdo()->findOrFail($form instanceof Form ? $form->id : $form);
+        $form = FormModelRegistry::query()->useWritePdo()->findOrFail(FormIdentifier::of($form, Form::class));
         $this->ownership->assertRecord($form, 'forms.forms');
         $source = $form->getConnection();
         $pdo = $source->getPdo();
@@ -541,7 +548,7 @@ final class FormEntries
     {
         $actor = FormManagement::authorize($actor);
         // Resolve model if ID provided
-        $formEntry = FormEntry::query()->findOrFail($formEntry instanceof FormEntry ? $formEntry->identifier() : $formEntry);
+        $formEntry = FormEntry::query()->findOrFail(FormIdentifier::of($formEntry, FormEntry::class));
 
         // Load all relationships needed for display
         return $formEntry->load(['form:id,handle']);
@@ -565,10 +572,19 @@ final class FormEntries
         // Filter by specific form if provided
         if ($form !== null) {
             $formId = $form instanceof Form ? $form->id : $form;
-            $query->where('form_id', $formId);
+            if (Str::isUuid($formId)) {
+                $query->where('form_id', $formId);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         foreach (array_intersect_key($filters, array_flip(['subject', 'email', 'first_name', 'last_name', 'phone', 'submitted_from', 'ip_address', 'is_spam'])) as $column => $value) {
+            if ($column === 'ip_address' && filter_var($value, FILTER_VALIDATE_IP) === false) {
+                $query->whereRaw('1 = 0');
+
+                continue;
+            }
             $query->where($column, $value);
         }
         $query->orderByDesc('created_at')->orderBy('id');
@@ -626,7 +642,7 @@ final class FormEntries
         $validated = Validator::make($attributes, FormSubmissions::fieldRules())->validate();
 
         return (new FormEntry)->getConnection()->transaction(function () use ($entry, $validated, $actor): FormEntry {
-            $model = FormEntry::query()->with('form')->lockForUpdate()->findOrFail($entry instanceof FormEntry ? $entry->identifier() : $entry);
+            $model = FormEntry::query()->with('form')->lockForUpdate()->findOrFail(FormIdentifier::of($entry, FormEntry::class));
             foreach ($validated as $key => $value) {
                 $model->setAttribute(Str::snake($key), $value);
             }

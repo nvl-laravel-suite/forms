@@ -4,6 +4,7 @@
         "nvl-forms": {
             "common": [
                 "authorization.gate",
+                "connection",
                 "migrations.enabled",
                 "models.form"
             ],
@@ -36,6 +37,7 @@
                 "security.spam_protection.score_weights.ip_reputation",
                 "security.spam_protection.score_weights.multiple_links",
                 "security.spam_protection.score_weights.spam_phrases",
+                "security.spam_protection.score_weights.suspicious_user_agent",
                 "security.spam_protection.spam_phrases",
                 "submission.max_depth",
                 "submission.max_items",

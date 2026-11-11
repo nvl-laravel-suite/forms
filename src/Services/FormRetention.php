@@ -20,6 +20,7 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormAnalytic;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormRateLimit;
+use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use PDO;
 
@@ -50,7 +51,7 @@ final readonly class FormRetention
         if ($form instanceof Form) {
             $this->ownership->assertRecord($form, 'forms.forms');
         }
-        $form = FormModelRegistry::query()->useWritePdo()->findOrFail($form instanceof Form ? $form->id : $form);
+        $form = FormModelRegistry::query()->useWritePdo()->findOrFail(FormIdentifier::of($form, Form::class));
         $this->ownership->assertRecord($form, 'forms.forms');
         $connection = $form->getConnection();
         $source = ['connection' => $connection, 'pdo' => $connection->getPdo(), 'read' => $connection->getRawReadPdo(), 'direct' => $connection->getRawDirectPdo()];

@@ -375,7 +375,7 @@ final class FormEntryExportService
             throw new FormException('Unable to open temporary stream for form entry CSV export.');
         }
 
-        $written = fputcsv($stream, array_values($array));
+        $written = fputcsv($stream, array_values($array), ',', '"', '');
 
         if ($written === false) {
             fclose($stream);

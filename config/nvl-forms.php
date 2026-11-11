@@ -7,6 +7,7 @@ use Nvl\Forms\Models\Form;
 /** Complete runtime defaults; publication sections are declared in ../resources/config/sections.json. */
 return [
     'models' => ['form' => Form::class],
+    'connection' => null,
     'migrations' => [
         'enabled' => true,
     ],
@@ -73,6 +74,7 @@ return [
                 'excessive_punctuation' => 20,
                 'spam_phrases' => 25,
                 'ip_reputation' => 10,
+                'suspicious_user_agent' => 25,
             ],
             'spam_phrases' => ['click here', 'buy now', 'limited time', 'act now', 'free money'],
             'min_submission_time' => 3,

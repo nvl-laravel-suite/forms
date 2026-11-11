@@ -17,6 +17,7 @@ use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Stringable;
 
@@ -78,8 +79,7 @@ final class FormReader
     /** Load management detail after the complete operation has admitted its actor. */
     private function detailsForForm(Form|string $form, bool $recordView, ?string $origin = null, ?string $ipAddress = null, ?string $userAgent = null, ?string $sessionId = null): Form
     {
-        $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail(FormIdentifier::of($form, Form::class));
         if ($recordView) {
             $formModel = app(FormAnalytics::class)->view($formModel, $origin, $ipAddress, $userAgent, $sessionId);
         }
@@ -218,8 +218,7 @@ final class FormReader
     public function summary(Form|string $form, int $days = 30, ?Authenticatable $actor = null): array
     {
         FormManagement::authorize($actor);
-        $formId = $form instanceof Form ? $form->identifier() : $form;
-        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail($formId);
+        $formModel = $this->boundary->query(FormModelRegistry::query(), 'forms.forms')->findOrFail(FormIdentifier::of($form, Form::class));
 
         return $this->summaryForForm($formModel, $days);
     }
@@ -366,12 +365,7 @@ final class FormReader
         $searchValue = $normalizedFilters['q'] ?? null;
         $search = is_string($searchValue) ? trim($searchValue) : '';
         if ($search !== '') {
-            $lower = mb_strtolower($search);
-            $query->where(function (Builder $q) use ($lower) {
-                $q->whereRaw('LOWER(handle) LIKE ?', ['%'.$lower.'%'])->orWhereHas('translations', function (Builder $translations) use ($lower): void {
-                    $translations->whereRaw('LOWER(name) LIKE ?', ['%'.$lower.'%']);
-                });
-            });
+            $this->filterSearch($query, $search);
         }
         // Apply active_only filter
         if (isset($normalizedFilters['active_only']) && (bool) $normalizedFilters['active_only'] === true) {
@@ -413,20 +407,18 @@ final class FormReader
      */
     public function suggestions(string $query, int $limit = 10): Collection
     {
-        $lower = mb_strtolower($query);
+        $forms = FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'submissions_count', 'last_used_at']);
 
-        return FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'submissions_count', 'last_used_at'])->where(function (Builder $q) use ($lower) {
-            $q->whereRaw('LOWER(handle) LIKE ?', ['%'.$lower.'%'])->orWhereHas('translations', function (Builder $translations) use ($lower): void {
-                $translations->whereRaw('LOWER(name) LIKE ?', ['%'.$lower.'%']);
-            });
-        })->orderBy('submissions_count', 'desc')->orderBy('handle')->limit($limit)->get();
+        return $this->filterSearch($forms, $query)->orderBy('submissions_count', 'desc')->orderBy('handle')->limit($limit)->get();
     }
 
     /**
-     * Filter by search term across multiple fields.
+     * Filter by a literal, case-insensitive term in the handle or any translated name.
      *
-     * @param  Builder<*>  $query  Query builder instance
-     * @return Builder<*> Modified query builder
+     * @template TBuilder of Builder<Form>
+     *
+     * @param  TBuilder  $query  Query builder instance
+     * @return TBuilder Modified query builder
      */
     private function filterSearch(Builder $query, mixed $value): Builder
     {
@@ -434,12 +426,12 @@ final class FormReader
             return $query;
         }
 
-        $searchTerm = '%'.mb_strtolower($value).'%';
+        $searchTerm = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($value)).'%';
 
         return $query->where(function (Builder $q) use ($searchTerm): void {
-            $q->whereRaw('LOWER(handle) LIKE ?', [$searchTerm])
+            $q->whereRaw("LOWER(handle) LIKE ? ESCAPE '!'", [$searchTerm])
                 ->orWhereHas('translations', function (Builder $translations) use ($searchTerm): void {
-                    $translations->whereRaw('LOWER(name) LIKE ?', [$searchTerm]);
+                    $translations->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$searchTerm]);
                 });
         });
     }

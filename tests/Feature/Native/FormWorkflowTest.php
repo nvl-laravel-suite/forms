@@ -194,12 +194,12 @@ test('native submissions and entry updates retain serialized payloads within the
     ], ['origin' => 'https://example.com', 'ipAddress' => '192.0.2.1']);
 
     expect($entry)->toBeInstanceOf(FormEntry::class)
-        ->and($entry->fresh()?->submission_data['profile'])->toBe(['first' => 'Ada', 'last' => 'Lovelace']);
+        ->and($entry->fresh()?->submission_data['profile'])->toEqual(['first' => 'Ada', 'last' => 'Lovelace']);
 
     $updated = app(FormEntries::class)->update($entry, [
         'submissionData' => ['profile' => $encode(['first' => 'Grace', 'last' => 'Hopper'])],
     ], formActor());
-    expect($updated->fresh()?->submission_data['profile'])->toBe(['first' => 'Grace', 'last' => 'Hopper'])
+    expect($updated->fresh()?->submission_data['profile'])->toEqual(['first' => 'Grace', 'last' => 'Hopper'])
         ->and(FormEntry::query()->count())->toBe(1);
 })->with('native submission encoders');
 

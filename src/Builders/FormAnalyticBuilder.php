@@ -7,6 +7,7 @@ namespace Nvl\Forms\Builders;
 use Illuminate\Database\Eloquent\Builder;
 use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Models\FormAnalytic;
+use Nvl\Support\Ownership\Traits\ScopesOwnedBuilderWrites;
 
 /**
  * Custom Eloquent builder for FormAnalytic query composition.
@@ -20,6 +21,8 @@ use Nvl\Forms\Models\FormAnalytic;
  */
 class FormAnalyticBuilder extends Builder
 {
+    use ScopesOwnedBuilderWrites;
+
     /**
      * Filter to view events only.
      */

@@ -20,6 +20,7 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormTranslation;
 use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Rules\AllowedOriginExpressionRule;
+use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Translatable\Enums\TranslationSyncMode;
 use Nvl\Translatable\Rules\SupportedLocaleMapRule;
@@ -66,13 +67,12 @@ final class FormLifecycle
             $translations = is_array($data['translations'] ?? null) ? $data['translations'] : [];
             $formData = $this->attributes($data, ['allowedOrigins', 'translations', 'translation_mode', 'expected_revision']);
             $translationRows = $this->translationPayloadMapper->rows(array_filter($translations, is_string(...), ARRAY_FILTER_USE_KEY));
-            // Generate handle if not provided
             $handle = $formData['handle'] ?? null;
-            if (! is_string($handle) || $handle === '') {
-                $handle = $this->handleService->generateHandle($this->createFormFirstTranslationName($translationRows));
-                $formData['handle'] = $handle;
+            if (is_string($handle) && $handle !== '') {
+                $this->handleService->validateUniqueness($handle);
+            } else {
+                $formData['handle'] = $this->handleService->generateUniqueHandle($this->createFormFirstTranslationName($translationRows) ?? '');
             }
-            $this->handleService->validateUniqueness($handle);
             $form = FormModelRegistry::create($formData);
             if (is_array($data['allowedOrigins'] ?? null)) {
                 $this->originService->createOrigins($form, array_values($data['allowedOrigins']));
@@ -108,7 +108,8 @@ final class FormLifecycle
     /**
      * Patch a form on its configured connection with a required expected_revision.
      *
-     * Nullable attributes accept explicit null. Translation patching retains omitted
+     * Nullable attributes accept explicit null; a null handle or rateLimitPerHour keeps
+     * the stored value. Translation patching retains omitted
      * locales; translation_mode=replace removes omitted locales. Returns fresh state.
      *
      * Validates handle uniqueness if changed, updates form attributes,
@@ -130,11 +131,11 @@ final class FormLifecycle
         $this->validateMutationKeys($data);
         Validator::make($data, $this->mutationRules(true))->validate();
         $data = array_intersect_key($data, $this->mutationRules(true));
-        $formId = $form instanceof Form ? $form->id : $form;
+        $formId = FormIdentifier::of($form, Form::class);
         $updated = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($formId, $data, $actor) {
             $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($formId);
             $expectedRevision = $data['expected_revision'] ?? null;
-            if ($expectedRevision === null || $form->revision !== $expectedRevision) {
+            if (! is_numeric($expectedRevision) || $form->revision !== (int) $expectedRevision) {
                 throw new FormException('The form was changed by another writer.', 409);
             }
             if (array_key_exists('availableFrom', $data) || array_key_exists('availableUntil', $data) || ($data['dateRestricted'] ?? false)) {
@@ -190,7 +191,7 @@ final class FormLifecycle
     public function duplicate(Form|string $form, ?string $newName = null, ?Authenticatable $actor = null): Form
     {
         $actor = FormManagement::authorize($actor);
-        $formId = $form instanceof Form ? $form->identifier() : $form;
+        $formId = FormIdentifier::of($form, Form::class);
         $originalForm = FormModelRegistry::query()->with(['allowedOrigins', 'translations'])->findOrFail($formId);
         /** @var Form $newForm */
         $newForm = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($originalForm, $newName, $actor) {
@@ -272,7 +273,7 @@ final class FormLifecycle
     {
         $actor = FormManagement::authorize($actor);
         // Resolve model if ID provided
-        $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail($form);
+        $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail(FormIdentifier::of($form, Form::class));
         $deleted = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $actor) {
             // Check for dependencies (form entries)
             if ($form->entries()->exists()) {
@@ -369,6 +370,9 @@ final class FormLifecycle
     {
         $result = [];
         foreach (array_diff_key($data, array_flip($except)) as $key => $value) {
+            if ($value === null && in_array($key, ['handle', 'rateLimitPerHour'], true)) {
+                continue;
+            }
             $result[Str::snake($key)] = $value;
         }
 

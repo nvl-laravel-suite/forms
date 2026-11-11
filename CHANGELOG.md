@@ -4,6 +4,25 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep builder-level `forceDelete()`, `updateOrInsert()` and `updateFrom()` on form entries and analytics inside the ownership boundary by adopting Core's owned write trait on both builders. Require Core 7.0.6.
+- Match a submission's origin with its explicit port, so an allowed origin such as `embed.example.test:8443` admits that origin instead of refusing every submission. `submitted_from` and the analytics origin now carry a non-default port.
+- Write the collection CSV formatter (`FormEntryExportService::generateCsvContent`) without an escape character, so a value containing `\"` can no longer break out of its cell and start a formula in the next one.
+- Treat a malformed form or entry identifier as not found on every driver instead of raising a PostgreSQL type error; entry lists treat a malformed form or IP filter as matching nothing.
+- Keep the handle of a soft-deleted form reserved: creating, renaming or duplicating onto it reports the handle conflict (or picks the next free suffix) instead of failing on the unique index.
+- Give a form created without a handle a unique generated one (`contact`, `contact-1`, …; `form` when the name has no sluggable characters) instead of failing on the second form with the same name.
+- Accept a numeric-string `expected_revision`, and keep the stored handle and hourly rate limit when an update or create passes them as explicit null instead of failing on a required column.
+- Resolve a `CustomFormHandler` instance registered directly in `FormHandlerRegistry`; it was ignored unless it was also invokable.
+- Move an entry between `submissions_count` and `spam_count` when it is marked as spam or legitimate, so a later delete no longer decrements a counter the entry never incremented.
+- Make `nvl:forms:doctor` inspect the configured package connection (`nvl-forms.connection`) instead of the default one.
+- Canonicalise the submission IP address, so text variants of one IPv6 address share a rate limit, reputation and stored value on every driver.
+- Check a single-registration duplicate after origin and rate limiting, and keep the consumed attempt, so repeated registration probes are rate limited like any other submission.
+- Search forms by the literal term: `%` and `_` in `search`, `options` and `suggestions` are no longer wildcards.
+- Refuse public submission text that is not valid UTF-8 or contains NUL bytes, and an origin host longer than 253 characters, with a validation error instead of a database or JSON failure; a malformed user agent is stored with its invalid bytes replaced.
+- Fail the CSRF check, and fall back to the signed public token, when the supplied session holds no token instead of raising a type error.
+- Publish `connection` (default null) and the `suspicious_user_agent` spam weight in the configuration file; both were already read. Correct the README's `idempotency_key` protection key.
+
 ## [7.0.3] - 2026-11-10
 
 ### Changed
