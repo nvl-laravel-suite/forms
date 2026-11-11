@@ -4,6 +4,8 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [7.0.4] - 2026-11-11
+
 ### Fixed
 
 - Keep builder-level `forceDelete()`, `updateOrInsert()` and `updateFrom()` on form entries and analytics inside the ownership boundary by adopting Core's owned write trait on both builders. Require Core 7.0.6.
@@ -22,6 +24,12 @@ All notable changes to `nvl/forms` are documented here.
 - Refuse public submission text that is not valid UTF-8 or contains NUL bytes, and an origin host longer than 253 characters, with a validation error instead of a database or JSON failure; a malformed user agent is stored with its invalid bytes replaced.
 - Fail the CSRF check, and fall back to the signed public token, when the supplied session holds no token instead of raising a type error.
 - Publish `connection` (default null) and the `suspicious_user_agent` spam weight in the configuration file; both were already read. Correct the README's `idempotency_key` protection key.
+
+<!-- NVL GENERATED CHANGES START -->
+### Changed
+
+- scope builder writes and harden entries, handlers and identifiers
+<!-- NVL GENERATED CHANGES END -->
 
 ## [7.0.3] - 2026-11-10
 
