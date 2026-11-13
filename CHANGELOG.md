@@ -4,9 +4,17 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [7.0.6] - 2026-11-13
+
 ### Fixed
 
 - Reject custom submissions, including receipt replay, inside an open transaction on the actual Forms connection before consuming rate limits or invoking the handler. This keeps caller rollback from erasing a receipt after external work succeeds; ordinary entry submissions still support caller transactions.
+
+<!-- NVL GENERATED CHANGES START -->
+### Changed
+
+- close package transaction, event and query parity gaps
+<!-- NVL GENERATED CHANGES END -->
 
 ## [7.0.5] - 2026-11-13
 
