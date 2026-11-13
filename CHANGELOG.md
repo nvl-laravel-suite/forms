@@ -4,9 +4,17 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [7.0.5] - 2026-11-13
+
 ### Fixed
 
 - Match Unicode form searches case-insensitively across SQLite (`nvl_utf8_lower`) and PostgreSQL (`COLLATE pg_c_utf8`), retain entry flag attributes on paginated projections, and route submission, receipt, rate-limit, and lifecycle side effects through configured database connections.
+
+<!-- NVL GENERATED CHANGES START -->
+### Changed
+
+- harden package runtime safety, PostgreSQL portability and test performance
+<!-- NVL GENERATED CHANGES END -->
 
 ## [7.0.4] - 2026-11-11
 
