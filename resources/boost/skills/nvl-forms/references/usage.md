@@ -127,7 +127,8 @@ returns `['entry_id' => $externalIdentifier, 'meta' => [...]]` when applicable.
 `FormSubmissionReceipt::result_id` is the external identifier. Inspect the union
 return type instead of treating it as a locally persisted FormEntry.
 
-Custom receipt claiming/completion is durable. A downstream external side effect
+Custom submissions, including completed receipt replays, must start outside every
+transaction on the Forms connection. Custom receipt claiming/completion is durable. A downstream external side effect
 must have its own idempotency/recovery contract; the receipt is not a distributed
 transaction. Successful custom work may carry a bookkeeping warning if counters fail.
 

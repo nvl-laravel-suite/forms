@@ -5,8 +5,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Enums\Resolvement;
+use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Exceptions\FormSubmissionRejectionException;
 use Nvl\Forms\Models\Form;
+use Nvl\Forms\Models\FormAnalytic;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Models\FormSubmissionReceipt;
@@ -48,7 +50,6 @@ test('handle public form submission delegates to custom handler', function (): v
 test('handle public form submission executes custom handler outside a forms-owned transaction', function (): void {
     $form = Form::factory()->create(['resolvement' => Resolvement::CUSTOM, 'handle' => 'custom-no-outer-transaction', 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false, 'require_csrf' => false]);
     $observedTransactionLevel = null;
-    $baselineTransactionLevel = DB::transactionLevel();
     $registry = app(FormHandlerRegistry::class);
     $registry->register('custom-no-outer-transaction', function (Form $form, array $data, array $context) use (&$observedTransactionLevel): array {
         $observedTransactionLevel = DB::transactionLevel();
@@ -59,7 +60,71 @@ test('handle public form submission executes custom handler outside a forms-owne
     $request = Request::create('/submit', 'POST');
     $request->server->set('REMOTE_ADDR', '10.0.0.4');
     $result = app(FormSubmissions::class)->submit($form, formNativeInput($data), formNativeInput(formSubmissionContext($request)));
-    expect(formSubmissionId($result))->toBe('custom-no-outer-transaction')->and($observedTransactionLevel)->toBe($baselineTransactionLevel);
+    expect(formSubmissionId($result))->toBe('custom-no-outer-transaction')->and($observedTransactionLevel)->toBe(0);
+});
+test('custom submissions reject an open source transaction before consuming attempts or invoking the handler', function (bool $configuredConnection): void {
+    if ($configuredConnection) {
+        $sourceName = config('database.default');
+        config(['database.connections.unrelated_submission' => config('database.connections.'.$sourceName), 'nvl-forms.connection' => $sourceName, 'database.default' => 'unrelated_submission']);
+    }
+    $form = Form::factory()->create(['handle' => 'custom-transaction-boundary', 'resolvement' => Resolvement::CUSTOM, 'allow_multiple_registrations' => true, 'restrict_public_access' => false, 'enable_rate_limiting' => true, 'enable_honeypot' => false, 'require_csrf' => false]);
+    $handlerCalls = 0;
+    app(FormHandlerRegistry::class)->register($form->handle, function () use (&$handlerCalls): array {
+        $handlerCalls++;
+
+        return ['entry_id' => 'external-'.$handlerCalls];
+    });
+    $source = $form->getConnection();
+    $fields = ['email' => 'transaction@example.com'];
+    $protection = ['origin' => 'https://example.test', 'ipAddress' => '127.0.0.1', 'userAgent' => 'Mozilla/5.0', 'idempotency_key' => 'custom-transaction-key'];
+    $source->beginTransaction();
+    try {
+        expect(fn () => app(FormSubmissions::class)->submit($form, $fields, $protection))->toThrow(FormException::class);
+        expect($handlerCalls)->toBe(0)
+            ->and(FormSubmissionReceipt::query()->count())->toBe(0)
+            ->and(FormRateLimit::query()->count())->toBe(0)
+            ->and(FormAnalytic::query()->count())->toBe(0);
+    } finally {
+        $source->rollBack();
+    }
+    $receipt = app(FormSubmissions::class)->submit($form, $fields, $protection);
+    $replay = app(FormSubmissions::class)->submit($form, $fields, $protection);
+    expect($receipt)->toBeInstanceOf(FormSubmissionReceipt::class)
+        ->and($replay->id)->toBe($receipt->id)
+        ->and($receipt->result_id)->toBe('external-1')
+        ->and($handlerCalls)->toBe(1);
+    $source->beginTransaction();
+    try {
+        expect(fn () => app(FormSubmissions::class)->submit($form, $fields, $protection))->toThrow(FormException::class);
+    } finally {
+        $source->rollBack();
+    }
+    expect(FormSubmissionReceipt::query()->findOrFail($receipt->id)->result_id)->toBe('external-1')
+        ->and($handlerCalls)->toBe(1);
+})->with(['default source' => false, 'configured source' => true]);
+
+test('custom submissions remain durable when only an unrelated connection transaction rolls back', function (): void {
+    $sourceName = config('database.default');
+    config(['database.connections.unrelated_submission' => config('database.connections.'.$sourceName), 'nvl-forms.connection' => $sourceName, 'database.default' => 'unrelated_submission']);
+    $form = Form::factory()->create(['handle' => 'custom-unrelated-transaction', 'resolvement' => Resolvement::CUSTOM, 'allow_multiple_registrations' => true, 'restrict_public_access' => false, 'enable_rate_limiting' => false, 'enable_honeypot' => false, 'require_csrf' => false]);
+    $handlerCalls = 0;
+    app(FormHandlerRegistry::class)->register($form->handle, function () use (&$handlerCalls): array {
+        $handlerCalls++;
+
+        return ['entry_id' => 'durable-external-result'];
+    });
+    $fields = ['email' => 'transaction@example.com'];
+    $protection = ['origin' => 'https://example.test', 'ipAddress' => '127.0.0.1', 'userAgent' => 'Mozilla/5.0', 'idempotency_key' => 'custom-unrelated-key'];
+    DB::beginTransaction();
+    try {
+        $receipt = app(FormSubmissions::class)->submit($form, $fields, $protection);
+    } finally {
+        DB::rollBack();
+    }
+    $replay = app(FormSubmissions::class)->submit($form, $fields, $protection);
+    expect($replay->id)->toBe($receipt->id)
+        ->and($replay->result_id)->toBe('durable-external-result')
+        ->and($handlerCalls)->toBe(1);
 });
 test('handle public form submission preserves custom handler success when forms bookkeeping fails', function (): void {
     $form = Form::factory()->create(['resolvement' => Resolvement::CUSTOM, 'handle' => 'custom-bookkeeping-failure', 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false, 'require_csrf' => false]);

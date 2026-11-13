@@ -102,6 +102,9 @@ final class FormSubmissions
      */
     private function executeCustomSubmission(Form $form, array $data, array $context): FormSubmissionReceipt
     {
+        if ($form->getConnection()->transactionLevel() !== 0) {
+            throw new FormException('Custom form submissions must start outside a database transaction.');
+        }
         $handler = $this->customRegistry->resolve($form);
         if ($handler === null) {
             throw new FormSubmissionRejectionException(message: (string) trans('nvl-forms::forms/messages.api.error'), statusCode: 400);

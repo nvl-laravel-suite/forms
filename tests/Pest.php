@@ -1,19 +1,26 @@
 <?php
 
 declare(strict_types=1);
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Request;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Services\FormSubmissions;
 use Nvl\Forms\Tests\Fixtures\Consumer\FormSubmissionContext;
 use Nvl\Forms\Tests\Fixtures\Consumer\Services\RequestOriginResolver;
+use Nvl\Forms\Tests\FormsRetentionTestCase;
 use Nvl\Forms\Tests\FormsTestCase;
 use Nvl\Forms\Tests\OwnershipTestCase;
 use Nvl\Forms\Tests\PivotOwnershipTestCase;
 use Nvl\Forms\Tests\Stubs\TestFormsUser;
 use Nvl\Ownership\Tests\Fixtures\ReusesAdoptedSchema;
 
-uses(FormsTestCase::class)->in('Feature');
+foreach ((new Filesystem)->allFiles(__DIR__.'/Feature') as $file) {
+    uses(match ($file->getFilename()) {
+        'FormSubmissionIdempotencyTest.php', 'HandlePublicFormSubmissionActionTest.php', 'FormRenderApiControllerTest.php' => FormsRetentionTestCase::class,
+        default => FormsTestCase::class,
+    })->in($file->getPathname());
+}
 function formSubmissionContext(Request $request): FormSubmissionContext
 {
     return FormSubmissionContext::fromRequest($request, app(RequestOriginResolver::class));
