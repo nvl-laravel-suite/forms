@@ -19,10 +19,10 @@ use Nvl\Forms\Tests\Stubs\TestFormsUser;
 
 beforeEach(function (): void {
     $driver = getenv('NVL_C1_TEST_DRIVER');
-    if (in_array($driver, ['pgsql', 'mysql', 'mariadb'], true)) {
+    if ($driver === 'pgsql') {
         $source = (new Form)->getConnection();
         expect($source->getDriverName())->toBe($driver)
-            ->and($source->getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME))->toBe($driver === 'mariadb' ? 'mysql' : $driver);
+            ->and($source->getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME))->toBe($driver);
     }
     Storage::fake('local');
     Gate::define('authoritative-group', static fn (TestFormsUser $user): bool => true);

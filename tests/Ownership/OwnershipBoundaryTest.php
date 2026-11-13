@@ -13,8 +13,11 @@ use Nvl\Forms\Services\FormReader;
 use Nvl\Forms\Services\FormRetention;
 use Nvl\Forms\Tests\Fixtures\Actor;
 use Nvl\Forms\Tests\Fixtures\OwnershipForm;
+use Nvl\Ownership\Tests\Fixtures\OptsIntoAdoptedSchemaReuse;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+
+uses(OptsIntoAdoptedSchemaReuse::class);
 
 it('keeps equal handles and child records owner local and denies foreign preloaded form handles', function (): void {
     $forms = [];

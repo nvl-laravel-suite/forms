@@ -5,7 +5,10 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Services\FormLifecycle;
 use Nvl\Forms\Tests\Fixtures\Actor;
 use Nvl\Forms\Tests\Fixtures\OwnershipForm;
+use Nvl\Ownership\Tests\Fixtures\OptsIntoAdoptedSchemaReuse;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+
+uses(OptsIntoAdoptedSchemaReuse::class);
 
 it('uses the configured native form root for creation localized copy and relations', function (): void {
     $this->owned(7, function (): void {

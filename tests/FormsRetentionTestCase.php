@@ -24,9 +24,9 @@ abstract class FormsRetentionTestCase extends FormsTestCase
         $driver = $source->getDriverName();
         $database = $source->getDatabaseName();
         $safe = $driver === 'sqlite' && $database === ':memory:';
-        if (in_array($driver, ['pgsql', 'mysql', 'mariadb'], true)) {
+        if ($driver === 'pgsql') {
             $safe = preg_match('/\Anvl_forms_test_[a-f0-9]{8}_ci\z/D', $database) === 1
-                && in_array($source->getConfig('host'), ['127.0.0.1', 'localhost', '::1', ...($driver === 'pgsql' ? ['/tmp'] : [])], true);
+                && in_array($source->getConfig('host'), ['127.0.0.1', 'localhost', '::1', '/tmp'], true);
         }
         if (! $safe) {
             throw new RuntimeException('Committed Forms retention tests require memory SQLite or an explicitly dedicated loopback nvl_forms_test_<8hex>_ci database.');

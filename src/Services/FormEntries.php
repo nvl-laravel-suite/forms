@@ -29,6 +29,7 @@ use Nvl\Forms\Exceptions\FormOwnershipException;
 use Nvl\Forms\Exceptions\FormRetentionPredicateChanged;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
@@ -551,7 +552,7 @@ final class FormEntries
         $formEntry = FormEntry::query()->findOrFail(FormIdentifier::of($formEntry, FormEntry::class));
 
         // Load all relationships needed for display
-        return $formEntry->load(['form:id,handle']);
+        return $formEntry->load(['form:'.FormsOwnership::formRelationSelect()]);
     }
 
     /**
@@ -603,7 +604,7 @@ final class FormEntries
      */
     private function listFormEntriesGetSelectColumns(): array
     {
-        return ['id', 'form_id', 'subject', 'email', 'first_name', 'last_name', 'phone', 'submitted_from', 'created_at'];
+        return ['id', 'form_id', 'subject', 'email', 'first_name', 'last_name', 'phone', 'submitted_from', 'is_spam', 'redacted_at', 'anonymized_at', 'created_at', ...FormsOwnership::columns('forms.entries')];
     }
 
     /**
@@ -613,7 +614,7 @@ final class FormEntries
      */
     private function listFormEntriesGetEagerLoadRelations(): array
     {
-        return ['form:id,handle'];
+        return ['form:'.FormsOwnership::formRelationSelect()];
     }
 
     /**

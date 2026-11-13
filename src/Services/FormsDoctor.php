@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
+use Closure;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 use Nvl\Forms\Contracts\FormEntryDeletionPolicy;
 use Nvl\Forms\Contracts\FormEntryPrivacyPolicy;
 use Nvl\Forms\Contracts\FormRateLimiter;
 use Nvl\Forms\Contracts\FormSpamDetector;
 use Nvl\Forms\Definitions\Tables\FormsTables;
 use Nvl\Forms\Ownership\FormsOwnership;
-use Nvl\Support\Config\PackageStorage;
 use Throwable;
 
 /**
@@ -77,76 +77,79 @@ final readonly class FormsDoctor
         $checks = [];
 
         try {
-            $schema = Schema::connection(PackageStorage::connection('forms'));
-            foreach ($requirements as $table => $columns) {
-                $exists = $schema->hasTable($table);
-                $checks[] = $this->check(
-                    "schema.table.{$table}",
-                    $exists,
-                    $exists
-                        ? "Table [{$table}] is available."
-                        : "Table [{$table}] is missing.",
-                );
-
-                if (! $exists) {
-                    continue;
-                }
-
-                foreach ($columns as $column) {
-                    $present = $schema->hasColumn($table, $column);
+            $connection = FormModelRegistry::newInstance()->getConnection();
+            $schema = $connection->getSchemaBuilder();
+            $this->probe($connection, function () use ($schema, $requirements, &$checks): void {
+                foreach ($requirements as $table => $columns) {
+                    $exists = $schema->hasTable($table);
                     $checks[] = $this->check(
-                        "schema.column.{$table}.{$column}",
-                        $present,
-                        $present
-                            ? "Column [{$table}.{$column}] is available."
-                            : "Column [{$table}.{$column}] is missing.",
+                        "schema.table.{$table}",
+                        $exists,
+                        $exists
+                            ? "Table [{$table}] is available."
+                            : "Table [{$table}] is missing.",
                     );
+
+                    if (! $exists) {
+                        continue;
+                    }
+
+                    foreach ($columns as $column) {
+                        $present = $schema->hasColumn($table, $column);
+                        $checks[] = $this->check(
+                            "schema.column.{$table}.{$column}",
+                            $present,
+                            $present
+                                ? "Column [{$table}.{$column}] is available."
+                                : "Column [{$table}.{$column}] is missing.",
+                        );
+                    }
+
+                    $indexes = $schema->getIndexes($table);
+                    foreach ($this->requiredIndexes($table) as $requirement) {
+                        $present = $this->hasIndex(
+                            $indexes,
+                            $requirement['columns'],
+                            $requirement['unique'],
+                        );
+                        $label = implode(',', $requirement['columns']);
+                        $checks[] = $this->check(
+                            "schema.index.{$table}.{$label}",
+                            $present,
+                            $present
+                                ? "Required index [{$table}:{$label}] is available."
+                                : "Required index [{$table}:{$label}] is missing.",
+                        );
+                    }
+
+                    $foreignKeys = $schema->getForeignKeys($table);
+                    foreach ($this->requiredForeignKeys($table) as $columns) {
+                        $present = collect($foreignKeys)->contains(
+                            static fn (array $foreignKey): bool => self::sameColumns($foreignKey['columns'], $columns),
+                        );
+                        $label = implode(',', $columns);
+                        $checks[] = $this->check(
+                            "schema.foreign_key.{$table}.{$label}",
+                            $present,
+                            $present
+                                ? "Required foreign key [{$table}:{$label}] is available."
+                                : "Required foreign key [{$table}:{$label}] is missing.",
+                        );
+                    }
                 }
 
-                $indexes = $schema->getIndexes($table);
-                foreach ($this->requiredIndexes($table) as $requirement) {
-                    $present = $this->hasIndex(
-                        $indexes,
-                        $requirement['columns'],
-                        $requirement['unique'],
-                    );
-                    $label = implode(',', $requirement['columns']);
+                if ($schema->hasColumn(FormsTables::get(FormsTables::Entries), 'spam_score')) {
+                    $type = $schema->getColumnType(FormsTables::get(FormsTables::Entries), 'spam_score', true);
+                    $numeric = str_contains(strtolower($type), 'int');
                     $checks[] = $this->check(
-                        "schema.index.{$table}.{$label}",
-                        $present,
-                        $present
-                            ? "Required index [{$table}:{$label}] is available."
-                            : "Required index [{$table}:{$label}] is missing.",
+                        'schema.type.form_entries.spam_score',
+                        $numeric,
+                        $numeric
+                            ? 'Spam score uses a numeric database type.'
+                            : "Spam score must use a numeric database type; found [{$type}].",
                     );
                 }
-
-                $foreignKeys = $schema->getForeignKeys($table);
-                foreach ($this->requiredForeignKeys($table) as $columns) {
-                    $present = collect($foreignKeys)->contains(
-                        static fn (array $foreignKey): bool => self::sameColumns($foreignKey['columns'], $columns),
-                    );
-                    $label = implode(',', $columns);
-                    $checks[] = $this->check(
-                        "schema.foreign_key.{$table}.{$label}",
-                        $present,
-                        $present
-                            ? "Required foreign key [{$table}:{$label}] is available."
-                            : "Required foreign key [{$table}:{$label}] is missing.",
-                    );
-                }
-            }
-
-            if ($schema->hasColumn(FormsTables::get(FormsTables::Entries), 'spam_score')) {
-                $type = $schema->getColumnType(FormsTables::get(FormsTables::Entries), 'spam_score', true);
-                $numeric = str_contains(strtolower($type), 'int');
-                $checks[] = $this->check(
-                    'schema.type.form_entries.spam_score',
-                    $numeric,
-                    $numeric
-                        ? 'Spam score uses a numeric database type.'
-                        : "Spam score must use a numeric database type; found [{$type}].",
-                );
-            }
+            });
         } catch (Throwable $throwable) {
             $checks[] = $this->check(
                 'schema.connection',
@@ -193,7 +196,7 @@ final readonly class FormsDoctor
         return [
             $this->check(
                 'security.ownership_callbacks',
-                ! FormsOwnership::declared() || ! $this->entryCallbacks->hasNonOwnershipCallbacks(),
+                ! $this->ownershipDeclared() || ! $this->entryCallbacks->hasNonOwnershipCallbacks(),
                 'Owned public callbacks require registerOwnership and immutable owner/site context.',
             ),
             $this->check(
@@ -213,7 +216,7 @@ final readonly class FormsDoctor
     {
         return match ($table) {
             FormsTables::get(FormsTables::Forms) => [
-                ['columns' => ['handle'], 'unique' => true],
+                ['columns' => $this->ownershipAdopted($table) ? ['owner_scope_key', 'handle'] : ['handle'], 'unique' => true],
                 ['columns' => ['status'], 'unique' => false],
             ],
             FormsTables::get(FormsTables::I18n) => [
@@ -291,5 +294,36 @@ final readonly class FormsDoctor
     private function check(string $key, bool $passed, string $message): array
     {
         return ['key' => $key, 'severity' => 'error', 'passed' => $passed, 'message' => $message];
+    }
+
+    private function ownershipDeclared(): bool
+    {
+        try {
+            return FormsOwnership::declared();
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function ownershipAdopted(string $table): bool
+    {
+        if (! $this->ownershipDeclared()) {
+            return false;
+        }
+
+        return FormModelRegistry::newInstance()->getConnection()->getSchemaBuilder()->hasColumn($table, 'owner_scope_key');
+    }
+
+    /**
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    private function probe(ConnectionInterface $connection, Closure $callback): mixed
+    {
+        return $connection->transactionLevel() > 0
+            ? $connection->transaction($callback)
+            : $callback();
     }
 }

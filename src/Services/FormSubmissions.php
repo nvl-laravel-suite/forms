@@ -26,6 +26,7 @@ use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Rules\BoundedSubmissionPayload;
 use Nvl\Ownership\Services\PublicOwnerSiteRunner;
+use Nvl\Support\Events\ConnectionCommitCallbacks;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
@@ -105,6 +106,13 @@ final class FormSubmissions
         if ($handler === null) {
             throw new FormSubmissionRejectionException(message: (string) trans('nvl-forms::forms/messages.api.error'), statusCode: 400);
         }
+        $entryData = $this->prepare($form, $data, $context);
+        $this->validateHost($form, $entryData['submittedFrom']);
+        $handlerPayload = $this->buildHandlerPayload($entryData, $data);
+        $replay = $this->customReceipts->findReplay($form, $handlerPayload, $context['idempotency_key']);
+        if ($replay instanceof FormSubmissionReceipt) {
+            return $replay;
+        }
         $guard = $this->guardCustom($form, $data, $context);
         $claim = $this->customReceipts->claim($form, $guard['handlerPayload'], $guard['sessionId'], $context['idempotency_key']);
         if ($claim->isReplay === true) {
@@ -140,13 +148,14 @@ final class FormSubmissions
         $entryData = $this->prepare($form, $data, $context);
         $entry = $this->createEntry($entryData, $context['ipAddress'], $context['userAgent'], $context['sessionId'], $context['actor'], $context['idempotency_key'], $this->tokenService->issuedAt($context['publicToken'], $form, $context['publicSite']));
         if (! $entry->isIdempotentReplay()) {
+            $commits = $this->container->make(ConnectionCommitCallbacks::class);
             if (FormsOwnership::declared()) {
                 $site = OwnerSiteContext::require();
                 $generations = $this->container->make(OwnershipContext::class)->snapshot()->generations;
                 $callbackContext = ['owner' => $site->owner, 'site' => $site->site, 'canonicalOrigin' => $site->canonicalOrigin, 'origin' => $context['origin'], 'locale' => $context['locale'], 'correlationId' => $context['idempotency_key']];
                 $formId = $form->identifier();
                 $entryId = $entry->identifier();
-                $form->getConnection()->afterCommit(function () use ($site, $generations, $callbackContext, $formId, $entryId): void {
+                $commits->afterCommit($form->getConnection(), function () use ($site, $generations, $callbackContext, $formId, $entryId): void {
                     $this->container->make(PublicOwnerSiteRunner::class)->run($site->canonicalOrigin, function () use ($site, $generations, $callbackContext, $formId, $entryId): void {
                         $snapshot = $this->container->make(OwnershipContext::class)->snapshot();
                         if ($snapshot->publicSite != $site || $snapshot->generations !== $generations) {
@@ -158,7 +167,7 @@ final class FormSubmissions
                     });
                 });
             } else {
-                FormModelRegistry::newInstance()->getConnection()->afterCommit(function () use ($form, $entry, $context): void {
+                $commits->afterCommit($form->getConnection(), function () use ($form, $entry, $context): void {
                     $this->entryCallbacks->dispatch($form, $entry, $context);
                 });
             }
@@ -222,9 +231,10 @@ final class FormSubmissions
     private function createEntry(array $data, string $ipAddress, ?string $userAgent, ?string $sessionId, ?Authenticatable $actor = null, ?string $idempotencyKey = null, ?float $trustedFormLoadTime = null): FormEntry
     {
         $payloadDigest = $this->payloadDigest($data);
+        $connection = FormModelRegistry::newInstance()->getConnection();
         try {
             /** @var array{entry?: FormEntry, form: Form, is_spam: bool, rejection?: string, rejection_exception?: FormSubmissionRejectionException, duplicate?: bool} $result */
-            $result = (new FormEntry)->getConnection()->transaction(function () use ($data, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $trustedFormLoadTime, $payloadDigest, $actor) {
+            $result = $connection->transaction(function () use ($data, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $trustedFormLoadTime, $payloadDigest, $actor) {
                 $formId = $data['formId'];
                 if ($formId === '') {
                     throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.not_found', ['item' => (string) trans('nvl-forms::forms/general.entities.singular')]));
@@ -260,7 +270,7 @@ final class FormSubmissions
                 $result = $this->persistEntry($form, $data, $spamDetection, $ipAddress, $userAgent, $sessionId, $idempotencyKey, $payloadDigest, $registrationFingerprint);
                 $entry = $result['entry'];
                 $form = $result['form'];
-                $fresh = $entry->fresh(['form:id,handle']);
+                $fresh = $entry->fresh(['form:'.FormsOwnership::formRelationSelect()]);
                 if ($fresh === null) {
                     throw new Exception((string) trans('nvl-forms::forms/shared.messages.error.refresh_failed', ['item' => (string) trans('nvl-forms::entries/general.entities.singular')]));
                 }
@@ -371,7 +381,7 @@ final class FormSubmissions
                 $form = app(FormAnalytics::class)->submission($form, $submittedFrom, $ipAddress, $userAgent, $sessionId);
             }
             // Ensure the entry has the minimal parent loaded for further logging
-            $entry->loadMissing('form:id,handle');
+            $entry->loadMissing('form:'.FormsOwnership::formRelationSelect());
 
             return ['entry' => $entry, 'form' => $form];
         });

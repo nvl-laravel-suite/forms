@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
+use Closure;
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -73,7 +75,8 @@ final class FormLifecycle
             } else {
                 $formData['handle'] = $this->handleService->generateUniqueHandle($this->createFormFirstTranslationName($translationRows) ?? '');
             }
-            $form = FormModelRegistry::create($formData);
+            $resolvedHandle = is_string($formData['handle'] ?? null) ? $formData['handle'] : '';
+            $form = $this->persistWithUniqueHandle($resolvedHandle, static fn (): Form => FormModelRegistry::create($formData));
             if (is_array($data['allowedOrigins'] ?? null)) {
                 $this->originService->createOrigins($form, array_values($data['allowedOrigins']));
             }
@@ -156,7 +159,11 @@ final class FormLifecycle
             $translations = is_array($data['translations'] ?? null) ? $data['translations'] : null;
             $payload['revision'] = $form->revision + 1;
             $form->fill($payload);
-            $form->save();
+            $this->persistWithUniqueHandle((string) $form->handle, static function () use ($form): Form {
+                $form->save();
+
+                return $form;
+            });
             if (array_key_exists('allowedOrigins', $data)) {
                 $this->originService->syncOrigins($form, is_array($allowedOrigins) ? array_values($allowedOrigins) : []);
             }
@@ -207,7 +214,7 @@ final class FormLifecycle
             $newForm->spam_count = 0;
             $newForm->last_used_at = null;
             $newForm->first_used_at = null;
-            $newForm = FormModelRegistry::persist($newForm);
+            $newForm = $this->persistWithUniqueHandle((string) $newForm->handle, static fn (): Form => FormModelRegistry::persist($newForm));
             $this->duplicateFormDuplicateAllowedOrigins($originalForm, $newForm);
             $this->duplicateFormDuplicateTranslations($originalForm, $newForm, $newName);
             $newForm->load(['allowedOrigins', 'translations']);
@@ -401,5 +408,26 @@ final class FormLifecycle
             $this->translationWriter->deleteExcept($form, $definition, array_keys($rows));
         }
         $form->unsetRelation('translations');
+    }
+
+    /**
+     * Isolate form writes inside a savepoint so concurrent handle collisions translate cleanly on PostgreSQL.
+     *
+     * @param  Closure(): Form  $callback
+     */
+    private function persistWithUniqueHandle(string $handle, Closure $callback): Form
+    {
+        $connection = FormModelRegistry::newInstance()->getConnection();
+
+        try {
+            return $connection->transactionLevel() > 0
+                ? $connection->transaction($callback)
+                : $callback();
+        } catch (UniqueConstraintViolationException) {
+            throw new FormException(
+                (string) trans('nvl-forms::forms/messages.error.handle_exists', ['handle' => $handle]),
+                409,
+            );
+        }
     }
 }

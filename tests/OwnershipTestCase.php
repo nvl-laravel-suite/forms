@@ -63,17 +63,19 @@ abstract class OwnershipTestCase extends RuntimeTestCase
         $this->allowOwners();
         config(['nvl-forms.authorization.gate' => 'manage-forms']);
         Gate::define('manage-forms', static fn ($actor): bool => $actor !== null);
-        $migrations = array_values(array_filter(glob(__DIR__.'/../database/migrations/*.php') ?: [], static fn (string $path): bool => basename($path) !== '2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php'));
-        $migrations[] = __DIR__.'/../database/migrations/current/2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php';
-        foreach ($migrations as $path) {
-            (require $path)->up();
+        if (! $this->hasRetainedOwnershipSchema()) {
+            $migrations = array_values(array_filter(glob(__DIR__.'/../database/migrations/*.php') ?: [], static fn (string $path): bool => basename($path) !== '2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php'));
+            $migrations[] = __DIR__.'/../database/migrations/current/2026_07_29_055330_nvl_forms_create_form_submission_receipts_table.php';
+            foreach ($migrations as $path) {
+                (require $path)->up();
+            }
+            $class = $this->formClass();
+            (new $class)->getConnection()->getSchemaBuilder()->table((new $class)->getTable(), static function (Blueprint $table): void {
+                $table->unsignedBigInteger('company_id')->nullable();
+                $table->foreign('company_id')->references('id')->on('ownership_test_companies');
+            });
+            (require dirname((new \ReflectionClass(OwnershipServiceProvider::class))->getFileName(), 3).'/database/migrations/ownership/2026_10_18_000001_nvl_ownership_create_adoption_tables.php')->up();
         }
-        $class = $this->formClass();
-        (new $class)->getConnection()->getSchemaBuilder()->table((new $class)->getTable(), static function (Blueprint $table): void {
-            $table->unsignedBigInteger('company_id')->nullable();
-            $table->foreign('company_id')->references('id')->on('ownership_test_companies');
-        });
-        (require dirname((new \ReflectionClass(OwnershipServiceProvider::class))->getFileName(), 3).'/database/migrations/ownership/2026_10_18_000001_nvl_ownership_create_adoption_tables.php')->up();
         $this->app->bind(OwnershipAdoptionAccess::class, static fn () => new class implements OwnershipAdoptionAccess
         {
             public function authorize(OwnershipOperation $operation): void {}
@@ -102,12 +104,14 @@ abstract class OwnershipTestCase extends RuntimeTestCase
                 return [];
             }
         });
-        $this->prepareOwnershipSchema();
-        $operation = new OwnershipOperation('adopt-forms', 'operator', '1');
-        $coordinator = app(OwnershipAdoptionCoordinator::class);
-        $plan = $coordinator->prepare(['forms'], $this->reviewedMappings(), $operation);
-        $coordinator->backfill($plan, 100, $operation);
-        $coordinator->activate($plan, $operation);
+        if (! $this->hasRetainedOwnershipSchema()) {
+            $this->prepareOwnershipSchema();
+            $operation = new OwnershipOperation('adopt-forms', 'operator', '1');
+            $coordinator = app(OwnershipAdoptionCoordinator::class);
+            $plan = $coordinator->prepare(['forms'], $this->reviewedMappings(), $operation);
+            $coordinator->backfill($plan, 100, $operation);
+            $coordinator->activate($plan, $operation);
+        }
         app(MaintenanceMode::class)->deactivate();
     }
 

@@ -37,7 +37,23 @@ test('form availability filters cover every supported transport shape and operat
     $after = $model->paginate(false, filters: ['availability' => CarbonImmutable::parse('2026-08-15 00:00:00'), 'availability_operator' => 'after'], actor: formActor())->pluck('id')->all();
     $equals = $model->paginate(false, filters: ['availability' => '2026-08-02T12:00:00+00:00'], actor: formActor())->pluck('id')->all();
     expect($between)->toContain($unrestricted->id, $current->id)->and($between)->not->toContain($future->id)->and($before)->toContain($unrestricted->id, $current->id)->and($after)->toContain($unrestricted->id, $future->id)->and($equals)->toContain($unrestricted->id, $current->id)->and($equals)->not->toContain($future->id);
-    expect(fn () => $model->paginate(false, filters: ['availability' => new stdClass, 'availability_operator' => 'equals'], actor: formActor()))->toThrow(FormException::class, 'must be a date')->and(fn () => $model->paginate(false, filters: ['availability' => '2026-08-02', 'availability_operator' => 'contains'], actor: formActor()))->toThrow(FormException::class, 'Unsupported availability operator');
+    expect(fn () => $model->paginate(false, filters: ['availability' => new stdClass, 'availability_operator' => 'equals'], actor: formActor()))->toThrow(FormException::class, 'must be a date')
+        ->and(fn () => $model->paginate(false, filters: ['availability' => 'not-a-valid-date', 'availability_operator' => 'equals'], actor: formActor()))->toThrow(FormException::class, 'must be a date')
+        ->and(fn () => $model->paginate(false, filters: ['availability' => '2026-08-02', 'availability_operator' => 'contains'], actor: formActor()))->toThrow(FormException::class, 'Unsupported availability operator');
+});
+
+test('form reader searches Cyrillic form translations case-insensitively and hydrates entry flags', function (): void {
+    $cyrillic = Form::factory()->create(['handle' => 'bg-contact', 'name' => 'Форма за Контакт']);
+    $entry = FormEntry::factory()->for($cyrillic)->create(['subject' => 'Запитване', 'is_spam' => true]);
+
+    expect(app(FormReader::class)->paginate(false, filters: ['search' => 'форма за контакт'], actor: formActor())->pluck('id')->all())
+        ->toBe([$cyrillic->id]);
+
+    $listed = app(FormEntries::class)->paginate($cyrillic, false, actor: formActor())->sole();
+    expect($listed->is_spam)->toBeTrue()
+        ->and(array_key_exists('redacted_at', $listed->getAttributes()))->toBeTrue()
+        ->and(array_key_exists('anonymized_at', $listed->getAttributes()))->toBeTrue()
+        ->and($listed->id)->toBe($entry->id);
 });
 
 test('consumer native queries retain origin entry analytic and rate predicates', function (): void {

@@ -33,8 +33,10 @@ use Nvl\Support\Doctor\PackageDoctorContributor;
 use Nvl\Support\Globals\GlobalNames;
 use Nvl\Support\Ownership\Contracts\OwnershipIntegratedProvider;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
+use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Support\Traits\MergesPackageConfiguration;
 use Nvl\Support\Traits\RegistersNamespacedResources;
+use Nvl\Translatable\Providers\TranslatableServiceProvider;
 use Nvl\Translatable\Services\TranslationResourceRegistry;
 
 /**
@@ -102,6 +104,8 @@ final class FormsServiceProvider extends ServiceProvider implements OwnershipInt
      */
     public function register(): void
     {
+        $this->app->register(SupportServiceProvider::class);
+        $this->app->register(TranslatableServiceProvider::class);
 
         PackageDoctorContributor::register($this->app, 'nvl/forms', fn (): array => $this->app->make(FormsDoctor::class)->inspect());
 

@@ -11,14 +11,17 @@ use Nvl\Forms\Tests\FormsTestCase;
 use Nvl\Forms\Tests\OwnershipTestCase;
 use Nvl\Forms\Tests\PivotOwnershipTestCase;
 use Nvl\Forms\Tests\Stubs\TestFormsUser;
+use Nvl\Ownership\Tests\Fixtures\ReusesAdoptedSchema;
 
 uses(FormsTestCase::class)->in('Feature');
 function formSubmissionContext(Request $request): FormSubmissionContext
 {
     return FormSubmissionContext::fromRequest($request, app(RequestOriginResolver::class));
 }
-uses(OwnershipTestCase::class)->in('Ownership');
-pest()->extend(PivotOwnershipTestCase::class)->in(__DIR__.'/OwnershipPivot');
+if (trait_exists(ReusesAdoptedSchema::class)) {
+    uses(OwnershipTestCase::class)->in('Ownership');
+    pest()->extend(PivotOwnershipTestCase::class)->in(__DIR__.'/OwnershipPivot');
+}
 
 /**
  * The request adapter converts trusted request context; mutation fields remain native arrays.

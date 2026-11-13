@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
+use Carbon\CarbonImmutable;
 use DateTimeInterface;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -17,9 +18,12 @@ use Nvl\Forms\Enums\FormAnalyticEventType;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
+use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Support\FormIdentifier;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use Pdo\Sqlite;
 use Stringable;
+use Throwable;
 
 /**
  * Native Forms workflow family.
@@ -85,7 +89,7 @@ final class FormReader
         }
 
         return $formModel->load(['entries' => static function (HasMany $query): void {
-            $query->latest()->select('id', 'form_id', 'subject', 'email', 'first_name', 'last_name', 'is_spam', 'created_at')->limit(10);
+            $query->latest()->select('id', 'form_id', 'subject', 'email', 'first_name', 'last_name', 'is_spam', 'created_at', ...FormsOwnership::columns('forms.entries'))->limit(10);
         }, 'allowedOrigins', 'translations'])->loadMissing(['analytics' => static function (HasMany $query): void {
             $query->whereDate('created_at', '>=', now()->subDays(30)->toDateString())->orderBy('created_at', 'desc')->limit(100);
         }]);
@@ -137,7 +141,7 @@ final class FormReader
      */
     private function listFormsGetSelectColumns(): array
     {
-        return ['id', 'handle', 'revision', 'status', 'resolvement', 'type', 'restrict_public_access', 'allow_multiple_registrations', 'date_restricted', 'available_from', 'available_until', 'submissions_count', 'first_used_at', 'last_used_at', 'created_at', 'updated_at'];
+        return ['id', 'handle', 'revision', 'status', 'resolvement', 'type', 'restrict_public_access', 'allow_multiple_registrations', 'date_restricted', 'available_from', 'available_until', 'submissions_count', 'first_used_at', 'last_used_at', 'created_at', 'updated_at', ...FormsOwnership::columns('forms.forms')];
     }
 
     /**
@@ -319,7 +323,7 @@ final class FormReader
      */
     private function searchFormsGetSelectColumns(array $filters): array
     {
-        $base = ['id', 'handle', 'revision', 'status', 'restrict_public_access', 'submissions_count', 'last_used_at', 'created_at', 'updated_at'];
+        $base = ['id', 'handle', 'revision', 'status', 'restrict_public_access', 'submissions_count', 'last_used_at', 'created_at', 'updated_at', ...FormsOwnership::columns('forms.forms')];
         // Add additional columns if relations are requested
         if (isset($filters['with']) && is_array($filters['with'])) {
             $with = $filters['with'];
@@ -344,7 +348,8 @@ final class FormReader
      */
     private function searchFormsGetSafeRelations(array $relations): array
     {
-        $allowed = ['entries' => 'entries:id,form_id,subject,email,created_at'];
+        $entryColumns = implode(',', ['id', 'form_id', 'subject', 'email', 'created_at', ...FormsOwnership::columns('forms.entries')]);
+        $allowed = ['entries' => 'entries:'.$entryColumns];
 
         return array_values(array_intersect_key($allowed, array_flip($relations)));
     }
@@ -360,7 +365,7 @@ final class FormReader
         $normalizedFilters = collect($filters)->mapWithKeys(static function ($value, string $key) {
             return [Str::snake($key) => $value];
         })->toArray();
-        $query = FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'status', 'restrict_public_access', 'submissions_count']);
+        $query = FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'status', 'restrict_public_access', 'submissions_count', ...FormsOwnership::columns('forms.forms')]);
         // Apply search query
         $searchValue = $normalizedFilters['q'] ?? null;
         $search = is_string($searchValue) ? trim($searchValue) : '';
@@ -407,7 +412,7 @@ final class FormReader
      */
     public function suggestions(string $query, int $limit = 10): Collection
     {
-        $forms = FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'submissions_count', 'last_used_at']);
+        $forms = FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'submissions_count', 'last_used_at', ...FormsOwnership::columns('forms.forms')]);
 
         return $this->filterSearch($forms, $query)->orderBy('submissions_count', 'desc')->orderBy('handle')->limit($limit)->get();
     }
@@ -426,12 +431,39 @@ final class FormReader
             return $query;
         }
 
-        $searchTerm = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($value)).'%';
+        $connection = $query->getModel()->getConnection();
+        $driver = $connection->getDriverName();
+        $escape = static fn (string $term): string => '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+        if ($driver === 'pgsql') {
+            $pattern = $escape($value);
 
-        return $query->where(function (Builder $q) use ($searchTerm): void {
-            $q->whereRaw("LOWER(handle) LIKE ? ESCAPE '!'", [$searchTerm])
-                ->orWhereHas('translations', function (Builder $translations) use ($searchTerm): void {
-                    $translations->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$searchTerm]);
+            return $query->where(function (Builder $q) use ($pattern): void {
+                $q->whereRaw("(handle COLLATE pg_c_utf8) ILIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereHas('translations', function (Builder $translations) use ($pattern): void {
+                        $translations->whereRaw("(name COLLATE pg_c_utf8) ILIKE ? ESCAPE '!'", [$pattern]);
+                    });
+            });
+        }
+
+        $pattern = $escape(mb_strtolower($value, 'UTF-8'));
+        $lowerFn = 'LOWER';
+        if ($driver === 'sqlite') {
+            $lower = static fn (?string $v): ?string => $v === null ? null : mb_strtolower($v, 'UTF-8');
+            foreach ([$connection->getPdo(), $connection->getReadPdo()] as $pdo) {
+                if ($pdo instanceof Sqlite) {
+                    $pdo->createFunction('nvl_utf8_lower', $lower, 1, Sqlite::DETERMINISTIC);
+                    $lowerFn = 'nvl_utf8_lower';
+                } elseif ($pdo instanceof \PDO) {
+                    $pdo->sqliteCreateFunction('nvl_utf8_lower', $lower, 1, \PDO::SQLITE_DETERMINISTIC);
+                    $lowerFn = 'nvl_utf8_lower';
+                }
+            }
+        }
+
+        return $query->where(function (Builder $q) use ($pattern, $lowerFn): void {
+            $q->whereRaw("{$lowerFn}(handle) LIKE ? ESCAPE '!'", [$pattern])
+                ->orWhereHas('translations', function (Builder $translations) use ($pattern, $lowerFn): void {
+                    $translations->whereRaw("{$lowerFn}(name) LIKE ? ESCAPE '!'", [$pattern]);
                 });
         });
     }
@@ -497,6 +529,9 @@ final class FormReader
             throw new FormException('The availability filter must be a date or date range.');
         }
 
+        $from = $this->normalizeAvailabilityBoundary($from);
+        $to = $this->normalizeAvailabilityBoundary($to);
+
         return match ($operator) {
             'between' => $query->where(function (Builder $q) use ($from, $to): void {
                 $q->whereRaw('date_restricted = ?', [false])
@@ -545,5 +580,22 @@ final class FormReader
             }),
             default => throw new FormException('Unsupported availability operator.'),
         };
+    }
+
+    private function normalizeAvailabilityBoundary(DateTimeInterface|string|null $boundary): ?string
+    {
+        if ($boundary === null || $boundary === '') {
+            return null;
+        }
+
+        try {
+            $timezone = config('app.timezone', 'UTC');
+
+            return CarbonImmutable::instance($boundary instanceof DateTimeInterface ? $boundary : CarbonImmutable::parse($boundary))
+                ->setTimezone(is_string($timezone) && $timezone !== '' ? $timezone : 'UTC')
+                ->format('Y-m-d H:i:s');
+        } catch (Throwable) {
+            throw new FormException('The availability filter must be a date or date range.');
+        }
     }
 }

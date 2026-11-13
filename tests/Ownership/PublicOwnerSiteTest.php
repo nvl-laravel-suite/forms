@@ -21,8 +21,11 @@ use Nvl\Forms\Tests\Fixtures\ThrowingOwnedEntryCallback;
 use Nvl\Ownership\Contracts\OwnerSiteResolver;
 use Nvl\Ownership\Services\OwnerIdentityResolver;
 use Nvl\Ownership\Services\PublicOwnerSiteRunner;
+use Nvl\Ownership\Tests\Fixtures\OptsIntoAdoptedSchemaReuse;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\ValueObjects\VerifiedOwnerSiteContext;
+
+uses(OptsIntoAdoptedSchemaReuse::class);
 
 beforeEach(function (): void {
     $this->app->bind(OwnerSiteResolver::class, static fn () => new class implements OwnerSiteResolver
@@ -96,7 +99,7 @@ it('rejects forged Form storage before token validation and timing facts are tru
         $forged->setConnection('foreign_form_storage');
         expect($tokens->validate($token, $forged, 'alpha'))->toBeFalse()->and($tokens->issuedAt($token, $forged, 'alpha'))->toBeNull();
     });
-});
+})->group('fresh-adoption');
 it('rejects retained public extension objects and legacy closures in an owned graph', function (): void {
     $renders = app(FormRenderDataRegistry::class);
     $renders->register('contact', new class implements FormRenderDataProvider

@@ -47,7 +47,7 @@ final class CustomSubmissionReceiptService
         $payloadDigest = $this->payloadDigest($payload);
 
         try {
-            return FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $idempotencyKey, $fingerprint, $payloadDigest): CustomSubmissionClaim {
+            return $form->getConnection()->transaction(function () use ($form, $idempotencyKey, $fingerprint, $payloadDigest): CustomSubmissionClaim {
                 if ($idempotencyKey !== null) {
                     $existing = $this->boundary->query(FormSubmissionReceipt::query(), 'forms.receipts')
                         ->where('form_id', $form->getKey())
@@ -90,6 +90,35 @@ final class CustomSubmissionReceiptService
                 $payloadDigest,
             );
         }
+    }
+
+    /**
+     * Resolve an already-persisted idempotent custom submission replay before consuming rate limits.
+     *
+     * @param  array<string, mixed>  $payload  Normalized handler payload
+     */
+    public function findReplay(
+        Form $form,
+        array $payload,
+        ?string $idempotencyKey,
+    ): ?FormSubmissionReceipt {
+        if ($idempotencyKey === null) {
+            return null;
+        }
+
+        $this->boundary->assertRecord($form, 'forms.forms');
+        $payloadDigest = $this->payloadDigest($payload);
+
+        $existing = $this->boundary->query(FormSubmissionReceipt::query(), 'forms.receipts')
+            ->where('form_id', $form->getKey())
+            ->where('idempotency_key', $idempotencyKey)
+            ->first();
+
+        if (! $existing instanceof FormSubmissionReceipt) {
+            return null;
+        }
+
+        return $this->resolveExistingIdempotencyClaim($existing, $payloadDigest)->receipt;
     }
 
     /**

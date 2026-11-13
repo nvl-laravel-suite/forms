@@ -314,13 +314,13 @@ final class FormRateLimitService implements FormRateLimiter
             ...$this->childOwnership($form),
             'ip_address' => $ipAddress,
             'submission_count' => 0,
-            'window_start' => $now->format('Y-m-d H:i:sP'),
-            'last_submission_at' => $now->format('Y-m-d H:i:sP'),
+            'window_start' => $now->format('Y-m-d H:i:s'),
+            'last_submission_at' => $now->format('Y-m-d H:i:s'),
             'is_blocked' => false,
             'blocked_until' => null,
             'violation_count' => 0,
-            'created_at' => $now->format('Y-m-d H:i:sP'),
-            'updated_at' => $now->format('Y-m-d H:i:sP'),
+            'created_at' => $now->format('Y-m-d H:i:s'),
+            'updated_at' => $now->format('Y-m-d H:i:s'),
         ]);
 
         $rateLimit = $this->boundary->query(FormRateLimit::query(), 'forms.rates')

@@ -4,6 +4,10 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Match Unicode form searches case-insensitively across SQLite (`nvl_utf8_lower`) and PostgreSQL (`COLLATE pg_c_utf8`), retain entry flag attributes on paginated projections, and route submission, receipt, rate-limit, and lifecycle side effects through configured database connections.
+
 ## [7.0.4] - 2026-11-11
 
 ### Fixed
@@ -166,7 +170,7 @@ All notable changes to `nvl/forms` are documented here.
 ## [1.0.2] - 2026-08-12
 
 - Serializes atomic submission-counter timestamps through Eloquent's
-  connection-aware date format for PostgreSQL, MySQL, MariaDB, and SQLite.
+  connection-aware date format for the database drivers.
 - Consolidated every pre-release form schema addition into the clean-install create migrations.
 - Standardized the localized-content table as `forms_i18n`.
 - Made form mutation DTO validation independent from requests, route bindings, and database reads.
