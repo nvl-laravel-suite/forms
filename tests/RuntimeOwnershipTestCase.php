@@ -17,6 +17,7 @@ use Nvl\Ownership\Providers\OwnershipServiceProvider;
 use Nvl\Ownership\Tests\Fixtures\ReusesAdoptedSchema;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Providers\SupportServiceProvider;
+use Nvl\Support\Testing\TestServiceHosts;
 use Orchestra\Testbench\TestCase;
 
 /** Boots only the neutral Core and optional Ownership runtime against native host keys. */
@@ -50,7 +51,7 @@ abstract class RuntimeOwnershipTestCase extends TestCase
             $driver = (string) getenv('NVL_OWNERSHIP_TEST_DRIVER');
             $host = getenv('NVL_OWNERSHIP_TEST_HOST') ?: '/tmp';
             $port = getenv('NVL_OWNERSHIP_TEST_PORT') ?: '5432';
-            if (! in_array($host, ['127.0.0.1', 'localhost', '::1', '/tmp'], true) || ! ctype_digit($port)) {
+            if (! TestServiceHosts::admitsDatabaseHost($host) || ! ctype_digit($port)) {
                 throw new \RuntimeException('Native ownership fixtures require a loopback service and explicit numeric port.');
             }
             $connection = ['driver' => $driver, 'url' => null, 'host' => $host, 'port' => $port, 'database' => $primary, 'username' => getenv('NVL_OWNERSHIP_TEST_USERNAME') ?: get_current_user(), 'password' => getenv('NVL_OWNERSHIP_TEST_PASSWORD') ?: '', 'prefix' => '', 'timezone' => 'UTC'];
