@@ -20,8 +20,8 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Support\FormIdentifier;
+use Nvl\Support\Contracts\TextMatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
-use Pdo\Sqlite;
 use Stringable;
 use Throwable;
 
@@ -431,40 +431,13 @@ final class FormReader
             return $query;
         }
 
-        $connection = $query->getModel()->getConnection();
-        $driver = $connection->getDriverName();
-        $escape = static fn (string $term): string => '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
-        if ($driver === 'pgsql') {
-            $pattern = $escape($value);
+        $matcher = app(TextMatcher::class);
 
-            return $query->where(function (Builder $q) use ($pattern): void {
-                $q->whereRaw("(handle COLLATE pg_c_utf8) ILIKE ? ESCAPE '!'", [$pattern])
-                    ->orWhereHas('translations', function (Builder $translations) use ($pattern): void {
-                        $translations->whereRaw("(name COLLATE pg_c_utf8) ILIKE ? ESCAPE '!'", [$pattern]);
-                    });
+        return $query->where(function (Builder $forms) use ($matcher, $value): void {
+            $matcher->contains($forms->getQuery(), $forms->qualifyColumn('handle'), $value);
+            $forms->orWhereHas('translations', function (Builder $translations) use ($matcher, $value): void {
+                $matcher->contains($translations->getQuery(), $translations->getModel()->qualifyColumn('name'), $value);
             });
-        }
-
-        $pattern = $escape(mb_strtolower($value, 'UTF-8'));
-        $lowerFn = 'LOWER';
-        if ($driver === 'sqlite') {
-            $lower = static fn (?string $v): ?string => $v === null ? null : mb_strtolower($v, 'UTF-8');
-            foreach ([$connection->getPdo(), $connection->getReadPdo()] as $pdo) {
-                if ($pdo instanceof Sqlite) {
-                    $pdo->createFunction('nvl_utf8_lower', $lower, 1, Sqlite::DETERMINISTIC);
-                    $lowerFn = 'nvl_utf8_lower';
-                } elseif ($pdo instanceof \PDO) {
-                    $pdo->sqliteCreateFunction('nvl_utf8_lower', $lower, 1, \PDO::SQLITE_DETERMINISTIC);
-                    $lowerFn = 'nvl_utf8_lower';
-                }
-            }
-        }
-
-        return $query->where(function (Builder $q) use ($pattern, $lowerFn): void {
-            $q->whereRaw("{$lowerFn}(handle) LIKE ? ESCAPE '!'", [$pattern])
-                ->orWhereHas('translations', function (Builder $translations) use ($pattern, $lowerFn): void {
-                    $translations->whereRaw("{$lowerFn}(name) LIKE ? ESCAPE '!'", [$pattern]);
-                });
         });
     }
 
