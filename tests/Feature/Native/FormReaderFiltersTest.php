@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use Carbon\CarbonImmutable;
 use Nvl\Forms\Enums\FormAnalyticEventType;
+use Nvl\Forms\Enums\FormStatus;
 use Nvl\Forms\Exceptions\FormException;
 use Nvl\Forms\Models\AllowedOrigin;
 use Nvl\Forms\Models\Form;
@@ -11,6 +12,8 @@ use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormRateLimit;
 use Nvl\Forms\Services\FormEntries;
 use Nvl\Forms\Services\FormReader;
+use Nvl\Forms\Tests\Fixtures\CloningTextMatcher;
+use Nvl\Support\Contracts\TextMatcher;
 
 beforeEach(function (): void {
     CarbonImmutable::setTestNow('2026-08-20 12:00:00');
@@ -66,4 +69,15 @@ test('consumer native queries retain origin entry analytic and rate predicates',
         ->and(app(FormEntries::class)->paginate($form, false, filters: ['email' => 'customer@example.test'], actor: formActor())->pluck('id')->all())->toBe([$entry->id])
         ->and(FormAnalytic::query()->where('event_type', 'view')->pluck('id')->all())->toBe([$analytic->id])
         ->and(FormRateLimit::query()->where('is_blocked', true)->pluck('id')->all())->toBe([$rate->id]);
+});
+
+test('form search keeps handle and translated name matches when a host matcher returns a cloned builder', function (): void {
+    app()->bind(TextMatcher::class, CloningTextMatcher::class);
+    $handleMatch = Form::factory()->create(['handle' => 'contact-us', 'name' => 'Support']);
+    $nameMatch = Form::factory()->create(['handle' => 'feedback', 'name' => 'Contact Desk']);
+    Form::factory()->create(['handle' => 'newsletter', 'name' => 'Newsletter']);
+    Form::factory()->create(['handle' => 'contact-archive', 'name' => 'Contact Archive', 'status' => FormStatus::ARCHIVED]);
+
+    expect(app(FormReader::class)->paginate(false, filters: ['search' => 'CONTACT', 'status' => FormStatus::ACTIVE->value], actor: formActor())->pluck('id')->all())
+        ->toBe([$handleMatch->id, $nameMatch->id]);
 });

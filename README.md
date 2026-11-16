@@ -113,6 +113,6 @@ The existing low-level `FormRateLimiter::cleanupExpiredRecords()` remains an exp
 
 `FormChanged` and `FormEntryChanged` snapshot scalar identifiers and bounded operation facts after the source commit. Personal entry content and export paths are excluded. See `resources/event-catalog.json` and `docs/events.md`.
 
-Tests and `phpunit.xml.dist` are not part of the distributed package; run package Pest tests from the source repository. Consumer HTTP/DTO fixtures remain active. The source repository's `tests/Historical` preserves retired bridge, automatic old-schema conversion and generated Action-interface metadata tests outside active discovery; native Ownership, committed callback, privacy, submission and lifecycle tests remain active.
+Tests and `phpunit.xml.dist` are not part of the distributed package; run package Pest tests from the source repository. Consumer HTTP/DTO fixtures remain active.
 
 Shared [service contracts, model extensions and composition](https://github.com/nvl-laravel-suite/laravel-suite/blob/main/docs/consumer-api.md) apply alongside the package-specific rules above.

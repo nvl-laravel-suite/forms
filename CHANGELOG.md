@@ -4,6 +4,10 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Search supports host text matchers that return a new builder.
+
 ## [7.1.0] - 2026-11-16
 
 ### Highlights

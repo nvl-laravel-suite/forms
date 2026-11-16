@@ -434,9 +434,9 @@ final class FormReader
         $matcher = app(TextMatcher::class);
 
         return $query->where(function (Builder $forms) use ($matcher, $value): void {
-            $matcher->contains($forms->getQuery(), $forms->qualifyColumn('handle'), $value);
+            $forms->setQuery($matcher->contains($forms->getQuery(), $forms->qualifyColumn('handle'), $value));
             $forms->orWhereHas('translations', function (Builder $translations) use ($matcher, $value): void {
-                $matcher->contains($translations->getQuery(), $translations->getModel()->qualifyColumn('name'), $value);
+                $translations->setQuery($matcher->contains($translations->getQuery(), $translations->getModel()->qualifyColumn('name'), $value));
             });
         });
     }
