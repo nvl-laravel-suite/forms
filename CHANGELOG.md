@@ -4,6 +4,8 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+## [7.4.0] - 2026-11-17
+
 ### Changed
 
 - Requires `nvl/core` ^7.4.0. Public submission counters are incremented with the ownership scope removed, after the locked and asserted read of the canonical form, because Core 7.4.0 refuses owned bulk writes to resources a public site may only read.
@@ -16,6 +18,12 @@ All notable changes to `nvl/forms` are documented here.
 - `FormEntries::update()` applies the public submission text guard: text fields that are not valid UTF-8 or contain a NUL byte are rejected with `ValidationException` instead of being silently truncated by PostgreSQL.
 - `FormLifecycle::delete()` reloads and locks the stored form inside its transaction, so the entry dependency check, the deletion and the `deleted` event always target the same form. Service identifiers reject a persisted model whose key was changed in memory with `ModelNotFoundException`.
 - A submission origin whose host and port exceed the 255-character `submitted_from` column fails origin validation before any write instead of raising a PostgreSQL length error.
+
+<!-- NVL GENERATED CHANGES START -->
+### Changed
+
+- consumer-audit fixes across the suite, UTC timestamps, core/forms release ordering
+<!-- NVL GENERATED CHANGES END -->
 
 ## [7.3.0] - 2026-11-17
 
