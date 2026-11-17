@@ -227,7 +227,7 @@ test('writes captured dynamic cells when persistence changes after a batch is re
 
     $path = app(FormEntries::class)->export($form, [], formActor());
 
-    expect($changed)->toBeTrue()->and(file_get_contents($path))->toContain('Field: before', 'Captured value', 'Captured body')->not->toContain('Field: after', 'Changed value', 'Changed body');
+    expect($changed)->toBeTrue()->and(file_get_contents($path))->toContain('Field: before', 'Captured value', 'Captured body')->not->toContain('Field: after')->not->toContain('Changed value')->not->toContain('Changed body');
 });
 
 it('preserves inclusive calendar date boundaries without wrapping the timestamp column', function (): void {
@@ -238,7 +238,7 @@ it('preserves inclusive calendar date boundaries without wrapping the timestamp 
     $after = FormEntry::factory()->for($form)->create(['created_at' => '2026-11-01 00:00:00']);
     $csv = file_get_contents(app(FormEntries::class)->export($form, ['date_from' => '2026-10-31', 'date_to' => '2026-10-31'], formActor()));
 
-    expect($csv)->toContain($first->id, $last->id)->not->toContain($before->id, $after->id);
+    expect($csv)->toContain($first->id, $last->id)->not->toContain($before->id)->not->toContain($after->id);
 });
 
 it('exports valid entries with nullable creation timestamps across bounded chunks', function (): void {

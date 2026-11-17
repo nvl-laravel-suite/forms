@@ -25,6 +25,7 @@ use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Models\FormSubmissionReceipt;
 use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Rules\BoundedSubmissionPayload;
+use Nvl\Forms\Support\SubmissionText;
 use Nvl\Ownership\Services\PublicOwnerSiteRunner;
 use Nvl\Support\Events\ConnectionCommitCallbacks;
 use Nvl\Support\Events\DomainEventDispatcher;
@@ -47,6 +48,9 @@ use Throwable;
  */
 final class FormSubmissions
 {
+    /** Width of the form_entries.submitted_from column that stores the origin host and port. */
+    private const int MaxSubmittedFromLength = 255;
+
     public function __construct(private readonly CustomFormRegistry $customRegistry, private readonly EntryCallbackRegistry $entryCallbacks, private readonly CustomSubmissionReceiptService $customReceipts, private PublicFormTokenService $tokenService, private readonly FormEntryLocator $entryLocator, private readonly Container $container, private readonly FormSpamDetector $spamDetection, private readonly FormSpamRejectionRecorder $spamRejectionRecorder, private readonly FormRegistrationFingerprint $registrationFingerprint, private readonly OwnershipBoundary $boundary, private DomainEventDispatcher $domainEvents, private readonly FormOriginAccessService $originAccess, private readonly FormRateLimiter $rateLimitService) {}
 
     /**
@@ -65,11 +69,7 @@ final class FormSubmissions
         if (array_diff(array_keys($fields), $allowed) !== []) {
             throw ValidationException::withMessages(['fields' => 'Unknown or protected submission fields are not accepted.']);
         }
-        foreach ($fields as $value) {
-            if (is_string($value) && (! mb_check_encoding($value, 'UTF-8') || str_contains($value, "\0"))) {
-                throw ValidationException::withMessages(['fields' => 'Submission text must be valid UTF-8 without NUL bytes.']);
-            }
-        }
+        SubmissionText::assertStorable($fields);
         Validator::make($fields, $rules)->validate();
         $data = $fields;
         $context = $this->protection($protection);
@@ -697,6 +697,9 @@ final class FormSubmissions
             throw ValidationException::withMessages(['origin' => 'A canonical HTTP origin is required.']);
         }
         $originHost = strtolower($parts['host']).(isset($parts['port']) ? ':'.$parts['port'] : '');
+        if (strlen($originHost) > self::MaxSubmittedFromLength) {
+            throw ValidationException::withMessages(['origin' => 'A canonical HTTP origin is required.']);
+        }
         $origin = strtolower($parts['scheme']).'://'.$originHost;
         $packedAddress = inet_pton($validated['ipAddress']);
         $canonicalAddress = $packedAddress === false ? false : inet_ntop($packedAddress);

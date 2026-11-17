@@ -16,15 +16,17 @@ use Illuminate\Support\Str;
 final class FormIdentifier
 {
     /**
-     * Return the record's UUID key; a malformed identifier names no record, on every driver.
+     * Return the record's UUID key; a malformed identifier or a persisted model whose key was changed
+     * in memory names no record, on every driver.
      *
      * @param  class-string<Model>  $model
      */
     public static function of(Model|string $record, string $model): string
     {
         $key = $record instanceof Model ? $record->getKey() : $record;
+        $keyChanged = $record instanceof Model && $record->exists && $record->isDirty($record->getKeyName());
 
-        if (! is_string($key) || ! Str::isUuid($key)) {
+        if ($keyChanged || ! is_string($key) || ! Str::isUuid($key)) {
             throw (new ModelNotFoundException)->setModel($model);
         }
 

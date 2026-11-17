@@ -197,10 +197,10 @@ test('form search treats wildcard characters in the term literally', function ()
     Form::factory()->create(['handle' => 'summerxsale', 'name' => '100 days']);
     $reader = app(FormReader::class);
 
-    expect($reader->suggestions('summer_sale')->pluck('handle')->all())->toBe(['summer_sale'])
-        ->and($reader->options(['q' => 'SUMMER_sale'])->pluck('sublabel')->all())->toBe(['summer_sale'])
+    expect($reader->suggestions('summer_sale', actor: formActor())->pluck('handle')->all())->toBe(['summer_sale'])
+        ->and($reader->options(['q' => 'SUMMER_sale'], formActor())->pluck('sublabel')->all())->toBe(['summer_sale'])
         ->and($reader->paginate(filters: ['search' => '100%'], actor: formActor())->pluck('handle')->all())->toBe(['summer_sale'])
-        ->and($reader->suggestions('summer')->count())->toBe(2);
+        ->and($reader->suggestions('summer', actor: formActor())->count())->toBe(2);
 });
 
 test('public submissions refuse text no supported database can store', function (array $fields): void {

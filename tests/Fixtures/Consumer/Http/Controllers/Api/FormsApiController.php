@@ -156,7 +156,7 @@ final class FormsApiController extends Controller
         Gate::authorize('viewAny', Form::class);
         $data = $request->validate(FormSuggestions::rules(), FormSuggestions::messages(), FormSuggestions::attributes());
         $limit = (int) ($data['limit'] ?? 10);
-        $forms = $action->suggestions($data['q'], $limit);
+        $forms = $action->suggestions($data['q'], $limit, $request->user());
 
         return response()->json(['data' => $forms->map(static fn (Form $form): array => FormSuggestion::fromModel($form)->toArray())->all()], 200);
     }
@@ -187,7 +187,7 @@ final class FormsApiController extends Controller
     public function select(Request $request, FormReader $action): JsonResponse
     {
         Gate::authorize('viewAny', Form::class);
-        $options = $action->options($request->validate(FormSelectOption::rules(), FormSelectOption::messages(), FormSelectOption::attributes()));
+        $options = $action->options($request->validate(FormSelectOption::rules(), FormSelectOption::messages(), FormSelectOption::attributes()), $request->user());
 
         return response()->json(['data' => $options], 200);
     }

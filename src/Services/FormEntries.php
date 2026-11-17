@@ -31,6 +31,7 @@ use Nvl\Forms\Models\Form;
 use Nvl\Forms\Models\FormEntry;
 use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Forms\Support\FormIdentifier;
+use Nvl\Forms\Support\SubmissionText;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use PDO;
@@ -640,6 +641,7 @@ final class FormEntries
         if (array_diff(array_keys($attributes), $allowed) !== []) {
             throw new InvalidArgumentException('Entry updates accept only documented content fields.');
         }
+        SubmissionText::assertStorable($attributes);
         $validated = Validator::make($attributes, FormSubmissions::fieldRules())->validate();
 
         return (new FormEntry)->getConnection()->transaction(function () use ($entry, $validated, $actor): FormEntry {

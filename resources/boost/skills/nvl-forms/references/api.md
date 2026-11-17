@@ -1298,8 +1298,10 @@ resolved @param (Nvl\Forms\Models\Form | string) $formIdentifier
 resolved @return Nvl\Forms\Models\Form
 @throws ModelNotFoundException
 resolved @throws Illuminate\Database\Eloquent\ModelNotFoundException
-public function options(array $filters): Illuminate\Support\Collection
+public function options(array $filters, ?Illuminate\Contracts\Auth\Authenticatable $actor=null): Illuminate\Support\Collection
 @param array<string, mixed> $filters
+@param (Authenticatable | null) $actor
+resolved @param (Illuminate\Contracts\Auth\Authenticatable | null) $actor
 @return Collection<int, array{id: string, label: string, sublabel: ?string}>
 resolved @return Illuminate\Support\Collection<int, array{id: string, label: string, sublabel: ?string}>
 public function paginate(bool $paginate=true, ?int $perPage=null, array $filters=[], ?Illuminate\Contracts\Auth\Authenticatable $actor=null): Illuminate\Contracts\Pagination\LengthAwarePaginator|Illuminate\Support\Collection
@@ -1317,9 +1319,11 @@ public function search(array $filters, ?Illuminate\Contracts\Auth\Authenticatabl
 @param array<string, mixed> $filters
 @return array{forms: \Illuminate\Database\Eloquent\Collection<int, Form>, total: int}
 resolved @return array{forms: Illuminate\Database\Eloquent\Collection<int, Nvl\Forms\Models\Form>, total: int}
-public function suggestions(string $query, int $limit=10): Illuminate\Support\Collection
+public function suggestions(string $query, int $limit=10, ?Illuminate\Contracts\Auth\Authenticatable $actor=null): Illuminate\Support\Collection
 @param string $query
 @param int $limit
+@param (Authenticatable | null) $actor
+resolved @param (Illuminate\Contracts\Auth\Authenticatable | null) $actor
 @return Collection<int, Form>
 resolved @return Illuminate\Support\Collection<int, Nvl\Forms\Models\Form>
 public function summary(Nvl\Forms\Models\Form|string $form, int $days=30, ?Illuminate\Contracts\Auth\Authenticatable $actor=null): array

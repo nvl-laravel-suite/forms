@@ -148,15 +148,15 @@ Redaction accepts only documented identifying content columns; anonymization
 also clears security flags and marks the stored privacy timestamps. Preserve host
 retention policy and counters; never replace these with direct model deletes.
 
-`FormReader::details/paginate/search/analytics/summary` are management reads with
-an explicit actor. `details(..., recordView: true, actor: $actor)` also writes a
+`FormReader::details/paginate/search/options/suggestions/analytics/summary` are
+management reads with an explicit actor. `details(..., recordView: true, actor: $actor)` also writes a
 view counter and analytics record, with optional origin usage; select
 `recordView: false` for previews, polling or cacheable management reads.
 Public `get`/`schema` do not implicitly track visits, and the package registers no
 public GET route. Throttle and choose a deliberate tracking policy in the host
 before invoking `FormAnalytics::view` for public traffic.
-`options` and `suggestions` provide native selector projections;
-their signatures have no actor argument, so the host must choose their exposure. `FormAnalytics` supplies domain bookkeeping; it is not the
+`options($filters, $actor)` and `suggestions($query, $limit, $actor)` provide
+native selector projections for authorized managers. `FormAnalytics` supplies domain bookkeeping; it is not the
 complete submission entrypoint. Export options can include sensitive data, so
 scope downloads and avoid exposing private local filesystem paths to clients.
 Raw entry models contain personal data; let the host resource decide disclosure.

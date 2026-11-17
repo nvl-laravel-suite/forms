@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Nvl\Forms\Services;
 
+use Carbon\CarbonImmutable;
 use Closure;
+use DateTimeInterface;
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -65,6 +67,7 @@ final class FormLifecycle
         $this->validateMutationKeys($data);
         Validator::make($data, $this->mutationRules(false))->validate();
         $data = array_intersect_key($data, $this->mutationRules(false));
+        $data = [...$data, ...array_intersect_key($this->availabilityWindow($data['availableFrom'] ?? null, $data['availableUntil'] ?? null), $data)];
         $form = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($data, $actor) {
             $translations = is_array($data['translations'] ?? null) ? $data['translations'] : [];
             $formData = $this->attributes($data, ['allowedOrigins', 'translations', 'translation_mode', 'expected_revision']);
@@ -142,11 +145,11 @@ final class FormLifecycle
                 throw new FormException('The form was changed by another writer.', 409);
             }
             if (array_key_exists('availableFrom', $data) || array_key_exists('availableUntil', $data) || ($data['dateRestricted'] ?? false)) {
-                $availability = [
-                    'availableFrom' => array_key_exists('availableFrom', $data) ? $data['availableFrom'] : $form->available_from,
-                    'availableUntil' => array_key_exists('availableUntil', $data) ? $data['availableUntil'] : $form->available_until,
-                ];
-                Validator::make($availability, array_intersect_key($this->mutationRules(true), $availability))->validate();
+                $window = $this->availabilityWindow(
+                    array_key_exists('availableFrom', $data) ? $data['availableFrom'] : $form->available_from,
+                    array_key_exists('availableUntil', $data) ? $data['availableUntil'] : $form->available_until,
+                );
+                $data = [...$data, ...array_intersect_key($window, $data)];
             }
             // Validate handle uniqueness if changed
             if (is_string($data['handle'] ?? null) && $form->handle !== $data['handle']) {
@@ -279,9 +282,10 @@ final class FormLifecycle
     public function delete(Form|string $form, ?Authenticatable $actor = null): bool
     {
         $actor = FormManagement::authorize($actor);
-        // Resolve model if ID provided
-        $form = $form instanceof Form ? $form : FormModelRegistry::query()->findOrFail(FormIdentifier::of($form, Form::class));
-        $deleted = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($form, $actor) {
+        $formId = FormIdentifier::of($form, Form::class);
+        $deleted = FormModelRegistry::newInstance()->getConnection()->transaction(function () use ($formId, $actor) {
+            // Check and delete the stored, locked form rather than a caller-held model
+            $form = FormModelRegistry::query()->lockForUpdate()->findOrFail($formId);
             // Check for dependencies (form entries)
             if ($form->entries()->exists()) {
                 throw new Exception((string) trans('nvl-forms::forms/messages.error.cannot_delete_with_entries'));
@@ -322,10 +326,10 @@ final class FormLifecycle
             'allowMultipleRegistrations' => ['boolean'],
             'dateRestricted' => ['boolean'],
             'availableFrom' => ['nullable', 'date'],
-            'availableUntil' => ['nullable', 'date', 'after_or_equal:availableFrom'],
+            'availableUntil' => ['nullable', 'date'],
             'enableHoneypot' => ['boolean'],
             'enableRateLimiting' => ['boolean'],
-            'rateLimitPerHour' => ['nullable', 'integer', 'min:1'],
+            'rateLimitPerHour' => ['nullable', 'integer', 'min:1', 'max:2147483647'],
             'requireCsrf' => ['boolean'],
             'corsSettings' => ['nullable', 'array:policy,allowCredentials,allowWildcards,maxAge,allowedMethods,allowedHeaders'],
             'corsSettings.policy' => [Rule::enum(CorsPolicy::class)],
@@ -350,6 +354,34 @@ final class FormLifecycle
             'allowedOrigins' => ['nullable', 'array'],
             'allowedOrigins.*' => ['string', 'max:255', 'distinct', new AllowedOriginExpressionRule],
         ];
+    }
+
+    /**
+     * Parse availability boundaries into application-timezone instants and reject a reversed window.
+     *
+     * Eloquent stores the wall clock it is given, so offsets must be resolved before persistence.
+     *
+     * @return array{availableFrom: ?CarbonImmutable, availableUntil: ?CarbonImmutable}
+     *
+     * @throws ValidationException When the window ends before it starts
+     */
+    private function availabilityWindow(mixed $from, mixed $until): array
+    {
+        $window = ['availableFrom' => $this->instant($from), 'availableUntil' => $this->instant($until)];
+        if ($window['availableFrom'] !== null && $window['availableUntil'] !== null && $window['availableUntil']->lessThan($window['availableFrom'])) {
+            throw ValidationException::withMessages(['availableUntil' => ['The availability end must not precede its start.']]);
+        }
+
+        return $window;
+    }
+
+    private function instant(mixed $value): ?CarbonImmutable
+    {
+        if ($value instanceof DateTimeInterface) {
+            return CarbonImmutable::instance($value)->setTimezone(date_default_timezone_get());
+        }
+
+        return is_string($value) && $value !== '' ? CarbonImmutable::parse($value)->setTimezone(date_default_timezone_get()) : null;
     }
 
     /** @param array<string,mixed> $data */

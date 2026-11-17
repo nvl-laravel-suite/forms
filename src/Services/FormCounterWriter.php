@@ -10,6 +10,7 @@ use Nvl\Forms\Ownership\FormsOwnership;
 use Nvl\Ownership\Services\OwnershipWriteLease;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Support\Ownership\Services\OwnershipScope;
 
 /**
  * Owns the narrow counter capability required by public Forms without granting management writes.
@@ -38,7 +39,7 @@ final readonly class FormCounterWriter
         $connection->transaction(function () use ($form, $counter, $extra, $connection): void {
             $this->container->make(OwnershipWriteLease::class)->during($connection, function () use ($form, $counter, $extra): void {
                 $canonical = FormModelRegistry::query()->whereKey($form->identifier())->lockForUpdate()->firstOrFail();
-                $canonical->newQuery()->whereKey($canonical->identifier())->increment($counter, 1, $extra);
+                $canonical->newQuery()->withoutGlobalScope(OwnershipScope::class)->whereKey($canonical->identifier())->increment($counter, 1, $extra);
                 $form->refresh();
             });
         });

@@ -358,10 +358,12 @@ final class FormReader
      * Execute the form select options retrieval.
      *
      * @param  array<string, mixed>  $filters  Filter parameters for form selection
+     * @param  Authenticatable|null  $actor  Management actor authorized by the configured gate
      * @return Collection<int, array{id:string,label:string,sublabel:?string}>
      */
-    public function options(array $filters): Collection
+    public function options(array $filters, ?Authenticatable $actor = null): Collection
     {
+        FormManagement::authorize($actor);
         $normalizedFilters = collect($filters)->mapWithKeys(static function ($value, string $key) {
             return [Str::snake($key) => $value];
         })->toArray();
@@ -408,10 +410,12 @@ final class FormReader
      *
      * @param  string  $query  Search query term
      * @param  int  $limit  Maximum number of suggestions to return
+     * @param  Authenticatable|null  $actor  Management actor authorized by the configured gate
      * @return Collection<int, Form>
      */
-    public function suggestions(string $query, int $limit = 10): Collection
+    public function suggestions(string $query, int $limit = 10, ?Authenticatable $actor = null): Collection
     {
+        FormManagement::authorize($actor);
         $forms = FormModelRegistry::query()->withResolvedTranslations()->select(['id', 'handle', 'submissions_count', 'last_used_at', ...FormsOwnership::columns('forms.forms')]);
 
         return $this->filterSearch($forms, $query)->orderBy('submissions_count', 'desc')->orderBy('handle')->limit($limit)->get();

@@ -4,6 +4,19 @@ All notable changes to `nvl/forms` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Requires `nvl/core` ^7.4.0. Public submission counters are incremented with the ownership scope removed, after the locked and asserted read of the canonical form, because Core 7.4.0 refuses owned bulk writes to resources a public site may only read.
+- **Breaking:** `FormReader::options($filters, $actor)` and `FormReader::suggestions($query, $limit, $actor)` now require an authorized management actor, like `details`, `paginate` and `search`. A missing or denied actor, or a call inside a public owner-site context, throws `AuthorizationException` instead of listing draft, paused, archived and restricted forms.
+
+### Fixed
+
+- `FormLifecycle` resolves `availableFrom`/`availableUntil` offsets to the application timezone before storing them, so `2026-01-01T10:00:00+02:00` is stored as 08:00 UTC instead of 10:00, and checks the window order on those instants.
+- `rateLimitPerHour` is limited to 2147483647, the stored integer range, so oversized limits fail validation instead of raising a PostgreSQL range error.
+- `FormEntries::update()` applies the public submission text guard: text fields that are not valid UTF-8 or contain a NUL byte are rejected with `ValidationException` instead of being silently truncated by PostgreSQL.
+- `FormLifecycle::delete()` reloads and locks the stored form inside its transaction, so the entry dependency check, the deletion and the `deleted` event always target the same form. Service identifiers reject a persisted model whose key was changed in memory with `ModelNotFoundException`.
+- A submission origin whose host and port exceed the 255-character `submitted_from` column fails origin validation before any write instead of raising a PostgreSQL length error.
+
 ## [7.3.0] - 2026-11-17
 
 ### Changed

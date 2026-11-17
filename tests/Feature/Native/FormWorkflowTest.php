@@ -98,6 +98,37 @@ test('native form creation rejects reversed date boundaries before persistence',
     expect(Form::query()->count())->toBe(0);
 });
 
+test('native form availability resolves offsets to the application timezone before storage', function (): void {
+    $form = app(FormLifecycle::class)->create([
+        'translations' => ['en' => ['name' => 'Offset schedule']], 'resolvement' => 'entries', 'type' => 'iframe',
+        'dateRestricted' => true, 'availableFrom' => '2026-01-01T10:00:00+02:00', 'availableUntil' => '2026-01-01T09:00:00Z',
+    ], formActor());
+
+    expect(config('app.timezone'))->toBe('UTC')
+        ->and($form->available_from?->toIso8601String())->toBe('2026-01-01T08:00:00+00:00')
+        ->and($form->available_until?->toIso8601String())->toBe('2026-01-01T09:00:00+00:00');
+
+    $updated = app(FormLifecycle::class)->update($form, ['expected_revision' => 1, 'availableUntil' => '2026-01-01T12:30:00+03:00'], formActor());
+
+    expect($updated->available_until?->toIso8601String())->toBe('2026-01-01T09:30:00+00:00');
+});
+
+test('native form availability rejects windows reversed across offsets', function (): void {
+    expect(fn () => app(FormLifecycle::class)->create([
+        'translations' => ['en' => ['name' => 'Reversed offsets']], 'resolvement' => 'entries', 'type' => 'iframe',
+        'dateRestricted' => true, 'availableFrom' => '2026-01-01T10:00:00Z', 'availableUntil' => '2026-01-01T11:00:00+02:00',
+    ], formActor()))->toThrow(ValidationException::class);
+    expect(Form::query()->count())->toBe(0);
+});
+
+test('native form rate limits stay within the stored integer range', function (): void {
+    expect(fn () => app(FormLifecycle::class)->create([
+        'translations' => ['en' => ['name' => 'Oversized limit']], 'resolvement' => 'entries', 'type' => 'iframe',
+        'rateLimitPerHour' => 2147483648,
+    ], formActor()))->toThrow(ValidationException::class);
+    expect(Form::query()->count())->toBe(0);
+});
+
 test('native submissions persist once and reject untrusted protection claims', function (): void {
     $form = Form::factory()->create(['require_csrf' => false, 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
     $protection = ['origin' => 'https://example.com', 'ipAddress' => '192.0.2.1', 'idempotency_key' => 'native-retry'];
@@ -256,3 +287,27 @@ test('native management retains explicit non Eloquent provider identities', func
 
     expect($form->displayName())->toBe('External actor');
 });
+
+test('native entry updates reject text that public submission rejects and keep stored content', function (string $subject): void {
+    $form = Form::factory()->create();
+    $entry = FormEntry::factory()->create(['form_id' => $form->id, 'subject' => 'Original subject']);
+
+    expect(fn () => app(FormEntries::class)->update($entry, ['subject' => $subject], formActor()))
+        ->toThrow(ValidationException::class, 'Submission text must be valid UTF-8 without NUL bytes.');
+    expect($entry->fresh()?->subject)->toBe('Original subject');
+})->with(['nul byte' => "quiet\0subject", 'malformed utf-8' => "quiet\xC3\x28subject"]);
+
+test('native submission origins must fit the stored submitted_from column', function (int $hostLength, bool $accepted): void {
+    $form = Form::factory()->create(['require_csrf' => false, 'enable_honeypot' => false, 'enable_rate_limiting' => false, 'restrict_public_access' => false]);
+    $labels = str_split(str_repeat('a', $hostLength - intdiv($hostLength, 64)), 63);
+    $host = implode('.', $labels);
+    expect(strlen($host))->toBe($hostLength);
+    $submit = fn () => app(FormSubmissions::class)->submit($form, ['body' => 'A normal enquiry.'], ['origin' => "https://{$host}:8443", 'ipAddress' => '192.0.2.1']);
+
+    if ($accepted) {
+        expect($submit()->fresh()?->submitted_from)->toBe("{$host}:8443");
+    } else {
+        expect($submit)->toThrow(ValidationException::class, 'A canonical HTTP origin is required.');
+        expect(FormEntry::query()->count())->toBe(0);
+    }
+})->with(['253-character host with a port' => [253, false], '250-character host with a port' => [250, true]]);
